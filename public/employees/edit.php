@@ -6,6 +6,7 @@
 
 require_once __DIR__ . '/../../includes/auth.php';
 require_once __DIR__ . '/../../classes/Employee.php';
+require_once __DIR__ . '/../../classes/JobTemplate.php';
 
 // Require HR Admin access
 requireAuth();
@@ -19,8 +20,9 @@ if (!$employeeId) {
     redirect('/employees/list.php');
 }
 
-// Initialize Employee class
+// Initialize classes
 $employeeClass = new Employee();
+$jobTemplateClass = new JobTemplate();
 
 // Get employee details
 $employee = $employeeClass->getEmployeeById($employeeId);
@@ -48,6 +50,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'active' => isset($_POST['active']) ? 1 : 0
         ];
 
+        // Only add job_template_id if the column exists in database
+        if (!empty($_POST['job_template_id'])) {
+            $updateData['job_template_id'] = $_POST['job_template_id'];
+        }
+
         $result = $employeeClass->updateEmployee($employeeId, $updateData);
         
         if ($result) {
@@ -57,6 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             setFlashMessage('Failed to update employee. Please try again.', 'error');
         }
     } catch (Exception $e) {
+        error_log('Employee update error: ' . $e->getMessage());
         setFlashMessage('Error: ' . $e->getMessage(), 'error');
     }
 }
@@ -64,8 +72,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Get potential managers
 $potentialManagers = $employeeClass->getPotentialManagers($employeeId);
 
-// Get departments
+// Get departments and job templates
 $departments = $employeeClass->getDepartments();
+$jobTemplates = $jobTemplateClass->getJobTemplates();
 
 include __DIR__ . '/../../templates/header.php';
 ?>
@@ -138,9 +147,36 @@ include __DIR__ . '/../../templates/header.php';
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="hire_date" class="form-label">Hire Date</label>
-                                <input type="date" class="form-control" id="hire_date" name="hire_date" 
+                                <input type="date" class="form-control" id="hire_date" name="hire_date"
                                        value="<?php echo $employee['hire_date']; ?>">
                             </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="job_template_id" class="form-label">Job Template</label>
+                                <select class="form-select" id="job_template_id" name="job_template_id">
+                                    <option value="">No Job Template</option>
+                                    <?php foreach ($jobTemplates as $template): ?>
+                                    <option value="<?php echo $template['id']; ?>"
+                                            <?php echo ($employee['job_template_id'] ?? '') == $template['id'] ? 'selected' : ''; ?>>
+                                        <?php echo htmlspecialchars($template['position_title']); ?>
+                                        <?php if ($template['department']): ?>
+                                            - <?php echo htmlspecialchars($template['department']); ?>
+                                        <?php endif; ?>
+                                    </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <div class="form-text">
+                                    Assign a job template to define evaluation criteria for this employee.
+                                    <br><small class="text-warning">Note: Job template assignment requires database migration. See sql/add_job_template_id_to_employees.sql</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <!-- Empty column for spacing -->
                         </div>
                     </div>
 

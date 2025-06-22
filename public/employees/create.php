@@ -7,6 +7,7 @@
 require_once __DIR__ . '/../../includes/auth.php';
 require_once __DIR__ . '/../../classes/Employee.php';
 require_once __DIR__ . '/../../classes/User.php';
+require_once __DIR__ . '/../../classes/JobTemplate.php';
 
 // Require HR Admin access
 requireAuth();
@@ -21,6 +22,7 @@ $pageDescription = 'Create a new employee record';
 // Initialize classes
 $employeeClass = new Employee();
 $userClass = new User();
+$jobTemplateClass = new JobTemplate();
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -53,7 +55,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'manager_id' => $_POST['manager_id'] ?: null,
             'hire_date' => $_POST['hire_date'] ?: null,
             'phone' => trim($_POST['phone']) ?: null,
-            'address' => trim($_POST['address']) ?: null
+            'address' => trim($_POST['address']) ?: null,
+            'job_template_id' => $_POST['job_template_id'] ?: null
         ];
 
         $employeeId = $employeeClass->createEmployee($employeeData);
@@ -77,8 +80,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Get potential managers
 $potentialManagers = $employeeClass->getPotentialManagers();
 
-// Get departments
+// Get departments and job templates
 $departments = $employeeClass->getDepartments();
+$jobTemplates = $jobTemplateClass->getJobTemplates();
 
 include __DIR__ . '/../../templates/header.php';
 ?>
@@ -162,8 +166,26 @@ include __DIR__ . '/../../templates/header.php';
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
+                                <label for="job_template_id" class="form-label">Job Template</label>
+                                <select class="form-select" id="job_template_id" name="job_template_id">
+                                    <option value="">No Job Template</option>
+                                    <?php foreach ($jobTemplates as $template): ?>
+                                    <option value="<?php echo $template['id']; ?>"
+                                            <?php echo ($_POST['job_template_id'] ?? '') == $template['id'] ? 'selected' : ''; ?>>
+                                        <?php echo htmlspecialchars($template['position_title']); ?>
+                                        <?php if ($template['department']): ?>
+                                            - <?php echo htmlspecialchars($template['department']); ?>
+                                        <?php endif; ?>
+                                    </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <div class="form-text">Assign a job template to define evaluation criteria for this employee.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
                                 <label for="phone" class="form-label">Phone</label>
-                                <input type="tel" class="form-control" id="phone" name="phone" 
+                                <input type="tel" class="form-control" id="phone" name="phone"
                                        value="<?php echo htmlspecialchars($_POST['phone'] ?? ''); ?>">
                             </div>
                         </div>

@@ -211,3 +211,24 @@ This project is developed for internal use. Please ensure compliance with your o
 ---
 
 **Note**: This system is designed to replace paper-based evaluation processes while maintaining the same evaluation criteria and workflow. All evaluation data is stored securely and can be exported for compliance purposes.
+
+## 🚀 Developer Resources
+
+- **[Developer Guide](README_DEV.md)** - Complete development environment management
+- **[Quick Reference](QUICK_REFERENCE.md)** - Essential commands cheat sheet
+- **[Database Migrations](docs/DATABASE_MIGRATION_IMPLEMENTATION.md)** - Migration system documentation
+- **[Architecture Design](docs/ARCHITECTURE_DESIGN.md)** - System architecture overview
+- **[Docker Setup](DOCKER_SETUP_COMPLETE.md)** - Docker environment details
+
+### Quick Start for Developers
+```bash
+# Start development environment
+make up
+
+# Access application
+open http://localhost:8080
+
+# Default login: admin / admin123
+```
+
+For detailed development instructions, see **[README_DEV.md](README_DEV.md)**.

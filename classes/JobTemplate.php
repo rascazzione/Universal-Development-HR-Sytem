@@ -12,7 +12,8 @@ class JobTemplate {
      */
     public function getJobTemplates() {
         $sql = "SELECT jpt.*,
-                       u.username as created_by_username
+                       u.username as created_by_username,
+                       0 as employee_count
                 FROM job_position_templates jpt
                 LEFT JOIN users u ON jpt.created_by = u.user_id
                 WHERE jpt.is_active = 1

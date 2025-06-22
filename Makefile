@@ -1,7 +1,7 @@
 # Docker Development Environment - Makefile
 # Performance Evaluation System
 
-.PHONY: help up down restart reset destroy logs shell health status clean
+.PHONY: help up down restart reset destroy logs shell health status clean migrate migrate-status migrate-rollback migrate-validate migrate-create
 
 # Default target
 .DEFAULT_GOAL := help
@@ -129,3 +129,25 @@ install: ## Initial setup (copy .env, create directories)
 	@mkdir -p docker/logs/{apache,php,mysql}
 	@echo "$(GREEN)Created log directories$(RESET)"
 	@echo "$(BLUE)Setup completed! Run 'make up' to start the environment$(RESET)"
+
+# Database Migration Commands
+migrate: ## Run pending database migrations
+	@echo "$(YELLOW)Running database migrations...$(RESET)"
+	@docker compose exec web php /var/www/html/sql/migration_runner.php migrate
+
+migrate-status: ## Show migration status
+	@echo "$(BLUE)Migration status:$(RESET)"
+	@docker compose exec web php /var/www/html/sql/migration_runner.php status
+
+migrate-rollback: ## Rollback specific migration
+	@echo "$(RED)Rolling back migration...$(RESET)"
+	@read -p "Enter migration version to rollback: " version; \
+	docker compose exec web php /var/www/html/sql/migration_runner.php rollback $$version
+
+migrate-validate: ## Validate migration files
+	@echo "$(YELLOW)Validating migrations...$(RESET)"
+	@docker compose exec web php /var/www/html/sql/migration_runner.php validate
+
+migrate-create: ## Create new migration file
+	@read -p "Enter migration description: " desc; \
+	docker compose exec web php /var/www/html/sql/migration_runner.php create "$$desc"

@@ -1,81 +1,88 @@
 # PHP Performance Evaluation System - Technical Specification
 
-## Project Overview
+## 1. Project Overview
 
-A comprehensive web-based employee performance evaluation system that digitizes paper-based evaluation processes. The system provides user authentication, role-based access control, flexible evaluation cycles, and automated reporting capabilities.
+This document outlines the technical specification for a comprehensive, web-based employee performance evaluation system. The application is designed to replace traditional paper-based evaluation processes with a robust, data-driven platform. It provides user authentication, a flexible role-based access control system, customizable evaluation cycles, and a sophisticated framework for managing performance metrics such as Key Performance Indicators (KPIs), competencies, and company values.
 
-## System Requirements
+The system is built on a modular architecture that allows for future expansion and integration with other HR systems. It is designed to be a central hub for all performance-related data, providing valuable insights to employees, managers, and HR administrators.
+
+## 2. System Requirements
 
 ### Functional Requirements
 
-#### 1. User Management & Authentication
+#### 2.1. User Management & Authentication
 - **Three-tier role system:**
-  - **HR Admin**: Full system access, user management, evaluation oversight
-  - **Manager**: Create/edit evaluations for direct reports, view team performance
-  - **Employee**: View own evaluations and performance history
-- **Secure login system** with session management
-- **Password reset functionality**
-- **User profile management**
+  - **HR Admin**: Full system access, including user management, system configuration, and oversight of all evaluations.
+  - **Manager**: Can create and edit evaluations for their direct reports, view team performance dashboards, and track their team's progress.
+  - **Employee**: Can view their own evaluations, track their performance history, and manage their personal profile.
+- **Secure login system** with session management and password hashing.
+- **Password reset functionality**.
+- **User profile management**.
 
-#### 2. Employee Management
-- **Employee database** with organizational hierarchy
-- **Department and team assignments**
-- **Manager-employee relationships**
-- **Employee profile information**
+#### 2.2. Employee Management
+- **Centralized employee database** with a clear organizational hierarchy.
+- **Department and team assignments**.
+- **Manager-employee relationships**.
+- **Linkage to `job_position_templates`** to standardize roles and responsibilities.
 
-#### 3. Evaluation System
-- **Digital replica** of current evaluation template with:
-  - Expected Results scoring
-  - Skills, Knowledge, and Competencies assessment
-  - Key Responsibilities evaluation
-  - Living Our Values assessment
-  - Overall rating system (1-5 scale)
-- **Flexible evaluation periods** (monthly, quarterly, annual, custom)
-- **Draft saving capability**
-- **Evaluation history tracking**
+#### 2.3. Job Position Templates
+- **Central repository of job templates**, managed by HR Admins.
+- Each template defines a specific role and includes:
+  - A list of **key responsibilities**.
+  - A set of **Key Performance Indicators (KPIs)** with target values.
+  - A list of required **competencies** with desired proficiency levels.
+  - The **company values** that are most relevant to the role.
+- **Weighting system** for each component to allow for customized scoring.
 
-#### 4. Reporting & Analytics
-- **PDF generation** matching current template format
-- **Performance dashboards** for managers and HR
-- **Evaluation status tracking**
-- **Performance trends over time**
+#### 2.4. Performance Metrics Management
+- **Company KPIs Catalog:** A central directory of all company-wide KPIs, managed by HR Admins.
+- **Competency Catalog:** A comprehensive list of skills and competencies, organized into categories.
+- **Company Values:** A defined set of company values that can be used in evaluations.
+
+#### 2.5. Evaluation System
+- **Flexible evaluation periods** (e.g., monthly, quarterly, annual).
+- **Dynamic evaluation forms** generated based on the employee's assigned job template.
+- **Automated scoring** based on the predefined weights and achieved results.
+- **Draft saving capability** and a clear workflow (draft, submitted, reviewed, approved).
+- **Detailed feedback** with section-specific comments.
+
+#### 2.6. Reporting & Analytics
+- **PDF generation** of evaluation summaries.
+- **Performance dashboards** tailored to each user role.
+- **Evaluation status tracking** and performance trend analysis.
+- **Audit trail** for all significant actions within the system.
 
 ### Technical Requirements
 - **Backend**: PHP 7.4+
 - **Database**: MySQL 8.0+
 - **Frontend**: HTML5, CSS3, JavaScript
-- **PDF Generation**: TCPDF or similar library
-- **Security**: Prepared statements, password hashing, session security
+- **Security**: Prepared statements, password hashing, XSS/CSRF protection, and secure session management.
 
-## System Architecture
+## 3. System Architecture
 
 ### High-Level Architecture
 
 ```mermaid
 graph TB
     A[Web Browser] --> B[PHP Frontend]
-    B --> C[Authentication Layer]
-    C --> D[Role-Based Access Control]
-    D --> E[Business Logic Layer]
-    E --> F[Database Layer - MySQL]
-    
-    E --> G[Evaluation Module]
-    E --> H[User Management Module]
-    E --> I[Reporting Module]
-    
-    G --> J[Evaluation Forms]
-    G --> K[Scoring System]
-    
-    I --> L[PDF Generator]
-    I --> M[Analytics Dashboard]
-    
-    F --> N[(Users Table)]
-    F --> O[(Employees Table)]
-    F --> P[(Evaluations Table)]
-    F --> Q[(Evaluation Periods Table)]
+    B --> C[Authentication & RBAC]
+    C --> D[Business Logic Layer]
+    D --> E[Database Layer - MySQL]
+
+    D --> F[Evaluation Module]
+    D --> G[User Management Module]
+    D --> H[Reporting Module]
+    D --> I[Job Template Module]
+    D --> J[Admin & Configuration Module]
+
+    F --> E
+    G --> E
+    H --> E
+    I --> E
+    J --> E
 ```
 
-### Database Schema
+### Detailed Database Schema
 
 ```mermaid
 erDiagram
@@ -85,317 +92,139 @@ erDiagram
         string email
         string password_hash
         enum role
-        datetime created_at
-        datetime updated_at
     }
-    
+
     EMPLOYEES {
         int employee_id PK
         int user_id FK
         string first_name
         string last_name
-        string position
-        string department
         int manager_id FK
-        date hire_date
-        boolean active
+        int job_template_id FK
     }
-    
+
+    JOB_POSITION_TEMPLATES {
+        int id PK
+        string position_title
+    }
+
+    COMPANY_KPIS {
+        int id PK
+        string kpi_name
+    }
+
+    COMPETENCIES {
+        int id PK
+        string competency_name
+    }
+
+    COMPANY_VALUES {
+        int id PK
+        string value_name
+    }
+
     EVALUATION_PERIODS {
         int period_id PK
         string period_name
         date start_date
         date end_date
-        enum status
-        int created_by FK
     }
-    
+
     EVALUATIONS {
         int evaluation_id PK
         int employee_id FK
         int evaluator_id FK
         int period_id FK
-        json evaluation_data
-        int overall_rating
-        text comments
-        enum status
-        datetime created_at
-        datetime updated_at
+        int job_template_id FK
+        decimal overall_rating
     }
-    
-    USERS ||--|| EMPLOYEES : "has profile"
+
+    USERS ||--|{ EMPLOYEES : "has"
+    USERS ||--|{ EVALUATIONS : "creates"
+    EMPLOYEES ||--o{ EVALUATIONS : "is evaluated in"
     EMPLOYEES ||--o{ EMPLOYEES : "manages"
-    EMPLOYEES ||--o{ EVALUATIONS : "receives"
-    USERS ||--o{ EVALUATIONS : "creates"
-    EVALUATION_PERIODS ||--o{ EVALUATIONS : "contains"
+    JOB_POSITION_TEMPLATES ||--|{ EMPLOYEES : "is assigned"
+    JOB_POSITION_TEMPLATES ||--|{ EVALUATIONS : "is based on"
+    EVALUATION_PERIODS ||--|{ EVALUATIONS : "occurs in"
+
+    JOB_POSITION_TEMPLATES ||--|{ JOB_TEMPLATE_KPIS : "has"
+    COMPANY_KPIS ||--|{ JOB_TEMPLATE_KPIS : "is assigned via"
+    JOB_POSITION_TEMPLATES ||--|{ JOB_TEMPLATE_COMPETENCIES : "has"
+    COMPETENCIES ||--|{ JOB_TEMPLATE_COMPETENCIES : "is assigned via"
+    JOB_POSITION_TEMPLATES ||--|{ JOB_TEMPLATE_RESPONSIBILITIES : "has"
+    JOB_POSITION_TEMPLATES ||--|{ JOB_TEMPLATE_VALUES : "has"
+    COMPANY_VALUES ||--|{ JOB_TEMPLATE_VALUES : "is assigned via"
+
+    EVALUATIONS ||--|{ EVALUATION_KPI_RESULTS : "has"
+    COMPANY_KPIS ||--|{ EVALUATION_KPI_RESULTS : "is measured in"
+    EVALUATIONS ||--|{ EVALUATION_COMPETENCY_RESULTS : "has"
+    COMPETENCIES ||--|{ EVALUATION_COMPETENCY_RESULTS : "is measured in"
+    EVALUATIONS ||--|{ EVALUATION_RESPONSIBILITY_RESULTS : "has"
+    JOB_TEMPLATE_RESPONSIBILITIES ||--|{ EVALUATION_RESPONSIBILITY_RESULTS : "is measured in"
+    EVALUATIONS ||--|{ EVALUATION_VALUE_RESULTS : "has"
+    COMPANY_VALUES ||--|{ EVALUATION_VALUE_RESULTS : "is measured in"
 ```
 
-### Detailed Database Design
-
-#### Users Table
-```sql
-CREATE TABLE users (
-    user_id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    role ENUM('hr_admin', 'manager', 'employee') NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-```
-
-#### Employees Table
-```sql
-CREATE TABLE employees (
-    employee_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT UNIQUE,
-    first_name VARCHAR(50) NOT NULL,
-    last_name VARCHAR(50) NOT NULL,
-    position VARCHAR(100),
-    department VARCHAR(100),
-    manager_id INT,
-    hire_date DATE,
-    active BOOLEAN DEFAULT TRUE,
-    FOREIGN KEY (user_id) REFERENCES users(user_id),
-    FOREIGN KEY (manager_id) REFERENCES employees(employee_id)
-);
-```
-
-#### Evaluation Periods Table
-```sql
-CREATE TABLE evaluation_periods (
-    period_id INT AUTO_INCREMENT PRIMARY KEY,
-    period_name VARCHAR(100) NOT NULL,
-    start_date DATE NOT NULL,
-    end_date DATE NOT NULL,
-    status ENUM('active', 'completed', 'draft') DEFAULT 'draft',
-    created_by INT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (created_by) REFERENCES users(user_id)
-);
-```
-
-#### Evaluations Table
-```sql
-CREATE TABLE evaluations (
-    evaluation_id INT AUTO_INCREMENT PRIMARY KEY,
-    employee_id INT NOT NULL,
-    evaluator_id INT NOT NULL,
-    period_id INT NOT NULL,
-    evaluation_data JSON,
-    overall_rating INT CHECK (overall_rating BETWEEN 1 AND 5),
-    comments TEXT,
-    status ENUM('draft', 'submitted', 'approved') DEFAULT 'draft',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (employee_id) REFERENCES employees(employee_id),
-    FOREIGN KEY (evaluator_id) REFERENCES users(user_id),
-    FOREIGN KEY (period_id) REFERENCES evaluation_periods(period_id)
-);
-```
-
-## File Structure
+## 4. File Structure
 
 ```
 performance_evaluation_system/
 ├── config/
-│   ├── database.php          # Database configuration
-│   └── config.php           # Application configuration
+│   ├── database.php
+│   └── config.php
 ├── includes/
-│   ├── auth.php             # Authentication functions
-│   ├── functions.php        # Utility functions
-│   └── db_connection.php    # Database connection
+│   ├── auth.php
+│   └── db_connection.php
 ├── classes/
-│   ├── User.php             # User management class
-│   ├── Employee.php         # Employee management class
-│   ├── Evaluation.php       # Evaluation handling class
-│   └── Report.php           # Report generation class
+│   ├── User.php
+│   ├── Employee.php
+│   ├── Evaluation.php
+│   ├── EvaluationPeriod.php
+│   ├── JobTemplate.php
+│   ├── CompanyKPI.php
+│   ├── Competency.php
+│   └── CompanyValues.php
 ├── public/
-│   ├── index.php            # Landing page
-│   ├── login.php            # Login page
-│   ├── dashboard.php        # Main dashboard
+│   ├── index.php
+│   ├── login.php
+│   ├── dashboard.php
 │   ├── evaluation/
-│   │   ├── create.php       # Create new evaluation
-│   │   ├── edit.php         # Edit existing evaluation
-│   │   └── view.php         # View evaluation details
 │   ├── admin/
-│   │   ├── users.php        # User management
-│   │   ├── employees.php    # Employee management
-│   │   └── periods.php      # Evaluation period management
+│   │   ├── job_templates.php
+│   │   ├── kpis.php
+│   │   ├── competencies.php
+│   │   ├── values.php
+│   │   └── periods.php
 │   └── assets/
 │       ├── css/
-│       │   └── style.css    # Main stylesheet
-│       ├── js/
-│       │   └── app.js       # JavaScript functionality
-│       └── images/          # Image assets
+│       └── js/
 ├── templates/
-│   ├── header.php           # Common header
-│   ├── footer.php           # Common footer
-│   └── navigation.php       # Navigation menu
-├── reports/
-│   └── pdf_generator.php    # PDF report generation
-└── sql/
-    └── database_setup.sql   # Database initialization script
+│   ├── header.php
+│   └── footer.php
+├── sql/
+│   ├── database_setup.sql
+│   └── job_templates_structure.sql
+└── docs/
+    └── PROJECT_SPECIFICATION.md
 ```
 
-## Core Features Implementation
+## 5. Core Features Implementation
 
-### 1. Authentication System
-- **Login/Logout functionality**
-- **Session management** with timeout
-- **Password hashing** using PHP's `password_hash()`
-- **Role-based access control**
+### 5.1. Job Template-Based Evaluations
+The core of the system is the use of job templates to standardize evaluations. When an evaluation is created, the system uses the employee's assigned job template to dynamically generate the evaluation form, complete with the correct responsibilities, KPIs, competencies, and values.
 
-### 2. Evaluation Form System
-- **Dynamic form generation** based on evaluation template
-- **Real-time validation** and scoring calculation
-- **Auto-save functionality** for drafts
-- **Progress indicators**
+### 5.2. Scoring and Weighting
+Each section of the evaluation (KPIs, competencies, etc.) has a predefined weight that is set in the job template. The final score is a weighted average of the scores from each section, providing a nuanced and fair assessment of performance.
 
-### 3. User Interface Components
-- **Responsive design** for mobile and desktop compatibility
-- **Dashboard widgets** showing relevant information per role
-- **Intuitive navigation** based on user permissions
-- **Form validation** with user-friendly error messages
+### 5.3. Security
+- **SQL Injection Prevention:** All database queries are executed using prepared statements.
+- **XSS Protection:** All output is properly escaped using `htmlspecialchars()`.
+- **CSRF Protection:** Forms are protected with CSRF tokens.
+- **Secure Session Handling:** Sessions are managed securely, with timeouts and other best practices.
 
-### 4. Security Implementation
-- **SQL injection prevention** using prepared statements
-- **XSS protection** with input sanitization
-- **CSRF protection** for all forms
-- **Secure session handling**
-- **Input validation** and sanitization
+## 6. Future Enhancements
 
-## Evaluation Template Structure
-
-Based on the provided templates, the evaluation form includes:
-
-### 1. Expected Results (Weighted scoring)
-- Multiple criteria with individual ratings
-- Percentage-based weighting system
-- Comments section for each criterion
-
-### 2. Skills, Knowledge, and Competencies
-- Technical skills assessment
-- Soft skills evaluation
-- Competency-based scoring
-
-### 3. Key Responsibilities
-- Job-specific responsibility evaluation
-- Performance against defined objectives
-- Achievement measurement
-
-### 4. Living Our Values
-- Company values alignment assessment
-- Behavioral indicators
-- Cultural fit evaluation
-
-### 5. Overall Rating System
-- 1-5 scale rating
-- Weighted average calculation
-- Final performance categorization
-
-## Development Phases
-
-### Phase 1: Foundation (Week 1-2)
-- Database setup and configuration
-- User authentication system
-- Basic user interface structure
-- Role-based access control
-
-### Phase 2: Core Functionality (Week 3-4)
-- Employee management system
-- Evaluation form creation
-- Basic CRUD operations
-- Draft saving functionality
-
-### Phase 3: Advanced Features (Week 5-6)
-- Evaluation period management
-- Reporting system
-- PDF generation
-- Dashboard implementation
-
-### Phase 4: Enhancement (Week 7-8)
-- Advanced analytics
-- Email notifications
-- Bulk operations
-- Performance optimization
-
-### Phase 5: Testing & Deployment (Week 9-10)
-- Comprehensive testing
-- Security audit
-- Documentation completion
-- Deployment preparation
-
-## Security Considerations
-
-### Data Protection
-- **Sensitive data encryption**
-- **Secure password storage**
-- **Access logging and audit trails**
-- **Regular security updates**
-
-### Access Control
-- **Role-based permissions**
-- **Session timeout management**
-- **Failed login attempt monitoring**
-- **Privilege escalation prevention**
-
-### Input Validation
-- **Server-side validation** for all inputs
-- **SQL injection prevention**
-- **XSS attack mitigation**
-- **File upload security** (if implemented)
-
-## Performance Considerations
-
-### Database Optimization
-- **Proper indexing** on frequently queried columns
-- **Query optimization** for complex reports
-- **Connection pooling** for high-traffic scenarios
-- **Regular maintenance** and cleanup procedures
-
-### Caching Strategy
-- **Session caching** for user data
-- **Query result caching** for reports
-- **Static asset caching** for improved load times
-
-## Deployment Requirements
-
-### Server Requirements
-- **PHP 7.4+** with required extensions
-- **MySQL 8.0+** or compatible database
-- **Web server** (Apache/Nginx)
-- **SSL certificate** for secure connections
-
-### Configuration
-- **Environment-specific configuration** files
-- **Database connection parameters**
-- **Email server configuration** (for notifications)
-- **Backup and recovery procedures**
-
-## Maintenance and Support
-
-### Regular Maintenance
-- **Database backups** (daily/weekly)
-- **Security updates** and patches
-- **Performance monitoring**
-- **Log file management**
-
-### User Support
-- **User manual** and documentation
-- **Training materials** for administrators
-- **Help desk procedures**
-- **System monitoring** and alerting
-
-## Future Enhancements
-
-### Potential Features
-- **Mobile application** for on-the-go access
-- **Integration** with existing HR systems
-- **Advanced analytics** and reporting
-- **Goal setting** and tracking functionality
-- **360-degree feedback** system
-- **Performance improvement** planning tools
-
-This specification provides a comprehensive foundation for developing a robust PHP-based performance evaluation system that meets modern web application standards while addressing the specific needs of employee performance management.
+- **360-Degree Feedback:** Allow for peer and subordinate feedback in addition to manager evaluations.
+- **Goal Setting:** A dedicated module for setting and tracking personal and team goals.
+- **Integration with HRIS:** Connect with other HR systems to synchronize employee data.
+- **Advanced Analytics:** More detailed reporting and data visualization features.

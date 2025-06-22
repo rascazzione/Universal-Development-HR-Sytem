@@ -143,6 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Get data for display
 $editTemplateId = $_GET['edit'] ?? null;
 $templates = $jobTemplateClass->getJobTemplates();
+
 $editTemplate = null;
 $templateKPIs = [];
 $templateCompetencies = [];

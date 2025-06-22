@@ -121,6 +121,24 @@
 - **Dependencies**: Database connection, validation service
 - **Interfaces**: IPeriodRepository, ISchedulingService
 
+**Job Template Management Service**
+- **File**: `classes/JobTemplate.php`
+- **Responsibilities**: Job template CRUD operations, assignment of KPIs, competencies, and values
+- **Technical Specifications**:
+  - Management of job templates with associated responsibilities, KPIs, competencies, and values
+  - Weighting and scoring configuration for each template component
+- **Dependencies**: Database connection, KPI service, Competency service, Value service
+- **Interfaces**: IJobTemplateRepository
+
+**Performance Metrics Service (KPIs, Competencies, Values)**
+- **Files**: `classes/CompanyKPI.php`, `classes/Competency.php`, `classes/CompanyValues.php`
+- **Responsibilities**: Management of company-wide performance metrics
+- **Technical Specifications**:
+  - CRUD operations for KPIs, competencies, and company values
+  - Categorization and management of competencies
+- **Dependencies**: Database connection
+- **Interfaces**: IKPIRepository, ICompetencyRepository, IValueRepository
+
 #### 3. Data Access Components
 
 **Database Connection Manager**
@@ -272,6 +290,8 @@ graph TD
         EMP[Employee Service]
         EVAL[Evaluation Service]
         PERIOD[Period Service]
+        JT[Job Template Service]
+        METRICS[Performance Metrics Service]
     end
     
     subgraph "Data Access Layer"
@@ -294,10 +314,14 @@ graph TD
     CTRL --> EMP
     CTRL --> EVAL
     CTRL --> PERIOD
+    CTRL --> JT
+    CTRL --> METRICS
     USER --> REPO
     EMP --> REPO
     EVAL --> REPO
     PERIOD --> REPO
+    JT --> REPO
+    METRICS --> REPO
     REPO --> CONN
     CONN --> DB
     USER --> FS
@@ -404,6 +428,15 @@ interface IEmployeeService
     public function createEmployee(EmployeeData $data): int;
     public function updateEmployee(int $id, EmployeeData $data): bool;
 }
+
+interface IJobTemplateService
+{
+    public function getTemplate(int $id): ?JobTemplate;
+    public function createTemplate(JobTemplateData $data): int;
+    public function updateTemplate(int $id, JobTemplateData $data): bool;
+    public function assignKpi(int $templateId, int $kpiId, float $weight): bool;
+    public function assignCompetency(int $templateId, int $competencyId, string $level, float $weight): bool;
+}
 ```
 
 ### Data Access Interfaces
@@ -464,117 +497,81 @@ class PaginatedResponse extends ApiResponse
 erDiagram
     USERS {
         int user_id PK
-        string username UK
-        string email UK
+        string username
+        string email
         string password_hash
         enum role
-        boolean is_active
-        timestamp last_login
-        timestamp created_at
-        timestamp updated_at
     }
-    
+
     EMPLOYEES {
         int employee_id PK
         int user_id FK
-        string employee_number UK
         string first_name
         string last_name
-        string position
-        string department
         int manager_id FK
-        date hire_date
-        string phone
-        text address
-        boolean active
-        timestamp created_at
-        timestamp updated_at
+        int job_template_id FK
     }
-    
+
+    JOB_POSITION_TEMPLATES {
+        int id PK
+        string position_title
+    }
+
+    COMPANY_KPIS {
+        int id PK
+        string kpi_name
+    }
+
+    COMPETENCIES {
+        int id PK
+        string competency_name
+    }
+
+    COMPANY_VALUES {
+        int id PK
+        string value_name
+    }
+
     EVALUATION_PERIODS {
         int period_id PK
         string period_name
-        enum period_type
         date start_date
         date end_date
-        enum status
-        text description
-        int created_by FK
-        timestamp created_at
-        timestamp updated_at
     }
-    
+
     EVALUATIONS {
         int evaluation_id PK
         int employee_id FK
         int evaluator_id FK
         int period_id FK
-        json expected_results
-        decimal expected_results_score
-        decimal expected_results_weight
-        json skills_competencies
-        decimal skills_competencies_score
-        decimal skills_competencies_weight
-        json key_responsibilities
-        decimal key_responsibilities_score
-        decimal key_responsibilities_weight
-        json living_values
-        decimal living_values_score
-        decimal living_values_weight
+        int job_template_id FK
         decimal overall_rating
-        text overall_comments
-        text goals_next_period
-        text development_areas
-        text strengths
-        enum status
-        timestamp submitted_at
-        timestamp reviewed_at
-        timestamp approved_at
-        timestamp created_at
-        timestamp updated_at
     }
-    
-    EVALUATION_COMMENTS {
-        int comment_id PK
-        int evaluation_id FK
-        string section
-        string criterion
-        text comment
-        int created_by FK
-        timestamp created_at
-    }
-    
-    SYSTEM_SETTINGS {
-        int setting_id PK
-        string setting_key UK
-        text setting_value
-        text description
-        timestamp created_at
-        timestamp updated_at
-    }
-    
-    AUDIT_LOG {
-        int log_id PK
-        int user_id FK
-        string action
-        string table_name
-        int record_id
-        json old_values
-        json new_values
-        string ip_address
-        text user_agent
-        timestamp created_at
-    }
-    
-    USERS ||--o| EMPLOYEES : "has profile"
+
+    USERS ||--|{ EMPLOYEES : "has"
+    USERS ||--|{ EVALUATIONS : "creates"
+    EMPLOYEES ||--o{ EVALUATIONS : "is evaluated in"
     EMPLOYEES ||--o{ EMPLOYEES : "manages"
-    EMPLOYEES ||--o{ EVALUATIONS : "receives"
-    USERS ||--o{ EVALUATIONS : "creates"
-    EVALUATION_PERIODS ||--o{ EVALUATIONS : "contains"
-    EVALUATIONS ||--o{ EVALUATION_COMMENTS : "has comments"
-    USERS ||--o{ EVALUATION_PERIODS : "creates"
-    USERS ||--o{ EVALUATION_COMMENTS : "creates"
-    USERS ||--o{ AUDIT_LOG : "generates"
+    JOB_POSITION_TEMPLATES ||--|{ EMPLOYEES : "is assigned"
+    JOB_POSITION_TEMPLATES ||--|{ EVALUATIONS : "is based on"
+    EVALUATION_PERIODS ||--|{ EVALUATIONS : "occurs in"
+
+    JOB_POSITION_TEMPLATES ||--|{ JOB_TEMPLATE_KPIS : "has"
+    COMPANY_KPIS ||--|{ JOB_TEMPLATE_KPIS : "is assigned via"
+    JOB_POSITION_TEMPLATES ||--|{ JOB_TEMPLATE_COMPETENCIES : "has"
+    COMPETENCIES ||--|{ JOB_TEMPLATE_COMPETENCIES : "is assigned via"
+    JOB_POSITION_TEMPLATES ||--|{ JOB_TEMPLATE_RESPONSIBILITIES : "has"
+    JOB_POSITION_TEMPLATES ||--|{ JOB_TEMPLATE_VALUES : "has"
+    COMPANY_VALUES ||--|{ JOB_TEMPLATE_VALUES : "is assigned via"
+
+    EVALUATIONS ||--|{ EVALUATION_KPI_RESULTS : "has"
+    COMPANY_KPIS ||--|{ EVALUATION_KPI_RESULTS : "is measured in"
+    EVALUATIONS ||--|{ EVALUATION_COMPETENCY_RESULTS : "has"
+    COMPETENCIES ||--|{ EVALUATION_COMPETENCY_RESULTS : "is measured in"
+    EVALUATIONS ||--|{ EVALUATION_RESPONSIBILITY_RESULTS : "has"
+    JOB_TEMPLATE_RESPONSIBILITIES ||--|{ EVALUATION_RESPONSIBILITY_RESULTS : "is measured in"
+    EVALUATIONS ||--|{ EVALUATION_VALUE_RESULTS : "has"
+    COMPANY_VALUES ||--|{ EVALUATION_VALUE_RESULTS : "is measured in"
 ```
 
 ### Data Models

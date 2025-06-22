@@ -38,22 +38,53 @@ class Employee {
                 throw new Exception("Employee number already exists");
             }
             
-            // Insert employee
-            $sql = "INSERT INTO employees (user_id, employee_number, first_name, last_name, position, department, manager_id, hire_date, phone, address) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            // Check if job_template_id column exists
+            $includeJobTemplate = false;
+            if (isset($employeeData['job_template_id'])) {
+                try {
+                    $testSql = "SELECT job_template_id FROM employees LIMIT 1";
+                    fetchOne($testSql);
+                    $includeJobTemplate = true;
+                } catch (Exception $e) {
+                    error_log('job_template_id column not found in employees table: ' . $e->getMessage());
+                }
+            }
             
-            $employeeId = insertRecord($sql, [
-                $employeeData['user_id'] ?? null,
-                $employeeData['employee_number'],
-                $employeeData['first_name'],
-                $employeeData['last_name'],
-                $employeeData['position'] ?? null,
-                $employeeData['department'] ?? null,
-                $employeeData['manager_id'] ?? null,
-                $employeeData['hire_date'] ?? null,
-                $employeeData['phone'] ?? null,
-                $employeeData['address'] ?? null
-            ]);
+            // Insert employee
+            if ($includeJobTemplate) {
+                $sql = "INSERT INTO employees (user_id, employee_number, first_name, last_name, position, department, manager_id, hire_date, phone, address, job_template_id)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                
+                $employeeId = insertRecord($sql, [
+                    $employeeData['user_id'] ?? null,
+                    $employeeData['employee_number'],
+                    $employeeData['first_name'],
+                    $employeeData['last_name'],
+                    $employeeData['position'] ?? null,
+                    $employeeData['department'] ?? null,
+                    $employeeData['manager_id'] ?? null,
+                    $employeeData['hire_date'] ?? null,
+                    $employeeData['phone'] ?? null,
+                    $employeeData['address'] ?? null,
+                    $employeeData['job_template_id'] ?? null
+                ]);
+            } else {
+                $sql = "INSERT INTO employees (user_id, employee_number, first_name, last_name, position, department, manager_id, hire_date, phone, address)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                
+                $employeeId = insertRecord($sql, [
+                    $employeeData['user_id'] ?? null,
+                    $employeeData['employee_number'],
+                    $employeeData['first_name'],
+                    $employeeData['last_name'],
+                    $employeeData['position'] ?? null,
+                    $employeeData['department'] ?? null,
+                    $employeeData['manager_id'] ?? null,
+                    $employeeData['hire_date'] ?? null,
+                    $employeeData['phone'] ?? null,
+                    $employeeData['address'] ?? null
+                ]);
+            }
             
             // Log employee creation
             logActivity($_SESSION['user_id'] ?? null, 'employee_created', 'employees', $employeeId, null, $employeeData);
@@ -84,9 +115,23 @@ class Employee {
             
             // Build dynamic update query
             $allowedFields = [
-                'employee_number', 'first_name', 'last_name', 'position', 
+                'employee_number', 'first_name', 'last_name', 'position',
                 'department', 'manager_id', 'hire_date', 'phone', 'address', 'active'
             ];
+            
+            // Check if job_template_id column exists before adding it
+            if (array_key_exists('job_template_id', $employeeData)) {
+                try {
+                    // Test if column exists by attempting a simple query
+                    $testSql = "SELECT job_template_id FROM employees LIMIT 1";
+                    fetchOne($testSql);
+                    $allowedFields[] = 'job_template_id';
+                } catch (Exception $e) {
+                    // Column doesn't exist, skip it
+                    error_log('job_template_id column not found in employees table: ' . $e->getMessage());
+                    unset($employeeData['job_template_id']);
+                }
+            }
             
             foreach ($allowedFields as $field) {
                 if (array_key_exists($field, $employeeData)) {

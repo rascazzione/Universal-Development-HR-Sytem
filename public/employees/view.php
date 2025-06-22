@@ -7,6 +7,7 @@
 require_once __DIR__ . '/../../includes/auth.php';
 require_once __DIR__ . '/../../classes/Employee.php';
 require_once __DIR__ . '/../../classes/Evaluation.php';
+require_once __DIR__ . '/../../classes/JobTemplate.php';
 
 // Require authentication
 requireAuth();
@@ -20,6 +21,7 @@ if (!$employeeId) {
 // Initialize classes
 $employeeClass = new Employee();
 $evaluationClass = new Evaluation();
+$jobTemplateClass = new JobTemplate();
 
 // Get employee details
 $employee = $employeeClass->getEmployeeById($employeeId);
@@ -46,6 +48,12 @@ $pageDescription = 'View employee information and evaluation history';
 
 // Get employee evaluations
 $evaluations = $evaluationClass->getEmployeeEvaluations($employeeId);
+
+// Get job template information if assigned
+$jobTemplate = null;
+if (!empty($employee['job_template_id'])) {
+    $jobTemplate = $jobTemplateClass->getJobTemplateById($employee['job_template_id']);
+}
 
 include __DIR__ . '/../../templates/header.php';
 ?>
@@ -103,6 +111,21 @@ include __DIR__ . '/../../templates/header.php';
                         <tr>
                             <td class="fw-medium">Phone:</td>
                             <td><?php echo htmlspecialchars($employee['phone'] ?? 'N/A'); ?></td>
+                        </tr>
+                        <tr>
+                            <td class="fw-medium">Job Template:</td>
+                            <td>
+                                <?php if ($jobTemplate): ?>
+                                    <a href="/admin/job_templates.php?edit=<?php echo $jobTemplate['id']; ?>" class="text-decoration-none">
+                                        <?php echo htmlspecialchars($jobTemplate['position_title']); ?>
+                                    </a>
+                                    <?php if ($jobTemplate['department']): ?>
+                                        <br><small class="text-muted"><?php echo htmlspecialchars($jobTemplate['department']); ?></small>
+                                    <?php endif; ?>
+                                <?php else: ?>
+                                    <span class="text-muted">No Job Template Assigned</span>
+                                <?php endif; ?>
+                            </td>
                         </tr>
                         <tr>
                             <td class="fw-medium">Status:</td>
