@@ -4,11 +4,11 @@
  * Performance Evaluation System
  */
 
-// Database configuration
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'performance_evaluation');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+// Database configuration - Docker compatible
+define('DB_HOST', $_ENV['DB_HOST'] ?? getenv('DB_HOST') ?: 'localhost');
+define('DB_NAME', $_ENV['DB_NAME'] ?? getenv('DB_NAME') ?: 'performance_evaluation');
+define('DB_USER', $_ENV['DB_USER'] ?? getenv('DB_USER') ?: 'root');
+define('DB_PASS', $_ENV['DB_PASS'] ?? getenv('DB_PASS') ?: '');
 define('DB_CHARSET', 'utf8mb4');
 
 // Database connection options

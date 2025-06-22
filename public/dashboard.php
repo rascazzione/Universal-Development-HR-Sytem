@@ -384,9 +384,24 @@ include __DIR__ . '/../templates/header.php';
                     <a href="/employees/create.php" class="btn btn-outline-primary">
                         <i class="fas fa-user-plus me-2"></i>Add Employee
                     </a>
-                    <a href="/admin/periods.php" class="btn btn-outline-secondary">
-                        <i class="fas fa-calendar-plus me-2"></i>Manage Periods
+                    <hr class="my-2">
+                    <small class="text-muted mb-2 d-block">System Configuration</small>
+                    <a href="/admin/job_templates.php" class="btn btn-outline-secondary btn-sm mb-1">
+                        <i class="fas fa-briefcase me-2"></i>Job Templates
                     </a>
+                    <a href="/admin/kpis.php" class="btn btn-outline-success btn-sm mb-1">
+                        <i class="fas fa-chart-line me-2"></i>Company KPIs
+                    </a>
+                    <a href="/admin/competencies.php" class="btn btn-outline-info btn-sm mb-1">
+                        <i class="fas fa-brain me-2"></i>Competencies
+                    </a>
+                    <a href="/admin/values.php" class="btn btn-outline-danger btn-sm mb-1">
+                        <i class="fas fa-heart me-2"></i>Company Values
+                    </a>
+                    <a href="/admin/periods.php" class="btn btn-outline-warning btn-sm mb-1">
+                        <i class="fas fa-calendar-plus me-2"></i>Evaluation Periods
+                    </a>
+                    <hr class="my-2">
                     <a href="/reports/performance.php" class="btn btn-outline-info">
                         <i class="fas fa-chart-bar me-2"></i>View Reports
                     </a>
