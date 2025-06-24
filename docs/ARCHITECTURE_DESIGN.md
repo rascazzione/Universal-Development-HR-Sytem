@@ -376,6 +376,182 @@ sequenceDiagram
     C-->>U: HTTP Response
 ```
 
+### User Interaction Sequences
+
+#### Complete Evaluation Workflow Sequence
+```mermaid
+sequenceDiagram
+    participant HR as HR Admin
+    participant MGR as Manager
+    participant EMP as Employee
+    participant SYS as System
+    participant DB as Database
+    participant EMAIL as Email Service
+
+    Note over HR,EMAIL: 1. Setup Phase
+    HR->>SYS: Create Job Templates
+    SYS->>DB: Store Templates with KPIs/Competencies
+    HR->>SYS: Create Evaluation Period
+    SYS->>DB: Store Period Configuration
+    HR->>SYS: Assign Templates to Employees
+    SYS->>DB: Update Employee Records
+
+    Note over HR,EMAIL: 2. Evaluation Creation
+    MGR->>SYS: Access Evaluation System
+    SYS->>SYS: Authenticate & Authorize
+    MGR->>SYS: Create New Evaluation
+    SYS->>DB: Fetch Employee Job Template
+    SYS->>DB: Initialize Evaluation with Template Data
+    SYS->>MGR: Display Evaluation Form (KPIs, Competencies, etc.)
+
+    Note over HR,EMAIL: 3. Evaluation Completion
+    MGR->>SYS: Fill KPI Scores & Comments
+    MGR->>SYS: Rate Competencies
+    MGR->>SYS: Evaluate Responsibilities
+    MGR->>SYS: Score Company Values
+    MGR->>SYS: Save Draft
+    SYS->>DB: Store All Section Data
+    SYS->>SYS: Calculate Weighted Overall Rating
+    SYS->>DB: Update Overall Rating
+    MGR->>SYS: Submit Evaluation
+    SYS->>DB: Update Status to 'submitted'
+    SYS->>EMAIL: Send Notification to HR
+    SYS->>EMAIL: Send Notification to Employee
+
+    Note over HR,EMAIL: 4. Review & Approval
+    HR->>SYS: Review Submitted Evaluation
+    SYS->>DB: Fetch Complete Evaluation Data
+    HR->>SYS: Approve/Request Changes
+    alt Approved
+        SYS->>DB: Update Status to 'approved'
+        SYS->>EMAIL: Send Approval Notification
+    else Changes Requested
+        SYS->>DB: Update Status to 'draft'
+        SYS->>EMAIL: Send Revision Request
+    end
+
+    Note over HR,EMAIL: 5. Employee Access
+    EMP->>SYS: View Own Evaluation
+    SYS->>SYS: Verify Employee Access Rights
+    SYS->>DB: Fetch Employee's Evaluations
+    SYS->>EMP: Display Read-Only Evaluation
+```
+
+#### Job Template Management Sequence
+```mermaid
+sequenceDiagram
+    participant HR as HR Admin
+    participant SYS as System
+    participant DB as Database
+
+    Note over HR,DB: Job Template Creation
+    HR->>SYS: Access Job Template Management
+    SYS->>DB: Fetch Available KPIs, Competencies, Values
+    SYS->>HR: Display Template Creation Form
+    HR->>SYS: Enter Template Details
+    HR->>SYS: Select KPIs with Weights
+    HR->>SYS: Select Competencies with Levels
+    HR->>SYS: Define Responsibilities
+    HR->>SYS: Assign Company Values
+    HR->>SYS: Save Template
+    SYS->>DB: Store Template Configuration
+    SYS->>DB: Store KPI Assignments
+    SYS->>DB: Store Competency Requirements
+    SYS->>DB: Store Responsibility Definitions
+    SYS->>DB: Store Value Assignments
+    SYS->>HR: Confirm Template Created
+
+    Note over HR,DB: Template Assignment
+    HR->>SYS: Assign Template to Employee
+    SYS->>DB: Update Employee Record
+    SYS->>DB: Link Employee to Job Template
+    SYS->>HR: Confirm Assignment
+```
+
+#### Authentication & Authorization Flow
+```mermaid
+sequenceDiagram
+    participant USER as User
+    participant WEB as Web Server
+    participant AUTH as Auth Service
+    participant SESSION as Session Store
+    participant DB as Database
+
+    Note over USER,DB: Login Process
+    USER->>WEB: Submit Login Credentials
+    WEB->>AUTH: Validate Credentials
+    AUTH->>DB: Query User Record
+    DB-->>AUTH: Return User Data
+    AUTH->>AUTH: Verify Password Hash
+    alt Valid Credentials
+        AUTH->>SESSION: Create Session
+        SESSION-->>AUTH: Return Session ID
+        AUTH->>DB: Update Last Login
+        AUTH-->>WEB: Authentication Success
+        WEB-->>USER: Set Session Cookie & Redirect
+    else Invalid Credentials
+        AUTH->>DB: Log Failed Attempt
+        AUTH-->>WEB: Authentication Failed
+        WEB-->>USER: Display Error Message
+    end
+
+    Note over USER,DB: Subsequent Requests
+    USER->>WEB: Request Protected Resource
+    WEB->>SESSION: Validate Session
+    SESSION-->>WEB: Session Data
+    WEB->>AUTH: Check Permissions
+    AUTH->>DB: Query User Roles
+    DB-->>AUTH: Return Role Data
+    AUTH-->>WEB: Authorization Result
+    alt Authorized
+        WEB-->>USER: Serve Protected Content
+    else Unauthorized
+        WEB-->>USER: Access Denied
+    end
+```
+
+#### Evaluation Data Flow with Weighted Scoring
+```mermaid
+sequenceDiagram
+    participant MGR as Manager
+    participant FORM as Evaluation Form
+    participant CALC as Score Calculator
+    participant DB as Database
+
+    Note over MGR,DB: Score Input & Calculation
+    MGR->>FORM: Enter KPI Scores
+    FORM->>CALC: Calculate KPI Section Score
+    CALC->>CALC: Apply KPI Weights from Template
+    CALC-->>FORM: Return Weighted KPI Score
+
+    MGR->>FORM: Rate Competencies
+    FORM->>CALC: Calculate Competency Score
+    CALC->>CALC: Apply Competency Weights
+    CALC-->>FORM: Return Weighted Competency Score
+
+    MGR->>FORM: Score Responsibilities
+    FORM->>CALC: Calculate Responsibility Score
+    CALC->>CALC: Apply Responsibility Weights
+    CALC-->>FORM: Return Weighted Responsibility Score
+
+    MGR->>FORM: Rate Company Values
+    FORM->>CALC: Calculate Values Score
+    CALC->>CALC: Apply Values Weights
+    CALC-->>FORM: Return Weighted Values Score
+
+    FORM->>CALC: Calculate Overall Rating
+    CALC->>CALC: Combine All Weighted Scores
+    CALC-->>FORM: Return Overall Rating (0.00-5.00)
+
+    MGR->>FORM: Save Evaluation
+    FORM->>DB: Store All Section Scores
+    FORM->>DB: Store Individual Comments
+    FORM->>DB: Store Overall Rating
+    FORM->>DB: Update Timestamps
+    DB-->>FORM: Confirm Save Success
+    FORM-->>MGR: Display Success Message
+```
+
 ---
 
 ## Interface Definitions and API Contracts
@@ -501,35 +677,82 @@ erDiagram
         string email
         string password_hash
         enum role
+        boolean is_active
+        timestamp last_login
+        timestamp created_at
+        timestamp updated_at
     }
 
     EMPLOYEES {
         int employee_id PK
         int user_id FK
+        string employee_number
         string first_name
         string last_name
+        string position
+        string department
         int manager_id FK
         int job_template_id FK
+        date hire_date
+        string phone
+        text address
+        boolean active
+        timestamp created_at
+        timestamp updated_at
     }
 
     JOB_POSITION_TEMPLATES {
         int id PK
         string position_title
+        string department
+        text description
+        int created_by FK
+        boolean is_active
+        timestamp created_at
+        timestamp updated_at
     }
 
     COMPANY_KPIS {
         int id PK
         string kpi_name
+        text kpi_description
+        string measurement_unit
+        string category
+        enum target_type
+        int created_by FK
+        boolean is_active
+        timestamp created_at
+        timestamp updated_at
     }
 
     COMPETENCIES {
         int id PK
         string competency_name
+        text description
+        int category_id FK
+        enum competency_type
+        boolean is_active
+        timestamp created_at
+    }
+
+    COMPETENCY_CATEGORIES {
+        int id PK
+        string category_name
+        text description
+        int parent_id FK
+        boolean is_active
+        timestamp created_at
     }
 
     COMPANY_VALUES {
         int id PK
         string value_name
+        text description
+        int sort_order
+        int created_by FK
+        boolean is_active
+        timestamp created_at
+        timestamp updated_at
     }
 
     EVALUATION_PERIODS {
@@ -537,6 +760,10 @@ erDiagram
         string period_name
         date start_date
         date end_date
+        enum status
+        text description
+        timestamp created_at
+        timestamp updated_at
     }
 
     EVALUATIONS {
@@ -546,6 +773,96 @@ erDiagram
         int period_id FK
         int job_template_id FK
         decimal overall_rating
+        text overall_comments
+        text development_goals
+        text strengths
+        enum status
+        timestamp submitted_at
+        timestamp reviewed_at
+        timestamp approved_at
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    JOB_TEMPLATE_KPIS {
+        int id PK
+        int job_template_id FK
+        int kpi_id FK
+        decimal weight_percentage
+        timestamp created_at
+    }
+
+    JOB_TEMPLATE_COMPETENCIES {
+        int id PK
+        int job_template_id FK
+        int competency_id FK
+        enum required_level
+        decimal weight_percentage
+        timestamp created_at
+    }
+
+    JOB_TEMPLATE_RESPONSIBILITIES {
+        int id PK
+        int job_template_id FK
+        text responsibility_description
+        decimal weight_percentage
+        timestamp created_at
+    }
+
+    JOB_TEMPLATE_VALUES {
+        int id PK
+        int job_template_id FK
+        int value_id FK
+        decimal weight_percentage
+        timestamp created_at
+    }
+
+    EVALUATION_KPI_RESULTS {
+        int id PK
+        int evaluation_id FK
+        int kpi_id FK
+        decimal target_value
+        decimal achieved_value
+        decimal score
+        text comments
+        decimal weight_percentage
+        timestamp updated_at
+        timestamp created_at
+    }
+
+    EVALUATION_COMPETENCY_RESULTS {
+        int id PK
+        int evaluation_id FK
+        int competency_id FK
+        enum required_level
+        enum achieved_level
+        decimal score
+        text comments
+        decimal weight_percentage
+        timestamp updated_at
+        timestamp created_at
+    }
+
+    EVALUATION_RESPONSIBILITY_RESULTS {
+        int id PK
+        int evaluation_id FK
+        int responsibility_id FK
+        decimal score
+        text comments
+        decimal weight_percentage
+        timestamp updated_at
+        timestamp created_at
+    }
+
+    EVALUATION_VALUE_RESULTS {
+        int id PK
+        int evaluation_id FK
+        int value_id FK
+        decimal score
+        text comments
+        decimal weight_percentage
+        timestamp updated_at
+        timestamp created_at
     }
 
     USERS ||--|{ EMPLOYEES : "has"
@@ -563,6 +880,9 @@ erDiagram
     JOB_POSITION_TEMPLATES ||--|{ JOB_TEMPLATE_RESPONSIBILITIES : "has"
     JOB_POSITION_TEMPLATES ||--|{ JOB_TEMPLATE_VALUES : "has"
     COMPANY_VALUES ||--|{ JOB_TEMPLATE_VALUES : "is assigned via"
+
+    COMPETENCY_CATEGORIES ||--|{ COMPETENCIES : "categorizes"
+    COMPETENCY_CATEGORIES ||--o{ COMPETENCY_CATEGORIES : "has parent"
 
     EVALUATIONS ||--|{ EVALUATION_KPI_RESULTS : "has"
     COMPANY_KPIS ||--|{ EVALUATION_KPI_RESULTS : "is measured in"
