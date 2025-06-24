@@ -91,7 +91,7 @@ CREATE TABLE evaluations (
     living_values_weight DECIMAL(5,2) DEFAULT 10.00,
     
     -- Overall evaluation
-    overall_rating DECIMAL(3,2) CHECK (overall_rating BETWEEN 1.00 AND 5.00),
+    overall_rating DECIMAL(3,2) CHECK (overall_rating IS NULL OR (overall_rating >= 0.00 AND overall_rating <= 5.00)),
     overall_comments TEXT,
     
     -- Goals and development

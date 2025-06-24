@@ -127,6 +127,8 @@ CREATE TABLE IF NOT EXISTS evaluation_kpi_results (
     achieved_value DECIMAL(10,2),
     score DECIMAL(3,2), -- 1-5 scale
     comments TEXT,
+    weight_percentage DECIMAL(5,2) DEFAULT 100.00,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (evaluation_id) REFERENCES evaluations(evaluation_id) ON DELETE CASCADE,
     FOREIGN KEY (kpi_id) REFERENCES company_kpis(id)
@@ -141,6 +143,8 @@ CREATE TABLE IF NOT EXISTS evaluation_competency_results (
     achieved_level ENUM('basic', 'intermediate', 'advanced', 'expert'),
     score DECIMAL(3,2), -- 1-5 scale
     comments TEXT,
+    weight_percentage DECIMAL(5,2) DEFAULT 100.00,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (evaluation_id) REFERENCES evaluations(evaluation_id) ON DELETE CASCADE,
     FOREIGN KEY (competency_id) REFERENCES competencies(id)
@@ -153,6 +157,8 @@ CREATE TABLE IF NOT EXISTS evaluation_responsibility_results (
     responsibility_id INT,
     score DECIMAL(3,2), -- 1-5 scale
     comments TEXT,
+    weight_percentage DECIMAL(5,2) DEFAULT 100.00,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (evaluation_id) REFERENCES evaluations(evaluation_id) ON DELETE CASCADE,
     FOREIGN KEY (responsibility_id) REFERENCES job_template_responsibilities(id)
@@ -165,6 +171,8 @@ CREATE TABLE IF NOT EXISTS evaluation_value_results (
     value_id INT,
     score DECIMAL(3,2), -- 1-5 scale
     comments TEXT,
+    weight_percentage DECIMAL(5,2) DEFAULT 100.00,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (evaluation_id) REFERENCES evaluations(evaluation_id) ON DELETE CASCADE,
     FOREIGN KEY (value_id) REFERENCES company_values(id)
