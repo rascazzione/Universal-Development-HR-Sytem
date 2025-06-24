@@ -192,28 +192,46 @@ class MigrationRunner {
         $startTime = microtime(true);
         
         try {
+            echo "🔄 Starting migration: {$migration['version']}\n";
+            
             // Mark as running
             $this->recordMigrationStart($migration);
+            echo "📝 Recorded migration start\n";
             
+            echo "🔒 Beginning transaction\n";
             $this->pdo->beginTransaction();
             
             // Read and execute migration
             $sql = file_get_contents($migration['path']);
             $checksum = md5($sql);
             
+            echo "📄 Executing migration SQL\n";
             // Execute the migration SQL
             $this->pdo->exec($sql);
             
+            echo "✏️ Recording migration completion\n";
             // Mark as completed
             $executionTime = round((microtime(true) - $startTime) * 1000);
             $this->recordMigrationComplete($migration, $executionTime, $checksum);
             
+            echo "✅ Committing transaction\n";
             $this->pdo->commit();
             
             echo "✅ Executed migration: {$migration['version']} ({$executionTime}ms)\n";
             
         } catch (Exception $e) {
-            $this->pdo->rollback();
+            echo "❌ Error occurred: " . $e->getMessage() . "\n";
+            echo "🔄 Attempting rollback\n";
+            try {
+                if ($this->pdo->inTransaction()) {
+                    $this->pdo->rollback();
+                    echo "✅ Rollback successful\n";
+                } else {
+                    echo "⚠️ No active transaction to rollback\n";
+                }
+            } catch (Exception $rollbackError) {
+                echo "❌ Rollback failed: " . $rollbackError->getMessage() . "\n";
+            }
             $this->recordMigrationFailed($migration, $e->getMessage());
             throw new Exception("Migration {$migration['version']} failed: " . $e->getMessage());
         }
@@ -224,24 +242,27 @@ class MigrationRunner {
     }
     
     private function recordMigrationStart($migration) {
-        $sql = "INSERT INTO schema_migrations (version, filename, status) 
+        $sql = "INSERT INTO schema_migrations (version, filename, status)
                 VALUES (?, ?, 'running')
                 ON DUPLICATE KEY UPDATE status = 'running'";
-        executeQuery($sql, [$migration['version'], $migration['filename']]);
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$migration['version'], $migration['filename']]);
     }
     
     private function recordMigrationComplete($migration, $executionTime, $checksum) {
-        $sql = "UPDATE schema_migrations 
+        $sql = "UPDATE schema_migrations
                 SET status = 'completed', execution_time_ms = ?, checksum = ?, executed_at = NOW()
                 WHERE version = ?";
-        executeQuery($sql, [$executionTime, $checksum, $migration['version']]);
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$executionTime, $checksum, $migration['version']]);
     }
     
     private function recordMigrationFailed($migration, $error) {
-        $sql = "UPDATE schema_migrations 
+        $sql = "UPDATE schema_migrations
                 SET status = 'failed'
                 WHERE version = ?";
-        executeQuery($sql, [$migration['version']]);
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$migration['version']]);
         
         error_log("Migration failed: {$migration['version']} - $error");
     }

@@ -207,17 +207,27 @@ include __DIR__ . '/../../templates/header.php';
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="username" class="form-label">Username</label>
-                                <input type="text" class="form-control" id="username" name="username" 
-                                       value="<?php echo htmlspecialchars($_POST['username'] ?? ''); ?>">
-                                <div class="form-text">Leave blank if no system access needed</div>
+                                <input type="text" class="form-control <?php echo isset($errors['username']) ? 'is-invalid' : ''; ?>"
+                                       id="username" name="username"
+                                       value="<?php echo htmlspecialchars($formData['username'] ?? ''); ?>">
+                                <?php if (isset($errors['username'])): ?>
+                                    <div class="invalid-feedback"><?php echo htmlspecialchars($errors['username']); ?></div>
+                                <?php else: ?>
+                                    <div class="form-text">Leave blank if no system access needed</div>
+                                <?php endif; ?>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="email" class="form-label">Email</label>
-                                <input type="email" class="form-control" id="email" name="email" 
-                                       value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>">
-                                <div class="form-text">Required for system access</div>
+                                <input type="email" class="form-control <?php echo isset($errors['email']) ? 'is-invalid' : ''; ?>"
+                                       id="email" name="email"
+                                       value="<?php echo htmlspecialchars($formData['email'] ?? ''); ?>">
+                                <?php if (isset($errors['email'])): ?>
+                                    <div class="invalid-feedback"><?php echo htmlspecialchars($errors['email']); ?></div>
+                                <?php else: ?>
+                                    <div class="form-text">Required for system access</div>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -226,7 +236,7 @@ include __DIR__ . '/../../templates/header.php';
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="password" class="form-label">Password</label>
-                                <input type="password" class="form-control" id="password" name="password" 
+                                <input type="password" class="form-control" id="password" name="password"
                                        placeholder="Leave blank for default: employee123">
                                 <div class="form-text">Default password: employee123</div>
                             </div>
@@ -235,9 +245,9 @@ include __DIR__ . '/../../templates/header.php';
                             <div class="mb-3">
                                 <label for="role" class="form-label">Role</label>
                                 <select class="form-select" id="role" name="role">
-                                    <option value="employee" <?php echo ($_POST['role'] ?? 'employee') === 'employee' ? 'selected' : ''; ?>>Employee</option>
-                                    <option value="manager" <?php echo ($_POST['role'] ?? '') === 'manager' ? 'selected' : ''; ?>>Manager</option>
-                                    <option value="hr_admin" <?php echo ($_POST['role'] ?? '') === 'hr_admin' ? 'selected' : ''; ?>>HR Admin</option>
+                                    <option value="employee" <?php echo ($formData['role'] ?? 'employee') === 'employee' ? 'selected' : ''; ?>>Employee</option>
+                                    <option value="manager" <?php echo ($formData['role'] ?? '') === 'manager' ? 'selected' : ''; ?>>Manager</option>
+                                    <option value="hr_admin" <?php echo ($formData['role'] ?? '') === 'hr_admin' ? 'selected' : ''; ?>>HR Admin</option>
                                 </select>
                             </div>
                         </div>

@@ -334,6 +334,36 @@ class User {
     }
     
     /**
+     * Get user by username
+     * @param string $username
+     * @return array|false
+     */
+    public function getUserByUsername($username) {
+        try {
+            $sql = "SELECT * FROM users WHERE username = ?";
+            return fetchOne($sql, [$username]);
+        } catch (Exception $e) {
+            error_log("Get user by username error: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Get user by email
+     * @param string $email
+     * @return array|false
+     */
+    public function getUserByEmail($email) {
+        try {
+            $sql = "SELECT * FROM users WHERE email = ?";
+            return fetchOne($sql, [$email]);
+        } catch (Exception $e) {
+            error_log("Get user by email error: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
      * Record failed login attempt
      * @param string $username
      */

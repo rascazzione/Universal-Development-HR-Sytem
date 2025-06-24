@@ -246,10 +246,13 @@ function redirect($url) {
 
 /**
  * Set flash message
- * @param string $type
  * @param string $message
+ * @param string $type
  */
-function setFlashMessage($type, $message) {
+function setFlashMessage($message, $type = 'info') {
+    if (!isset($_SESSION['flash_messages'])) {
+        $_SESSION['flash_messages'] = [];
+    }
     $_SESSION['flash_messages'][] = [
         'type' => $type,
         'message' => $message

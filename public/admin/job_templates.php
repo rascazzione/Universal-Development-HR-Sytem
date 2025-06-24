@@ -664,44 +664,6 @@ include __DIR__ . '/../../templates/header.php';
                 <h5 class="modal-title">Add Company Value to Template</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-<form method="POST">
-                <div class="modal-body">
-                    <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
-                    <input type="hidden" name="action" value="add_responsibility">
-                    <input type="hidden" name="template_id" value="<?php echo $editTemplateId; ?>">
-                    
-                    <div class="mb-3">
-                        <label for="responsibility_text" class="form-label">Responsibility Description</label>
-                        <textarea class="form-control" id="responsibility_text" name="responsibility_text" rows="3" required></textarea>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="sort_order" class="form-label">Sort Order</label>
-                        <input type="number" class="form-control" id="sort_order" name="sort_order" value="<?php echo count($templateResponsibilities) + 1; ?>">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="responsibility_weight" class="form-label">Weight (%)</label>
-                        <input type="number" step="0.1" class="form-control" id="responsibility_weight" name="weight" value="100" min="0" max="100">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add Responsibility</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Add Value Modal -->
-<div class="modal fade" id="addValueModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Add Company Value to Template</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
             <form method="POST">
                 <div class="modal-body">
                     <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">

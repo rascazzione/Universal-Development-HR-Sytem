@@ -30,29 +30,40 @@ if (!$employee) {
     redirect('/employees/list.php');
 }
 
-// Check permissions
-$userRole = $_SESSION['user_role'];
-$currentUserId = $_SESSION['user_id'];
+// Check permissions with better error handling
+$userRole = $_SESSION['user_role'] ?? '';
+$currentUserId = $_SESSION['user_id'] ?? null;
 $currentEmployeeId = $_SESSION['employee_id'] ?? null;
 
-// Only HR Admin, managers, or the employee themselves can view
-if ($userRole !== 'hr_admin' &&
-    $userRole !== 'manager' &&
-    $currentEmployeeId != $employeeId) {
+// Use the canAccessEmployee function for proper permission checking
+if (!canAccessEmployee($employeeId)) {
+    setFlashMessage('You do not have permission to view this employee.', 'error');
     redirect('/dashboard.php');
 }
 
-$pageTitle = 'Employee Details - ' . $employee['first_name'] . ' ' . $employee['last_name'];
+$pageTitle = 'Employee Details - ' . htmlspecialchars($employee['first_name'] . ' ' . $employee['last_name']);
 $pageHeader = true;
 $pageDescription = 'View employee information and evaluation history';
 
-// Get employee evaluations
-$evaluations = $evaluationClass->getEmployeeEvaluations($employeeId);
+// Get employee evaluations with error handling
+$evaluations = [];
+try {
+    $evaluationResult = $evaluationClass->getEvaluations(1, 1000, ['employee_id' => $employeeId]);
+    $evaluations = $evaluationResult['evaluations'] ?? [];
+} catch (Exception $e) {
+    error_log('Error fetching employee evaluations: ' . $e->getMessage());
+    setFlashMessage('Warning: Could not load evaluation history.', 'warning');
+}
 
-// Get job template information if assigned
+// Get job template information if assigned with error handling
 $jobTemplate = null;
 if (!empty($employee['job_template_id'])) {
-    $jobTemplate = $jobTemplateClass->getJobTemplateById($employee['job_template_id']);
+    try {
+        $jobTemplate = $jobTemplateClass->getJobTemplateById($employee['job_template_id']);
+    } catch (Exception $e) {
+        error_log('Error fetching job template: ' . $e->getMessage());
+        // Don't show error to user for job template, just log it
+    }
 }
 
 include __DIR__ . '/../../templates/header.php';

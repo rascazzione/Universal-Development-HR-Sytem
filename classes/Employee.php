@@ -167,14 +167,31 @@ class Employee {
      * @return array|false
      */
     public function getEmployeeById($employeeId) {
-        $sql = "SELECT e.*, u.username, u.email, u.role, 
-                       m.first_name as manager_first_name, m.last_name as manager_last_name
-                FROM employees e 
-                LEFT JOIN users u ON e.user_id = u.user_id 
-                LEFT JOIN employees m ON e.manager_id = m.employee_id 
-                WHERE e.employee_id = ?";
-        
-        return fetchOne($sql, [$employeeId]);
+        try {
+            // Validate input
+            if (!is_numeric($employeeId) || $employeeId <= 0) {
+                throw new Exception("Invalid employee ID");
+            }
+            
+            $sql = "SELECT e.*, u.username, u.email, u.role,
+                           m.first_name as manager_first_name, m.last_name as manager_last_name
+                    FROM employees e
+                    LEFT JOIN users u ON e.user_id = u.user_id
+                    LEFT JOIN employees m ON e.manager_id = m.employee_id
+                    WHERE e.employee_id = ? AND e.active = 1";
+            
+            $result = fetchOne($sql, [$employeeId]);
+            
+            if (!$result) {
+                error_log("Employee not found with ID: $employeeId");
+                return false;
+            }
+            
+            return $result;
+        } catch (Exception $e) {
+            error_log("Error in getEmployeeById: " . $e->getMessage());
+            throw $e;
+        }
     }
     
     /**

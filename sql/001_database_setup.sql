@@ -179,13 +179,17 @@ INSERT INTO system_settings (setting_key, setting_value, description) VALUES
 ('password_min_length', '8', 'Minimum password length'),
 ('require_password_complexity', '1', 'Require complex passwords (1=yes, 0=no)');
 
--- Create default admin user (password: admin123 - CHANGE THIS!)
+-- Create demo users (passwords: admin123, manager123, employee123 - CHANGE IN PRODUCTION!)
 INSERT INTO users (username, email, password_hash, role) VALUES
-('admin', 'admin@company.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'hr_admin');
+('admin', 'admin@company.com', '$2y$10$IDWrdKHBFpvDjD2WPs5LYOaLVK2tEc4VXz5gvNhJZwKp2M4JGfN7a', 'hr_admin'),
+('manager', 'manager@company.com', '$2y$10$26iwx6/uHL9XnsEb1szRB.gPzyi0cqf1GdKhQvmRXX1.o0Ye5QSoC', 'manager'),
+('employee', 'employee@company.com', '$2y$10$uyVyKeO.Fyp0SRJobheoX.mUJMRhe0WSUSggAWm/fBtV2VqefCbxi', 'employee');
 
--- Create sample employee record for admin
+-- Create sample employee records for all demo users
 INSERT INTO employees (user_id, employee_number, first_name, last_name, position, department, hire_date) VALUES
-(1, 'EMP001', 'System', 'Administrator', 'HR Administrator', 'Human Resources', CURDATE());
+(1, 'EMP001', 'System', 'Administrator', 'HR Administrator', 'Human Resources', CURDATE()),
+(2, 'EMP002', 'Demo', 'Manager', 'Department Manager', 'Operations', CURDATE()),
+(3, 'EMP003', 'Demo', 'Employee', 'Staff Member', 'Operations', CURDATE());
 
 -- Create indexes for better performance
 CREATE INDEX idx_evaluations_composite ON evaluations(employee_id, period_id, status);

@@ -8,6 +8,7 @@ require_once __DIR__ . '/../../includes/auth.php';
 require_once __DIR__ . '/../../classes/Employee.php';
 require_once __DIR__ . '/../../classes/Evaluation.php';
 require_once __DIR__ . '/../../classes/EvaluationPeriod.php';
+require_once __DIR__ . '/../../classes/JobTemplate.php';
 
 // Require manager or HR admin role
 requireRole(['manager', 'hr_admin']);
@@ -59,13 +60,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $evaluationId = $evaluationClass->createEvaluation($evaluationData);
             
             if ($evaluationId) {
+                // LOG: Evaluation creation success and redirect
+                error_log("EVALUATION CREATION SUCCESS: ID=$evaluationId, redirecting to edit page");
                 setFlashMessage('success', 'Evaluation created successfully.');
                 redirect("/evaluation/edit.php?id=$evaluationId");
             } else {
                 $errors[] = 'Failed to create evaluation. Please try again.';
             }
         } catch (Exception $e) {
-            $errors[] = $e->getMessage();
+            // Enhanced error handling for workflow validation
+            $errorMessage = $e->getMessage();
+            
+            // Check if this is a workflow validation error and provide helpful guidance
+            if (strpos($errorMessage, 'job template') !== false) {
+                $errors[] = $errorMessage;
+                
+                // Add helpful action buttons based on user role
+                if (isHRAdmin()) {
+                    if (strpos($errorMessage, 'No job templates found') !== false) {
+                        $errors[] = '<a href="/admin/job_templates.php" class="btn btn-sm btn-primary mt-2">Create Job Templates</a>';
+                    } elseif (strpos($errorMessage, 'does not have a job template assigned') !== false) {
+                        $errors[] = '<a href="/employees/list.php" class="btn btn-sm btn-primary mt-2">Manage Employee Job Assignments</a>';
+                    }
+                }
+            } else {
+                $errors[] = $errorMessage;
+            }
+            
+            // Log the full error for debugging
+            error_log("EVALUATION CREATION ERROR: " . $errorMessage . " | User: " . ($_SESSION['user_id'] ?? 'unknown') . " | Employee: $employeeId");
         }
     }
 }

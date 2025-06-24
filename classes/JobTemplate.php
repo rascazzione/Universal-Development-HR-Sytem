@@ -4,6 +4,8 @@
  * Handles job position templates and their components
  */
 
+require_once __DIR__ . '/../config/config.php';
+
 class JobTemplate {
     
     /**

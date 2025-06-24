@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS job_position_templates (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     is_active BOOLEAN DEFAULT TRUE,
-    FOREIGN KEY (created_by) REFERENCES users(id)
+    FOREIGN KEY (created_by) REFERENCES users(user_id)
 );
 
 -- Company KPIs Directory
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS company_kpis (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     is_active BOOLEAN DEFAULT TRUE,
-    FOREIGN KEY (created_by) REFERENCES users(id)
+    FOREIGN KEY (created_by) REFERENCES users(user_id)
 );
 
 -- Skills and Competencies Catalog
@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS company_values (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     is_active BOOLEAN DEFAULT TRUE,
-    FOREIGN KEY (created_by) REFERENCES users(id)
+    FOREIGN KEY (created_by) REFERENCES users(user_id)
 );
 
 -- Job Template - KPI Assignments
@@ -128,7 +128,7 @@ CREATE TABLE IF NOT EXISTS evaluation_kpi_results (
     score DECIMAL(3,2), -- 1-5 scale
     comments TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (evaluation_id) REFERENCES evaluations(id) ON DELETE CASCADE,
+    FOREIGN KEY (evaluation_id) REFERENCES evaluations(evaluation_id) ON DELETE CASCADE,
     FOREIGN KEY (kpi_id) REFERENCES company_kpis(id)
 );
 
@@ -142,7 +142,7 @@ CREATE TABLE IF NOT EXISTS evaluation_competency_results (
     score DECIMAL(3,2), -- 1-5 scale
     comments TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (evaluation_id) REFERENCES evaluations(id) ON DELETE CASCADE,
+    FOREIGN KEY (evaluation_id) REFERENCES evaluations(evaluation_id) ON DELETE CASCADE,
     FOREIGN KEY (competency_id) REFERENCES competencies(id)
 );
 
@@ -154,7 +154,7 @@ CREATE TABLE IF NOT EXISTS evaluation_responsibility_results (
     score DECIMAL(3,2), -- 1-5 scale
     comments TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (evaluation_id) REFERENCES evaluations(id) ON DELETE CASCADE,
+    FOREIGN KEY (evaluation_id) REFERENCES evaluations(evaluation_id) ON DELETE CASCADE,
     FOREIGN KEY (responsibility_id) REFERENCES job_template_responsibilities(id)
 );
 
@@ -166,7 +166,7 @@ CREATE TABLE IF NOT EXISTS evaluation_value_results (
     score DECIMAL(3,2), -- 1-5 scale
     comments TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (evaluation_id) REFERENCES evaluations(id) ON DELETE CASCADE,
+    FOREIGN KEY (evaluation_id) REFERENCES evaluations(evaluation_id) ON DELETE CASCADE,
     FOREIGN KEY (value_id) REFERENCES company_values(id)
 );
 
@@ -197,3 +197,47 @@ INSERT INTO competencies (competency_name, description, category_id, competency_
 ('Creative Problem Solving', 'Finding innovative solutions to challenges', 4, 'core'),
 ('Collaboration', 'Working effectively with others', 5, 'soft_skill'),
 ('Adaptability', 'Ability to adapt to change and new situations', 5, 'core');
+
+-- Create evaluation section weights table for flexible weighting
+CREATE TABLE IF NOT EXISTS evaluation_section_weights (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    evaluation_id INT NOT NULL,
+    section_type ENUM('kpis', 'competencies', 'responsibilities', 'values') NOT NULL,
+    weight_percentage DECIMAL(5,2) NOT NULL DEFAULT 25.00,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (evaluation_id) REFERENCES evaluations(evaluation_id) ON DELETE CASCADE,
+    
+    INDEX idx_evaluation_section (evaluation_id, section_type),
+    UNIQUE KEY unique_evaluation_section (evaluation_id, section_type)
+);
+
+-- Insert default section weights for any existing evaluations
+INSERT IGNORE INTO evaluation_section_weights (evaluation_id, section_type, weight_percentage)
+SELECT
+    evaluation_id,
+    'kpis' as section_type,
+    40.00 as weight_percentage
+FROM evaluations;
+
+INSERT IGNORE INTO evaluation_section_weights (evaluation_id, section_type, weight_percentage)
+SELECT
+    evaluation_id,
+    'competencies' as section_type,
+    25.00 as weight_percentage
+FROM evaluations;
+
+INSERT IGNORE INTO evaluation_section_weights (evaluation_id, section_type, weight_percentage)
+SELECT
+    evaluation_id,
+    'responsibilities' as section_type,
+    25.00 as weight_percentage
+FROM evaluations;
+
+INSERT IGNORE INTO evaluation_section_weights (evaluation_id, section_type, weight_percentage)
+SELECT
+    evaluation_id,
+    'values' as section_type,
+    10.00 as weight_percentage
+FROM evaluations;
