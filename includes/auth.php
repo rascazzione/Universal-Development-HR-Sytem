@@ -115,7 +115,7 @@ function canAccessEmployee($employeeId) {
 }
 
 /**
- * Check if current user can access evaluation
+ * Check if current user can access evaluation (ENHANCED with direct manager relationship)
  * @param array $evaluation
  * @return bool
  */
@@ -126,6 +126,7 @@ function canAccessEvaluation($evaluation) {
     
     $userRole = $_SESSION['user_role'];
     $userId = $_SESSION['user_id'];
+    $employeeId = $_SESSION['employee_id'] ?? null;
     
     // HR Admin can access all evaluations
     if ($userRole === 'hr_admin') {
@@ -138,12 +139,17 @@ function canAccessEvaluation($evaluation) {
     }
     
     // Employee can access their own evaluations
-    if ($userRole === 'employee' && $evaluation['employee_id'] == $_SESSION['employee_id']) {
+    if ($userRole === 'employee' && $evaluation['employee_id'] == $employeeId) {
         return true;
     }
     
-    // Manager can access evaluations of their direct reports
-    if ($userRole === 'manager') {
+    // CRITICAL FIX: Manager can access evaluations via direct manager_id relationship
+    if ($userRole === 'manager' && $evaluation['manager_id'] == $employeeId) {
+        return true;
+    }
+    
+    // FALLBACK: Use old logic for evaluations without manager_id (backward compatibility)
+    if ($userRole === 'manager' && empty($evaluation['manager_id'])) {
         return canAccessEmployee($evaluation['employee_id']);
     }
     
@@ -151,7 +157,7 @@ function canAccessEvaluation($evaluation) {
 }
 
 /**
- * Check if current user can edit evaluation
+ * Check if current user can edit evaluation (ENHANCED with proper workflow state management)
  * @param array $evaluation
  * @return bool
  */
@@ -162,23 +168,56 @@ function canEditEvaluation($evaluation) {
     
     $userRole = $_SESSION['user_role'];
     $userId = $_SESSION['user_id'];
+    $employeeId = $_SESSION['employee_id'] ?? null;
+    $status = $evaluation['status'];
     
-    // HR Admin can edit all evaluations
+    // WORKFLOW STATE MANAGEMENT: Respect evaluation lifecycle
+    switch ($status) {
+        case 'draft':
+            // Draft evaluations can be edited by manager, evaluator, or HR admin
+            break;
+            
+        case 'submitted':
+            // Submitted evaluations can only be reviewed/edited by HR admin
+            if ($userRole !== 'hr_admin') {
+                return false;
+            }
+            break;
+            
+        case 'reviewed':
+        case 'approved':
+        case 'rejected':
+            // Final states - only HR admin can make changes
+            if ($userRole !== 'hr_admin') {
+                return false;
+            }
+            break;
+            
+        default:
+            return false;
+    }
+    
+    // HR Admin can edit evaluations in any state (for review/approval workflow)
     if ($userRole === 'hr_admin') {
         return true;
     }
     
-    // Only evaluator can edit their evaluations
-    if ($evaluation['evaluator_id'] != $userId) {
-        return false;
+    // For draft evaluations: Manager can edit evaluations for their direct reports
+    if ($userRole === 'manager' && $evaluation['manager_id'] == $employeeId) {
+        return true;
     }
     
-    // Cannot edit submitted, reviewed, or approved evaluations (unless HR Admin)
-    if (in_array($evaluation['status'], ['submitted', 'reviewed', 'approved']) && $userRole !== 'hr_admin') {
-        return false;
+    // For draft evaluations: Evaluator can edit their evaluations
+    if ($evaluation['evaluator_id'] == $userId) {
+        return true;
     }
     
-    return true;
+    // FALLBACK: Use old logic for evaluations without manager_id (backward compatibility)
+    if ($userRole === 'manager' && empty($evaluation['manager_id'])) {
+        return canAccessEmployee($evaluation['employee_id']);
+    }
+    
+    return false;
 }
 
 /**

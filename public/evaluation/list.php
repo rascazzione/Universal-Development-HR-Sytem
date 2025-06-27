@@ -39,8 +39,9 @@ if ($userRole === 'employee') {
     // Employees can only see their own evaluations
     $evaluations = $evaluationClass->getEmployeeEvaluations($_SESSION['employee_id']);
 } elseif ($userRole === 'manager') {
-    // Managers can see evaluations they created or for their team members
-    $evaluations = $evaluationClass->getEvaluatorEvaluations($_SESSION['user_id']);
+    // FIXED: Managers can see evaluations for their direct reports via manager_id relationship
+    $managerId = $_SESSION['employee_id'];
+    $evaluations = $evaluationClass->getManagerEvaluations($managerId, $filters);
 } else {
     // HR Admin can see all evaluations
     $evaluationsData = $evaluationClass->getEvaluations(1, 50, $filters);
@@ -173,8 +174,8 @@ include __DIR__ . '/../../templates/header.php';
                                         <a href="/evaluation/view.php?id=<?php echo $evaluation['evaluation_id']; ?>" class="btn btn-outline-primary" title="View Details">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <?php if ($evaluation['status'] === 'draft' && ($userRole !== 'employee' || $evaluation['employee_id'] == $_SESSION['employee_id'])): ?>
-                                        <a href="/evaluation/edit.php?id=<?php echo $evaluation['evaluation_id']; ?>" class="btn btn-outline-secondary" title="Edit">
+                                        <?php if (canEditEvaluation($evaluation)): ?>
+                                        <a href="/evaluation/edit.php?id=<?php echo $evaluation['evaluation_id']; ?>" class="btn btn-outline-secondary" title="<?php echo ($evaluation['status'] === 'submitted' && $userRole === 'hr_admin') ? 'Review' : 'Edit'; ?>">
                                             <i class="fas fa-edit"></i>
                                         </a>
                                         <?php endif; ?>

@@ -41,9 +41,14 @@ if ($userRole === 'hr_admin') {
         'employee_stats' => $employeeClass->getEmployeeStats()
     ];
 } elseif ($userRole === 'manager') {
-    // Manager Dashboard
-    $teamMembers = $employeeClass->getTeamMembers($_SESSION['employee_id']);
-    $teamEvaluations = $evaluationClass->getEvaluatorEvaluations($_SESSION['user_id']);
+    // Manager Dashboard - ENHANCED with direct manager relationship
+    $managerId = $_SESSION['employee_id'];
+    
+    // Use new direct manager evaluation query
+    $teamEvaluations = $evaluationClass->getManagerEvaluations($managerId);
+    
+    // Get team members for additional context
+    $teamMembers = $employeeClass->getTeamMembers($managerId);
     
     $dashboardData = [
         'team_size' => count($teamMembers),
@@ -54,6 +59,9 @@ if ($userRole === 'hr_admin') {
         'recent_evaluations' => array_slice($teamEvaluations, 0, 5),
         'current_period' => $periodClass->getCurrentPeriod()
     ];
+    
+    // LOG: Manager dashboard data
+    error_log("MANAGER_DASHBOARD - Manager ID: $managerId, Team Evaluations: " . count($teamEvaluations));
 } else {
     // Employee Dashboard
     $employeeEvaluations = $evaluationClass->getEmployeeEvaluations($_SESSION['employee_id']);
@@ -214,7 +222,14 @@ include __DIR__ . '/../templates/header.php';
             <div class="widget-title">Latest Rating</div>
             <div class="widget-value">
                 <?php if ($dashboardData['latest_evaluation']): ?>
-                    <?php echo number_format($dashboardData['latest_evaluation']['overall_rating'], 1); ?>/5.0
+                    <?php
+                    $rating = $dashboardData['latest_evaluation']['overall_rating'] ?? null;
+                    if ($rating !== null && is_numeric($rating)) {
+                        echo number_format($rating, 1);
+                    } else {
+                        echo "Pending";
+                    }
+                    ?>/5.0
                 <?php else: ?>
                     N/A
                 <?php endif; ?>
@@ -419,8 +434,15 @@ include __DIR__ . '/../templates/header.php';
                     <a href="/evaluation/my-evaluations.php" class="btn btn-primary">
                         <i class="fas fa-clipboard-list me-2"></i>My Evaluations
                     </a>
-                    <a href="/profile.php" class="btn btn-outline-primary">
+                    <?php if (!empty($_SESSION['employee_id'])): ?>
+                    <a href="/employees/edit.php?id=<?php echo $_SESSION['employee_id']; ?>" class="btn btn-outline-primary">
                         <i class="fas fa-user-edit me-2"></i>Update Profile
+                    </a>
+                    <?php else: ?>
+                    <a href="#" onclick="alert('Profile functionality requires employee account setup. Contact HR.');" class="btn btn-outline-primary">
+                        <i class="fas fa-user-edit me-2"></i>Update Profile
+                    </a>
+                    <?php endif; ?>
                     </a>
                     <a href="/change-password.php" class="btn btn-outline-secondary">
                         <i class="fas fa-key me-2"></i>Change Password

@@ -49,13 +49,8 @@ error_log("EVALUATION DEBUG - Competency Results Count: " . count($evaluation['c
 error_log("EVALUATION DEBUG - Responsibility Results Count: " . count($evaluation['responsibility_results'] ?? []));
 error_log("EVALUATION DEBUG - Value Results Count: " . count($evaluation['value_results'] ?? []));
 
-// Check permissions
-$userRole = $_SESSION['user_role'];
-$currentUserId = $_SESSION['user_id'];
-
-// Only allow editing if user is the evaluator or HR admin, and evaluation is in draft status
-if ($evaluation['status'] !== 'draft' || 
-    ($userRole !== 'hr_admin' && $evaluation['evaluator_id'] != $currentUserId)) {
+// Check permissions using the enhanced authorization function
+if (!canEditEvaluation($evaluation)) {
     setFlashMessage('You do not have permission to edit this evaluation.', 'error');
     redirect('/evaluation/view.php?id=' . $evaluationId);
 }
@@ -160,14 +155,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'strengths' => $_POST['strengths'] ?? ''
             ];
             
+            // Handle workflow state transitions
             if ($_POST['submit_type'] === 'submit') {
+                if ($evaluation['status'] !== 'draft') {
+                    setFlashMessage('Cannot submit evaluation. Current status: ' . $evaluation['status'], 'error');
+                    redirect('/evaluation/view.php?id=' . $evaluationId);
+                }
                 $updateData['status'] = 'submitted';
+            } elseif ($_POST['submit_type'] === 'approve') {
+                if ($evaluation['status'] !== 'submitted' || $_SESSION['user_role'] !== 'hr_admin') {
+                    setFlashMessage('Cannot approve evaluation. Invalid status or permissions.', 'error');
+                    redirect('/evaluation/view.php?id=' . $evaluationId);
+                }
+                $updateData['status'] = 'approved';
+            } elseif ($_POST['submit_type'] === 'reject') {
+                if ($evaluation['status'] !== 'submitted' || $_SESSION['user_role'] !== 'hr_admin') {
+                    setFlashMessage('Cannot reject evaluation. Invalid status or permissions.', 'error');
+                    redirect('/evaluation/view.php?id=' . $evaluationId);
+                }
+                $updateData['status'] = 'rejected';
             }
             
             $result = $evaluationClass->updateEvaluation($evaluationId, $updateData);
             
             if ($result && $allSuccess) {
-                $message = $_POST['submit_type'] === 'submit' ? 'Evaluation submitted successfully!' : 'Evaluation saved successfully!';
+                $message = match($_POST['submit_type']) {
+                    'submit' => 'Evaluation submitted successfully!',
+                    'approve' => 'Evaluation approved successfully!',
+                    'reject' => 'Evaluation rejected successfully!',
+                    default => 'Evaluation saved successfully!'
+                };
                 setFlashMessage($message, 'success');
                 redirect('/evaluation/view.php?id=' . $evaluationId);
             } else {
@@ -500,11 +517,20 @@ include __DIR__ . '/../../templates/header.php';
                         </a>
                         <div>
                             <button type="submit" name="submit_type" value="save" class="btn btn-outline-primary me-2">
-                                <i class="fas fa-save me-2"></i>Save Draft
+                                <i class="fas fa-save me-2"></i>Save Changes
                             </button>
+                            <?php if ($evaluation['status'] === 'draft' && ($_SESSION['user_role'] === 'manager' || $_SESSION['user_role'] === 'hr_admin')): ?>
                             <button type="submit" name="submit_type" value="submit" class="btn btn-success">
                                 <i class="fas fa-check me-2"></i>Submit Evaluation
                             </button>
+                            <?php elseif ($evaluation['status'] === 'submitted' && $_SESSION['user_role'] === 'hr_admin'): ?>
+                            <button type="submit" name="submit_type" value="approve" class="btn btn-success me-2">
+                                <i class="fas fa-check me-2"></i>Approve
+                            </button>
+                            <button type="submit" name="submit_type" value="reject" class="btn btn-danger">
+                                <i class="fas fa-times me-2"></i>Reject
+                            </button>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </form>

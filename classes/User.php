@@ -245,7 +245,7 @@ class User {
             }
             
             if (empty($updateFields)) {
-                throw new Exception("No fields to update");
+                return true; // No changes needed is considered success
             }
             
             $params[] = $userId;
@@ -256,9 +256,11 @@ class User {
             if ($affected > 0) {
                 // Log user update
                 logActivity($_SESSION['user_id'] ?? null, 'user_updated', 'users', $userId, $currentUser, $userData);
+                return true;
+            } else {
+                // Check if no rows were affected because values are the same
+                return true; // Consider this success since no actual error occurred
             }
-            
-            return $affected > 0;
         } catch (Exception $e) {
             error_log("Update user error: " . $e->getMessage());
             throw $e;

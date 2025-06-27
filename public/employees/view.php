@@ -24,7 +24,9 @@ $evaluationClass = new Evaluation();
 $jobTemplateClass = new JobTemplate();
 
 // Get employee details
-$employee = $employeeClass->getEmployeeById($employeeId);
+// HR Admins can view inactive employees, regular employees cannot
+$includeInactive = isHRAdmin();
+$employee = $employeeClass->getEmployeeById($employeeId, $includeInactive);
 if (!$employee) {
     setFlashMessage('Employee not found.', 'error');
     redirect('/employees/list.php');
@@ -239,8 +241,8 @@ include __DIR__ . '/../../templates/header.php';
                                         <a href="/evaluation/view.php?id=<?php echo $evaluation['evaluation_id']; ?>" class="btn btn-outline-primary" title="View Details">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <?php if ($evaluation['status'] === 'draft' && $userRole !== 'employee'): ?>
-                                        <a href="/evaluation/edit.php?id=<?php echo $evaluation['evaluation_id']; ?>" class="btn btn-outline-secondary" title="Edit">
+                                        <?php if (canEditEvaluation($evaluation)): ?>
+                                        <a href="/evaluation/edit.php?id=<?php echo $evaluation['evaluation_id']; ?>" class="btn btn-outline-secondary" title="<?php echo ($evaluation['status'] === 'submitted' && $userRole === 'hr_admin') ? 'Review' : 'Edit'; ?>">
                                             <i class="fas fa-edit"></i>
                                         </a>
                                         <?php endif; ?>

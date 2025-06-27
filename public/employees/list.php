@@ -10,7 +10,7 @@ require_once __DIR__ . '/../../classes/Employee.php';
 // Require authentication and HR/Manager access
 requireAuth();
 if (!isHRAdmin() && !isManager()) {
-    redirectTo('/dashboard.php');
+    redirect('/dashboard.php');
 }
 
 $pageTitle = 'All Employees';
@@ -20,8 +20,18 @@ $pageDescription = 'Manage and view all employees in the system';
 // Initialize Employee class
 $employeeClass = new Employee();
 
-// Get all employees
-$employeesData = $employeeClass->getEmployees(1, 100); // Get first 100 employees
+// Get filter parameters
+$showInactive = isset($_GET['show_inactive']) ? true : false;
+
+// Get all employees with filter
+$filters = [];
+if ($showInactive) {
+    // We need to modify the query to show all employees, not just active ones
+    // For now, let's get all employees including inactive ones
+    $employeesData = $employeeClass->getAllEmployees(1, 100); // We'll create this method
+} else {
+    $employeesData = $employeeClass->getEmployees(1, 100); // Get first 100 active employees
+}
 $employees = $employeesData['employees'];
 
 include __DIR__ . '/../../templates/header.php';
@@ -30,13 +40,25 @@ include __DIR__ . '/../../templates/header.php';
 <div class="row">
     <div class="col-12">
         <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0">Employee List</h5>
-                <?php if (isHRAdmin()): ?>
-                <a href="/employees/add.php" class="btn btn-primary">
-                    <i class="fas fa-plus me-2"></i>Add Employee
-                </a>
-                <?php endif; ?>
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Employee List</h5>
+                    <?php if (isHRAdmin()): ?>
+                    <a href="/employees/add.php" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Add Employee
+                    </a>
+                    <?php endif; ?>
+                </div>
+                <div class="mt-2">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="showInactive"
+                               <?php echo $showInactive ? 'checked' : ''; ?>
+                               onchange="window.location.href = this.checked ? '?show_inactive=1' : '?';">
+                        <label class="form-check-label" for="showInactive">
+                            Show inactive employees
+                        </label>
+                    </div>
+                </div>
             </div>
             <div class="card-body">
                 <?php if (empty($employees)): ?>

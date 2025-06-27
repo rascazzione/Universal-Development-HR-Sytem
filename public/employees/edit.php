@@ -7,12 +7,10 @@
 require_once __DIR__ . '/../../includes/auth.php';
 require_once __DIR__ . '/../../classes/Employee.php';
 require_once __DIR__ . '/../../classes/JobTemplate.php';
+require_once __DIR__ . '/../../classes/User.php';
 
-// Require HR Admin access
+// Require authentication
 requireAuth();
-if (!isHRAdmin()) {
-    redirect('/dashboard.php');
-}
 
 // Get employee ID from URL
 $employeeId = $_GET['id'] ?? null;
@@ -20,42 +18,87 @@ if (!$employeeId) {
     redirect('/employees/list.php');
 }
 
+// Check permissions - HR Admin can edit anyone, employees can only edit themselves
+$userRole = $_SESSION['user_role'] ?? '';
+$currentEmployeeId = $_SESSION['employee_id'] ?? null;
+
+if (!isHRAdmin() && $currentEmployeeId != $employeeId) {
+    setFlashMessage('You can only edit your own profile.', 'error');
+    redirect('/dashboard.php');
+}
+
+// Determine if this is a self-edit (employee editing their own profile)
+$isSelfEdit = ($currentEmployeeId == $employeeId);
+
 // Initialize classes
 $employeeClass = new Employee();
 $jobTemplateClass = new JobTemplate();
 
 // Get employee details
-$employee = $employeeClass->getEmployeeById($employeeId);
+// HR Admins can view/edit inactive employees, regular employees cannot
+$includeInactive = isHRAdmin();
+$employee = $employeeClass->getEmployeeById($employeeId, $includeInactive);
 if (!$employee) {
     setFlashMessage('Employee not found.', 'error');
     redirect('/employees/list.php');
 }
 
-$pageTitle = 'Edit Employee - ' . $employee['first_name'] . ' ' . $employee['last_name'];
+$pageTitle = $isSelfEdit ? 'My Profile - ' . $employee['first_name'] . ' ' . $employee['last_name'] : 'Edit Employee - ' . $employee['first_name'] . ' ' . $employee['last_name'];
 $pageHeader = true;
-$pageDescription = 'Update employee information';
+$pageDescription = $isSelfEdit ? 'Update your profile information' : 'Update employee information';
 
 // Handle form submission
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-        $updateData = [
+        // Base fields that employees can edit about themselves (employees table)
+        $employeeUpdateData = [
             'first_name' => trim($_POST['first_name']),
             'last_name' => trim($_POST['last_name']),
-            'position' => trim($_POST['position']) ?: null,
-            'department' => trim($_POST['department']) ?: null,
-            'manager_id' => $_POST['manager_id'] ?: null,
-            'hire_date' => $_POST['hire_date'] ?: null,
             'phone' => trim($_POST['phone']) ?: null,
             'address' => trim($_POST['address']) ?: null,
-            'active' => isset($_POST['active']) ? 1 : 0
         ];
 
-        // Only add job_template_id if the column exists in database
-        if (!empty($_POST['job_template_id'])) {
-            $updateData['job_template_id'] = $_POST['job_template_id'];
+        // Additional employee fields only HR Admin can modify
+        if (isHRAdmin()) {
+            $employeeUpdateData['position'] = trim($_POST['position'] ?? '') ?: null;
+            $employeeUpdateData['department'] = trim($_POST['department'] ?? '') ?: null;
+            $employeeUpdateData['manager_id'] = ($_POST['manager_id'] ?? '') ?: null;
+            $employeeUpdateData['hire_date'] = ($_POST['hire_date'] ?? '') ?: null;
+            $employeeUpdateData['active'] = isset($_POST['active']) ? 1 : 0;
+            
+            // Add job_template_id (including empty values for unassignment)
+            if (isset($_POST['job_template_id'])) {
+                $employeeUpdateData['job_template_id'] = $_POST['job_template_id'] ?: null;
+            }
         }
 
-        $result = $employeeClass->updateEmployee($employeeId, $updateData);
+        
+        // Update employee table
+        $result = $employeeClass->updateEmployee($employeeId, $employeeUpdateData);
+        
+        // Update user table fields (HR Admin only)
+        if (isHRAdmin() && !empty($employee['user_id'])) {
+            $userClass = new User();
+            $userUpdateData = [];
+            
+            if (!empty($_POST['email'])) {
+                $userUpdateData['email'] = trim($_POST['email']);
+            }
+            if (!empty($_POST['username'])) {
+                $userUpdateData['username'] = trim($_POST['username']);
+            }
+            if (!empty($_POST['role'])) {
+                $userUpdateData['role'] = $_POST['role'];
+            }
+            
+            if (!empty($userUpdateData)) {
+                $userResult = $userClass->updateUser($employee['user_id'], $userUpdateData);
+                if (!$userResult) {
+                    throw new Exception('Failed to update user account information');
+                }
+            }
+        }
         
         if ($result) {
             setFlashMessage('Employee updated successfully!', 'success');
@@ -83,10 +126,10 @@ include __DIR__ . '/../../templates/header.php';
     <div class="col-md-8">
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title mb-0">Edit Employee Information</h5>
+                <h5 class="card-title mb-0"><?php echo $isSelfEdit ? 'Edit My Profile' : 'Edit Employee Information'; ?></h5>
             </div>
             <div class="card-body">
-                <form method="POST" class="needs-validation" novalidate>
+                <form method="POST">
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
@@ -106,19 +149,53 @@ include __DIR__ . '/../../templates/header.php';
                         </div>
                     </div>
 
+                    <?php if (isHRAdmin()): ?>
+                    <!-- User Account Fields (HR Admin only) -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email Address</label>
+                                <input type="email" class="form-control" id="email" name="email"
+                                       value="<?php echo htmlspecialchars($employee['email'] ?? ''); ?>">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Username</label>
+                                <input type="text" class="form-control" id="username" name="username"
+                                       value="<?php echo htmlspecialchars($employee['username'] ?? ''); ?>">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="role" class="form-label">User Role</label>
+                                <select class="form-select" id="role" name="role">
+                                    <option value="employee" <?php echo ($employee['role'] ?? '') === 'employee' ? 'selected' : ''; ?>>Employee</option>
+                                    <option value="manager" <?php echo ($employee['role'] ?? '') === 'manager' ? 'selected' : ''; ?>>Manager</option>
+                                    <option value="hr_admin" <?php echo ($employee['role'] ?? '') === 'hr_admin' ? 'selected' : ''; ?>>HR Admin</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <!-- Empty for spacing -->
+                        </div>
+                    </div>
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="position" class="form-label">Position</label>
-                                <input type="text" class="form-control" id="position" name="position" 
+                                <input type="text" class="form-control" id="position" name="position"
                                        value="<?php echo htmlspecialchars($employee['position'] ?? ''); ?>">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="department" class="form-label">Department</label>
-                                <input type="text" class="form-control" id="department" name="department" 
-                                       value="<?php echo htmlspecialchars($employee['department'] ?? ''); ?>" 
+                                <input type="text" class="form-control" id="department" name="department"
+                                       value="<?php echo htmlspecialchars($employee['department'] ?? ''); ?>"
                                        list="departments">
                                 <datalist id="departments">
                                     <?php foreach ($departments as $dept): ?>
@@ -129,6 +206,27 @@ include __DIR__ . '/../../templates/header.php';
                         </div>
                     </div>
 
+                    <?php else: ?>
+                    <!-- Read-only fields for self-edit -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Position</label>
+                                <input type="text" class="form-control" value="<?php echo htmlspecialchars($employee['position'] ?? 'Not assigned'); ?>" readonly>
+                                <div class="form-text">Contact HR to change your position.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Department</label>
+                                <input type="text" class="form-control" value="<?php echo htmlspecialchars($employee['department'] ?? 'Not assigned'); ?>" readonly>
+                                <div class="form-text">Contact HR to change your department.</div>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
+                    <?php if (isHRAdmin()): ?>
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
@@ -179,19 +277,22 @@ include __DIR__ . '/../../templates/header.php';
                             <!-- Empty column for spacing -->
                         </div>
                     </div>
+                    <?php endif; ?>
 
+                    <!-- Phone and Address - available to all users -->
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="phone" class="form-label">Phone</label>
-                                <input type="tel" class="form-control" id="phone" name="phone" 
+                                <input type="tel" class="form-control" id="phone" name="phone"
                                        value="<?php echo htmlspecialchars($employee['phone'] ?? ''); ?>">
                             </div>
                         </div>
+                        <?php if (isHRAdmin()): ?>
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <div class="form-check mt-4">
-                                    <input class="form-check-input" type="checkbox" id="active" name="active" 
+                                    <input class="form-check-input" type="checkbox" id="active" name="active"
                                            <?php echo $employee['active'] ? 'checked' : ''; ?>>
                                     <label class="form-check-label" for="active">
                                         Active Employee
@@ -199,6 +300,7 @@ include __DIR__ . '/../../templates/header.php';
                                 </div>
                             </div>
                         </div>
+                        <?php endif; ?>
                     </div>
 
                     <div class="mb-3">
@@ -212,7 +314,7 @@ include __DIR__ . '/../../templates/header.php';
                         </a>
                         <div>
                             <a href="/employees/list.php" class="btn btn-outline-secondary me-2">Cancel</a>
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-primary" onclick="console.log('Submit button clicked'); return true;">
                                 <i class="fas fa-save me-2"></i>Update Employee
                             </button>
                         </div>

@@ -60,7 +60,7 @@ The system uses a revolutionary job template approach where evaluations are dyna
 - **Audit trail** for all significant actions within the system.
 
 ### Technical Requirements
-- **Backend**: PHP 7.4+
+- **Backend**: PHP 8.2+
 - **Database**: MySQL 8.0+
 - **Frontend**: HTML5, CSS3, JavaScript (ES6+)
 - **Security**: Prepared statements, password hashing, XSS/CSRF protection, and secure session management.

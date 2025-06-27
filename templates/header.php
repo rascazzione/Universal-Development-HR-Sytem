@@ -81,10 +81,19 @@ $bodyClass = $bodyClass ?? '';
                             <small class="text-light opacity-75 ms-1">(<?php echo getUserRoleDisplayName(); ?>)</small>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="/profile.php">
-                                <i class="fas fa-user-edit me-2"></i>My Profile
+                            <?php if (!empty($_SESSION['employee_id'])): ?>
+                            <li><a class="dropdown-item" href="/employees/view.php?id=<?php echo $_SESSION['employee_id']; ?>">
+                                <i class="fas fa-user me-2"></i>My Profile
                             </a></li>
-                            <li><a class="dropdown-item" href="/change-password.php">
+                            <li><a class="dropdown-item" href="/employees/edit.php?id=<?php echo $_SESSION['employee_id']; ?>">
+                                <i class="fas fa-user-edit me-2"></i>Edit Profile
+                            </a></li>
+                            <?php else: ?>
+                            <li><a class="dropdown-item" href="#" onclick="alert('Profile functionality requires employee account setup. Contact HR.');">
+                                <i class="fas fa-user me-2"></i>My Profile
+                            </a></li>
+                            <?php endif; ?>
+                            <li><a class="dropdown-item" href="#" onclick="alert('Change password functionality coming soon!');">
                                 <i class="fas fa-key me-2"></i>Change Password
                             </a></li>
                             <li><hr class="dropdown-divider"></li>

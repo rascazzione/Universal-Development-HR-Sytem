@@ -110,12 +110,12 @@ CREATE TABLE IF NOT EXISTS job_template_values (
     FOREIGN KEY (value_id) REFERENCES company_values(id)
 );
 
--- Link employees to job templates
-ALTER TABLE employees ADD COLUMN job_template_id INT NULL;
-ALTER TABLE employees ADD FOREIGN KEY (job_template_id) REFERENCES job_position_templates(id);
+-- Note: job_template_id fields are now included in the main schema (001_database_setup.sql)
+-- employees.job_template_id and evaluations.job_template_id are created there
+-- Foreign key constraints will be added after job_position_templates table is created
 
--- Modify evaluations table to reference job template
-ALTER TABLE evaluations ADD COLUMN job_template_id INT NULL;
+-- Add foreign key constraints for job template relationships
+ALTER TABLE employees ADD FOREIGN KEY (job_template_id) REFERENCES job_position_templates(id);
 ALTER TABLE evaluations ADD FOREIGN KEY (job_template_id) REFERENCES job_position_templates(id);
 
 -- Evaluation KPI Results

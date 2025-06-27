@@ -40,7 +40,7 @@ class Evaluation {
                 throw new Exception($workflowValidation['message']);
             }
             
-            // Get employee's job template
+            // Get employee's job template and manager
             $employeeClass = new Employee();
             $employee = $employeeClass->getEmployeeById($evaluationData['employee_id']);
             
@@ -48,15 +48,24 @@ class Evaluation {
                 throw new Exception("Employee not found");
             }
             
-            // LOG: Employee and job template details
-            error_log("EVALUATION CREATION - Employee ID: {$evaluationData['employee_id']}, Job Template ID: " . ($employee['job_template_id'] ?? 'NULL'));
+            // CRITICAL FIX: Get the employee's manager_id for direct relationship
+            $managerId = $employee['manager_id'];
+            if (empty($managerId)) {
+                error_log("WARNING: Employee {$evaluationData['employee_id']} has no manager assigned");
+                // Don't throw error - allow evaluations for employees without managers (e.g., CEO)
+            }
             
-            // Insert evaluation with job template reference
-            $sql = "INSERT INTO evaluations (employee_id, evaluator_id, period_id, job_template_id, status)
-                    VALUES (?, ?, ?, ?, 'draft')";
+            // LOG: Employee, manager, and job template details
+            error_log("EVALUATION CREATION - Employee ID: {$evaluationData['employee_id']}, Manager ID: " . ($managerId ?? 'NULL'));
+            error_log("EVALUATION CREATION - Job Template ID: " . ($employee['job_template_id'] ?? 'NULL'));
+            
+            // Insert evaluation with manager_id for direct relationship
+            $sql = "INSERT INTO evaluations (employee_id, evaluator_id, manager_id, period_id, job_template_id, status)
+                    VALUES (?, ?, ?, ?, ?, 'draft')";
             $evaluationId = insertRecord($sql, [
                 $evaluationData['employee_id'],
                 $evaluationData['evaluator_id'],
+                $managerId,  // CRITICAL FIX: Store manager_id directly
                 $evaluationData['period_id'],
                 $employee['job_template_id']
             ]);
@@ -1134,6 +1143,99 @@ class Evaluation {
                 ORDER BY e.created_at DESC";
         
         return fetchAll($sql, $params);
+    }
+    
+    /**
+     * Get evaluations for a specific manager (direct relationship)
+     * @param int $managerId
+     * @param array $filters
+     * @return array
+     */
+    public function getManagerEvaluations($managerId, $filters = []) {
+        $whereClause = "WHERE e.manager_id = ?";
+        $params = [$managerId];
+        
+        // Apply additional filters
+        if (!empty($filters['status'])) {
+            $whereClause .= " AND e.status = ?";
+            $params[] = $filters['status'];
+        }
+        
+        if (!empty($filters['period_id'])) {
+            $whereClause .= " AND e.period_id = ?";
+            $params[] = $filters['period_id'];
+        }
+        
+        if (!empty($filters['employee_id'])) {
+            $whereClause .= " AND e.employee_id = ?";
+            $params[] = $filters['employee_id'];
+        }
+        
+        $sql = "SELECT e.*,
+                       emp.first_name as employee_first_name, emp.last_name as employee_last_name,
+                       emp.employee_number, emp.position, emp.department,
+                       mgr.first_name as manager_first_name, mgr.last_name as manager_last_name,
+                       p.period_name, p.start_date, p.end_date,
+                       jpt.position_title as job_template_title
+                FROM evaluations e
+                JOIN employees emp ON e.employee_id = emp.employee_id
+                LEFT JOIN employees mgr ON e.manager_id = mgr.employee_id
+                JOIN evaluation_periods p ON e.period_id = p.period_id
+                LEFT JOIN job_position_templates jpt ON e.job_template_id = jpt.id
+                $whereClause
+                ORDER BY e.created_at DESC";
+        
+        $evaluations = fetchAll($sql, $params);
+        
+        // LOG: Manager evaluation query results
+        error_log("MANAGER_EVALUATIONS - Manager ID: $managerId, Found: " . count($evaluations) . " evaluations");
+        
+        return $evaluations;
+    }
+    
+    /**
+     * Get evaluations for a specific employee (where they are being evaluated)
+     * @param int $employeeId
+     * @param array $filters
+     * @return array
+     */
+    public function getEmployeeEvaluations($employeeId, $filters = []) {
+        $whereClause = "WHERE e.employee_id = ?";
+        $params = [$employeeId];
+        
+        // Apply additional filters
+        if (!empty($filters['status'])) {
+            $whereClause .= " AND e.status = ?";
+            $params[] = $filters['status'];
+        }
+        
+        if (!empty($filters['period_id'])) {
+            $whereClause .= " AND e.period_id = ?";
+            $params[] = $filters['period_id'];
+        }
+        
+        $sql = "SELECT e.*, e.overall_rating,
+                       emp.first_name as employee_first_name, emp.last_name as employee_last_name,
+                       emp.employee_number, emp.position, emp.department,
+                       eval_user.username as evaluator_username,
+                       eval_emp.first_name as evaluator_first_name, eval_emp.last_name as evaluator_last_name,
+                       p.period_name, p.start_date, p.end_date,
+                       jpt.position_title as job_template_title
+                FROM evaluations e
+                JOIN employees emp ON e.employee_id = emp.employee_id
+                JOIN users eval_user ON e.evaluator_id = eval_user.user_id
+                LEFT JOIN employees eval_emp ON eval_user.user_id = eval_emp.user_id
+                JOIN evaluation_periods p ON e.period_id = p.period_id
+                LEFT JOIN job_position_templates jpt ON e.job_template_id = jpt.id
+                $whereClause
+                ORDER BY e.created_at DESC";
+        
+        $evaluations = fetchAll($sql, $params);
+        
+        // LOG: Employee evaluation query results
+        error_log("EMPLOYEE_EVALUATIONS - Employee ID: $employeeId, Found: " . count($evaluations) . " evaluations");
+        
+        return $evaluations;
     }
     
     /**

@@ -105,7 +105,8 @@ class Employee {
     public function updateEmployee($employeeId, $employeeData) {
         try {
             // Get current employee data for logging
-            $currentEmployee = $this->getEmployeeById($employeeId);
+            // Include inactive employees since we might be updating their status
+            $currentEmployee = $this->getEmployeeById($employeeId, true);
             if (!$currentEmployee) {
                 throw new Exception("Employee not found");
             }
@@ -152,9 +153,11 @@ class Employee {
             if ($affected > 0) {
                 // Log employee update
                 logActivity($_SESSION['user_id'] ?? null, 'employee_updated', 'employees', $employeeId, $currentEmployee, $employeeData);
+                return true;
+            } else {
+                // Check if no rows were affected because values are the same
+                return true; // Consider this success since no actual error occurred
             }
-            
-            return $affected > 0;
         } catch (Exception $e) {
             error_log("Update employee error: " . $e->getMessage());
             throw $e;
@@ -164,13 +167,19 @@ class Employee {
     /**
      * Get employee by ID
      * @param int $employeeId
+     * @param bool $includeInactive Whether to include inactive employees (default: false)
      * @return array|false
      */
-    public function getEmployeeById($employeeId) {
+    public function getEmployeeById($employeeId, $includeInactive = false) {
         try {
             // Validate input
             if (!is_numeric($employeeId) || $employeeId <= 0) {
                 throw new Exception("Invalid employee ID");
+            }
+            
+            $whereClause = "WHERE e.employee_id = ?";
+            if (!$includeInactive) {
+                $whereClause .= " AND e.active = 1";
             }
             
             $sql = "SELECT e.*, u.username, u.email, u.role,
@@ -178,7 +187,7 @@ class Employee {
                     FROM employees e
                     LEFT JOIN users u ON e.user_id = u.user_id
                     LEFT JOIN employees m ON e.manager_id = m.employee_id
-                    WHERE e.employee_id = ? AND e.active = 1";
+                    $whereClause";
             
             $result = fetchOne($sql, [$employeeId]);
             
@@ -253,6 +262,61 @@ class Employee {
                 LEFT JOIN employees m ON e.manager_id = m.employee_id 
                 $whereClause 
                 ORDER BY e.last_name, e.first_name 
+                LIMIT $limit OFFSET $offset";
+        
+        $employees = fetchAll($sql, $params);
+        
+        return [
+            'employees' => $employees,
+            'total' => $total,
+            'pages' => ceil($total / $limit),
+            'current_page' => $page
+        ];
+    }
+    
+    /**
+     * Get all employees including inactive ones
+     * @param int $page
+     * @param int $limit
+     * @param array $filters
+     * @return array
+     */
+    public function getAllEmployees($page = 1, $limit = RECORDS_PER_PAGE, $filters = []) {
+        $offset = ($page - 1) * $limit;
+        
+        $whereClause = "WHERE 1=1"; // Show all employees, active and inactive
+        $params = [];
+        
+        // Apply filters
+        if (!empty($filters['search'])) {
+            $whereClause .= " AND (e.first_name LIKE ? OR e.last_name LIKE ? OR e.employee_number LIKE ? OR e.position LIKE ?)";
+            $searchTerm = "%{$filters['search']}%";
+            $params = array_merge($params, array_fill(0, 4, $searchTerm));
+        }
+        
+        if (!empty($filters['department'])) {
+            $whereClause .= " AND e.department = ?";
+            $params[] = $filters['department'];
+        }
+        
+        if (!empty($filters['manager_id'])) {
+            $whereClause .= " AND e.manager_id = ?";
+            $params[] = $filters['manager_id'];
+        }
+        
+        // Get total count
+        $countSql = "SELECT COUNT(*) as total FROM employees e $whereClause";
+        $totalResult = fetchOne($countSql, $params);
+        $total = $totalResult['total'];
+        
+        // Get employees
+        $sql = "SELECT e.*, u.username, u.email, u.role,
+                       m.first_name as manager_first_name, m.last_name as manager_last_name
+                FROM employees e
+                LEFT JOIN users u ON e.user_id = u.user_id
+                LEFT JOIN employees m ON e.manager_id = m.employee_id
+                $whereClause
+                ORDER BY e.active DESC, e.last_name, e.first_name
                 LIMIT $limit OFFSET $offset";
         
         $employees = fetchAll($sql, $params);

@@ -94,21 +94,15 @@ if (!$evaluation) {
     redirect('/evaluation/list.php');
 }
 
-// Check permissions
-$userRole = $_SESSION['user_role'];
-$currentUserId = $_SESSION['user_id'];
-$currentEmployeeId = $_SESSION['employee_id'] ?? null;
-
-// Allow viewing if user is HR admin, manager, evaluator, or the employee being evaluated
-$canView = ($userRole === 'hr_admin' || 
-           $userRole === 'manager' || 
-           $evaluation['evaluator_id'] == $currentUserId ||
-           $evaluation['employee_id'] == $currentEmployeeId);
-
-if (!$canView) {
+// Check permissions using the enhanced authorization function
+if (!canAccessEvaluation($evaluation)) {
     setFlashMessage('You do not have permission to view this evaluation.', 'error');
     redirect('/dashboard.php');
 }
+
+// Get user role and user ID for template usage
+$userRole = $_SESSION['user_role'];
+$currentUserId = $_SESSION['user_id'];
 
 $pageTitle = 'Evaluation Details - ' . $evaluation['employee_first_name'] . ' ' . $evaluation['employee_last_name'];
 $pageHeader = true;
@@ -485,9 +479,14 @@ include __DIR__ . '/../../templates/header.php';
                         <i class="fas fa-arrow-left me-2"></i>Back to List
                     </a>
                     <div>
-                        <?php if ($evaluation['status'] === 'draft' && ($userRole !== 'employee' || $evaluation['evaluator_id'] == $currentUserId)): ?>
+                        <?php if (canEditEvaluation($evaluation)): ?>
                         <a href="/evaluation/edit.php?id=<?php echo $evaluationId; ?>" class="btn btn-primary">
-                            <i class="fas fa-edit me-2"></i>Edit Evaluation
+                            <i class="fas fa-edit me-2"></i>
+                            <?php if ($evaluation['status'] === 'submitted' && $userRole === 'hr_admin'): ?>
+                                Review Evaluation
+                            <?php else: ?>
+                                Edit Evaluation
+                            <?php endif; ?>
                         </a>
                         <?php endif; ?>
                         

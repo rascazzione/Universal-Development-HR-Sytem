@@ -31,6 +31,7 @@ CREATE TABLE employees (
     position VARCHAR(100),
     department VARCHAR(100),
     manager_id INT,
+    job_template_id INT,
     hire_date DATE,
     phone VARCHAR(20),
     address TEXT,
@@ -41,6 +42,7 @@ CREATE TABLE employees (
     FOREIGN KEY (manager_id) REFERENCES employees(employee_id) ON DELETE SET NULL,
     INDEX idx_employee_number (employee_number),
     INDEX idx_manager (manager_id),
+    INDEX idx_job_template (job_template_id),
     INDEX idx_department (department),
     INDEX idx_active (active)
 );
@@ -68,7 +70,9 @@ CREATE TABLE evaluations (
     evaluation_id INT AUTO_INCREMENT PRIMARY KEY,
     employee_id INT NOT NULL,
     evaluator_id INT NOT NULL,
+    manager_id INT,
     period_id INT NOT NULL,
+    job_template_id INT,
     
     -- Expected Results (JSON structure for flexibility)
     expected_results JSON,
@@ -110,13 +114,17 @@ CREATE TABLE evaluations (
     
     FOREIGN KEY (employee_id) REFERENCES employees(employee_id) ON DELETE CASCADE,
     FOREIGN KEY (evaluator_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (manager_id) REFERENCES employees(employee_id) ON DELETE SET NULL,
     FOREIGN KEY (period_id) REFERENCES evaluation_periods(period_id) ON DELETE CASCADE,
     
     INDEX idx_employee (employee_id),
     INDEX idx_evaluator (evaluator_id),
+    INDEX idx_manager (manager_id),
     INDEX idx_period (period_id),
     INDEX idx_status (status),
     INDEX idx_overall_rating (overall_rating),
+    INDEX idx_evaluations_manager_employee (manager_id, employee_id),
+    INDEX idx_evaluations_manager_period (manager_id, period_id),
     
     UNIQUE KEY unique_employee_period (employee_id, period_id)
 );
