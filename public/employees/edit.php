@@ -8,6 +8,7 @@ require_once __DIR__ . '/../../includes/auth.php';
 require_once __DIR__ . '/../../classes/Employee.php';
 require_once __DIR__ . '/../../classes/JobTemplate.php';
 require_once __DIR__ . '/../../classes/User.php';
+require_once __DIR__ . '/../../classes/Department.php';
 
 // Require authentication
 requireAuth();
@@ -33,6 +34,7 @@ $isSelfEdit = ($currentEmployeeId == $employeeId);
 // Initialize classes
 $employeeClass = new Employee();
 $jobTemplateClass = new JobTemplate();
+$departmentClass = new Department();
 
 // Get employee details
 // HR Admins can view/edit inactive employees, regular employees cannot
@@ -194,14 +196,17 @@ include __DIR__ . '/../../templates/header.php';
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="department" class="form-label">Department</label>
-                                <input type="text" class="form-control" id="department" name="department"
-                                       value="<?php echo htmlspecialchars($employee['department'] ?? ''); ?>"
-                                       list="departments">
-                                <datalist id="departments">
-                                    <?php foreach ($departments as $dept): ?>
-                                    <option value="<?php echo htmlspecialchars($dept); ?>">
+                                <select class="form-select" id="department" name="department">
+                                    <option value="">Select Department</option>
+                                    <?php 
+                                    $allDepartments = $departmentClass->getDepartments();
+                                    foreach ($allDepartments as $dept): ?>
+                                    <option value="<?php echo htmlspecialchars($dept['department_name']); ?>"
+                                            <?php echo ($employee['department'] ?? '') == $dept['department_name'] ? 'selected' : ''; ?>>
+                                        <?php echo htmlspecialchars($dept['department_name']); ?>
+                                    </option>
                                     <?php endforeach; ?>
-                                </datalist>
+                                </select>
                             </div>
                         </div>
                     </div>

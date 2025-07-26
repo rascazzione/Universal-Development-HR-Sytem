@@ -8,6 +8,7 @@ require_once __DIR__ . '/../../includes/auth.php';
 require_once __DIR__ . '/../../classes/Employee.php';
 require_once __DIR__ . '/../../classes/User.php';
 require_once __DIR__ . '/../../classes/JobTemplate.php';
+require_once __DIR__ . '/../../classes/Department.php';
 
 // Require HR Admin access
 requireAuth();
@@ -127,14 +128,15 @@ include __DIR__ . '/../../templates/header.php';
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="department" class="form-label">Department</label>
-                                <input type="text" class="form-control" id="department" name="department" 
-                                       value="<?php echo htmlspecialchars($_POST['department'] ?? ''); ?>" 
-                                       list="departments">
-                                <datalist id="departments">
+                                <select class="form-select" id="department" name="department">
+                                    <option value="">Select Department</option>
                                     <?php foreach ($departments as $dept): ?>
-                                    <option value="<?php echo htmlspecialchars($dept); ?>">
+                                    <option value="<?php echo htmlspecialchars($dept['department_name']); ?>"
+                                            <?php echo ($_POST['department'] ?? '') == $dept['department_name'] ? 'selected' : ''; ?>>
+                                        <?php echo htmlspecialchars($dept['department_name']); ?>
+                                    </option>
                                     <?php endforeach; ?>
-                                </datalist>
+                                </select>
                             </div>
                         </div>
                     </div>

@@ -176,6 +176,23 @@ CREATE TABLE audit_log (
     INDEX idx_created_at (created_at)
 );
 
+-- Departments table
+CREATE TABLE departments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    department_name VARCHAR(255) NOT NULL UNIQUE,
+    description TEXT,
+    manager_id INT,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_by INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES users(user_id) ON DELETE SET NULL,
+    FOREIGN KEY (manager_id) REFERENCES employees(employee_id) ON DELETE SET NULL,
+    INDEX idx_department_name (department_name),
+    INDEX idx_is_active (is_active),
+    INDEX idx_manager_id (manager_id)
+);
+
 -- Insert default system settings
 INSERT INTO system_settings (setting_key, setting_value, description) VALUES
 ('system_name', 'Performance Evaluation System', 'Application name'),
@@ -192,6 +209,15 @@ INSERT INTO users (username, email, password_hash, role) VALUES
 ('admin', 'admin@company.com', '$2y$10$IDWrdKHBFpvDjD2WPs5LYOaLVK2tEc4VXz5gvNhJZwKp2M4JGfN7a', 'hr_admin'),
 ('manager', 'manager@company.com', '$2y$10$26iwx6/uHL9XnsEb1szRB.gPzyi0cqf1GdKhQvmRXX1.o0Ye5QSoC', 'manager'),
 ('employee', 'employee@company.com', '$2y$10$uyVyKeO.Fyp0SRJobheoX.mUJMRhe0WSUSggAWm/fBtV2VqefCbxi', 'employee');
+
+-- Insert some default departments (after users are created)
+INSERT INTO departments (department_name, description, created_by) VALUES
+('Human Resources', 'Human Resources and Personnel Management', 1),
+('Information Technology', 'IT Systems and Infrastructure', 1),
+('Finance', 'Financial Management and Accounting', 1),
+('Operations', 'Day-to-day Business Operations', 1),
+('Marketing', 'Marketing and Brand Management', 1),
+('Sales', 'Sales and Customer Relations', 1);
 
 -- Create sample employee records for all demo users
 INSERT INTO employees (user_id, employee_number, first_name, last_name, position, department, hire_date) VALUES

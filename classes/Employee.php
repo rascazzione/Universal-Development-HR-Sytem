@@ -349,9 +349,10 @@ class Employee {
      * @return array
      */
     public function getDepartments() {
-        $sql = "SELECT DISTINCT department FROM employees WHERE department IS NOT NULL AND active = 1 ORDER BY department";
-        $result = fetchAll($sql);
-        return array_column($result, 'department');
+        // Use the new Department class to get departments
+        require_once __DIR__ . '/Department.php';
+        $departmentClass = new Department();
+        return $departmentClass->getDepartments();
     }
     
     /**

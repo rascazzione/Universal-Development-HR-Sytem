@@ -9,6 +9,7 @@ require_once __DIR__ . '/../../classes/JobTemplate.php';
 require_once __DIR__ . '/../../classes/CompanyKPI.php';
 require_once __DIR__ . '/../../classes/Competency.php';
 require_once __DIR__ . '/../../classes/CompanyValues.php';
+require_once __DIR__ . '/../../classes/Department.php';
 
 // Require HR admin authentication
 requireAuth();
@@ -22,6 +23,7 @@ $jobTemplateClass = new JobTemplate();
 $kpiClass = new CompanyKPI();
 $competencyClass = new Competency();
 $valuesClass = new CompanyValues();
+$departmentClass = new Department();
 
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -288,8 +290,17 @@ include __DIR__ . '/../../templates/header.php';
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="department" class="form-label">Department</label>
-                                <input type="text" class="form-control" id="department" name="department" 
-                                       value="<?php echo htmlspecialchars($editTemplate['department'] ?? ''); ?>">
+                                <select class="form-select" id="department" name="department">
+                                    <option value="">Select Department</option>
+                                    <?php 
+                                    $allDepartments = $departmentClass->getDepartments();
+                                    foreach ($allDepartments as $dept): ?>
+                                    <option value="<?php echo htmlspecialchars($dept['department_name']); ?>"
+                                            <?php echo ($editTemplate['department'] ?? '') == $dept['department_name'] ? 'selected' : ''; ?>>
+                                        <?php echo htmlspecialchars($dept['department_name']); ?>
+                                    </option>
+                                    <?php endforeach; ?>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -506,7 +517,16 @@ include __DIR__ . '/../../templates/header.php';
                     
                     <div class="mb-3">
                         <label for="new_department" class="form-label">Department</label>
-                        <input type="text" class="form-control" id="new_department" name="department">
+                        <select class="form-select" id="new_department" name="department">
+                            <option value="">Select Department</option>
+                            <?php 
+                            $allDepartments = $departmentClass->getDepartments();
+                            foreach ($allDepartments as $dept): ?>
+                            <option value="<?php echo htmlspecialchars($dept['department_name']); ?>">
+                                <?php echo htmlspecialchars($dept['department_name']); ?>
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
                     
                     <div class="mb-3">

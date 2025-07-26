@@ -316,12 +316,14 @@ graph TD
     CTRL --> PERIOD
     CTRL --> JT
     CTRL --> METRICS
+    CTRL --> DEPT
     USER --> REPO
     EMP --> REPO
     EVAL --> REPO
     PERIOD --> REPO
     JT --> REPO
     METRICS --> REPO
+    DEPT --> REPO
     REPO --> CONN
     CONN --> DB
     USER --> FS

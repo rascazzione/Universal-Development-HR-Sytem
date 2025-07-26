@@ -427,6 +427,7 @@ function getNavigationMenu() {
             'icon' => 'fas fa-cog',
             'submenu' => [
                 ['title' => 'Users', 'url' => '/admin/users.php'],
+                ['title' => 'Departments', 'url' => '/admin/departments.php'],
                 ['title' => 'Evaluation Periods', 'url' => '/admin/periods.php'],
                 ['title' => 'System Settings', 'url' => '/admin/settings.php'],
                 ['title' => 'Audit Log', 'url' => '/admin/audit.php']
