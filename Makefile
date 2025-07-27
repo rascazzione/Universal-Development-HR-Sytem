@@ -1,7 +1,7 @@
 # Docker Development Environment - Makefile
 # Performance Evaluation System
 
-.PHONY: help up down restart reset destroy logs shell health status clean migrate migrate-status migrate-rollback migrate-validate migrate-create
+.PHONY: help up down restart reset destroy logs shell health status clean migrate migrate-status migrate-rollback migrate-validate migrate-create test-data test-data-check test-data-validate test-data-credentials
 
 # Default target
 .DEFAULT_GOAL := help
@@ -21,13 +21,15 @@ help: ## Show this help message
 	@echo "$(BLUE)Docker Development Environment Commands$(RESET)"
 	@echo ""
 	@echo "$(GREEN)Available commands:$(RESET)"
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  $(YELLOW)%-15s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  $(YELLOW)%-20s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 	@echo ""
 	@echo "$(GREEN)Examples:$(RESET)"
-	@echo "  make up          # Start the development environment"
-	@echo "  make logs        # View application logs"
-	@echo "  make shell       # Access web container shell"
-	@echo "  make reset       # Reset environment with fresh data"
+	@echo "  make up              # Start the development environment"
+	@echo "  make logs            # View application logs"
+	@echo "  make shell           # Access web container shell"
+	@echo "  make reset           # Reset environment with fresh data"
+	@echo "  make test-data       # Populate with comprehensive test data"
+	@echo "  make test-data-help  # Show detailed test data help"
 	@echo ""
 
 up: ## Start the development environment
@@ -151,3 +153,79 @@ migrate-validate: ## Validate migration files
 migrate-create: ## Create new migration file
 	@read -p "Enter migration description: " desc; \
 	docker compose exec web php /var/www/html/sql/migration_runner.php create "$$desc"
+
+# Test Data Commands
+test-data: ## Populate database with comprehensive test data
+	@echo "$(YELLOW)Populating database with test data...$(RESET)"
+	@echo "$(RED)WARNING: This will clear all existing data except system settings!$(RESET)"
+	@read -p "Continue? (y/N): " confirm; \
+	if [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ]; then \
+		docker compose exec web php /var/www/html/scripts/populate_test_data.php; \
+		echo "$(GREEN)Test data population completed!$(RESET)"; \
+		echo "$(BLUE)Check scripts/test_data_credentials.txt for login information$(RESET)"; \
+	else \
+		echo "$(YELLOW)Operation cancelled$(RESET)"; \
+	fi
+
+test-data-force: ## Populate test data without confirmation (use with caution!)
+	@echo "$(YELLOW)Force populating database with test data...$(RESET)"
+	@docker compose exec web php /var/www/html/scripts/populate_test_data.php
+	@echo "$(GREEN)Test data population completed!$(RESET)"
+	@echo "$(BLUE)Check scripts/test_data_credentials.txt for login information$(RESET)"
+
+test-data-check: ## Validate prerequisites for test data population
+	@echo "$(BLUE)Checking test data prerequisites...$(RESET)"
+	@docker compose exec web php /var/www/html/scripts/test_populate_script.php
+
+test-data-validate: ## Alias for test-data-check
+	@make test-data-check
+
+test-data-credentials: ## Show test data user credentials
+	@echo "$(BLUE)Test Data User Credentials:$(RESET)"
+	@if [ -f scripts/test_data_credentials.txt ]; then \
+		cat scripts/test_data_credentials.txt; \
+	else \
+		echo "$(RED)Credentials file not found. Run 'make test-data' first.$(RESET)"; \
+	fi
+
+test-data-summary: ## Show test data summary
+	@echo "$(BLUE)Test Data Summary:$(RESET)"
+	@if [ -f scripts/test_data_summary.txt ]; then \
+		cat scripts/test_data_summary.txt; \
+	else \
+		echo "$(RED)Summary file not found. Run 'make test-data' first.$(RESET)"; \
+	fi
+
+test-data-clean: ## Remove test data files
+	@echo "$(YELLOW)Cleaning test data files...$(RESET)"
+	@rm -f scripts/test_data_credentials.txt scripts/test_data_summary.txt
+	@echo "$(GREEN)Test data files cleaned$(RESET)"
+
+test-data-help: ## Show detailed help for test data commands
+	@echo "$(BLUE)Test Data Population Commands$(RESET)"
+	@echo ""
+	@echo "$(GREEN)Available commands:$(RESET)"
+	@echo "  $(YELLOW)test-data$(RESET)             Populate database with test data (with confirmation)"
+	@echo "  $(YELLOW)test-data-force$(RESET)       Populate test data without confirmation"
+	@echo "  $(YELLOW)test-data-check$(RESET)       Validate prerequisites before running"
+	@echo "  $(YELLOW)test-data-credentials$(RESET) Show user credentials for testing"
+	@echo "  $(YELLOW)test-data-summary$(RESET)     Show summary of generated data"
+	@echo "  $(YELLOW)test-data-clean$(RESET)       Remove generated documentation files"
+	@echo ""
+	@echo "$(GREEN)What gets created:$(RESET)"
+	@echo "  • 28 users (1 HR admin, 6 managers, 21 employees)"
+	@echo "  • 6 departments with organizational hierarchy"
+	@echo "  • 8 job templates with KPIs, competencies, and responsibilities"
+	@echo "  • 18 KPIs across 5 categories"
+	@echo "  • 14 competencies covering technical and soft skills"
+	@echo "  • 5 company values"
+	@echo "  • 3 evaluation periods (past, current, future)"
+	@echo "  • 75+ evaluations with realistic scores and comments"
+	@echo ""
+	@echo "$(GREEN)Sample credentials:$(RESET)"
+	@echo "  HR Admin:  admin.system / admin123"
+	@echo "  Manager:   manager.smith / manager123"
+	@echo "  Employee:  john.doe / employee123"
+	@echo ""
+	@echo "$(RED)WARNING:$(RESET) This will clear ALL existing data except system settings!"
+	@echo ""

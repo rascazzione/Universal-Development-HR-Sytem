@@ -1,0 +1,53 @@
+=== TEST DATA SUMMARY ===
+Generated on: 2025-07-27 09:58:18
+
+USERS CREATED: 31
+- HR Admins: 1
+- Managers: 6
+- Employees: 24
+
+ORGANIZATIONAL STRUCTURE:
+- Departments: 6
+- Job Templates: 8
+- Employees: 31
+
+EVALUATION FRAMEWORK:
+- KPIs: 18
+- Competencies: 14
+- Company Values: 5
+
+EVALUATION DATA:
+- Evaluation Periods: 3
+- Total Evaluations: 90
+
+EVALUATION PERIODS:
+- 2024 Q3 Performance Review: 30 evaluations
+- 2024 Q4 Performance Review: 30 evaluations
+- 2025 Q1 Performance Review: 30 evaluations
+
+DEPARTMENTS:
+- Information Technology
+- Human Resources
+- Sales
+- Marketing
+- Finance
+- Operations
+
+TESTING SCENARIOS:
+1. HR Admin Testing:
+   - Login as admin.system
+   - View all employees and evaluations
+   - Create new evaluation periods
+   - Generate reports
+
+2. Manager Testing:
+   - Login as any manager.* account
+   - View team members
+   - Create/edit evaluations for direct reports
+   - Review evaluation progress
+
+3. Employee Testing:
+   - Login as any employee account
+   - View personal evaluations
+   - Check performance history
+   - Update profile information
