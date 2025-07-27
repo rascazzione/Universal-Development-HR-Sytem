@@ -421,11 +421,11 @@ include __DIR__ . '/../templates/header.php';
                         <i class="fas fa-chart-bar me-2"></i>View Reports
                     </a>
                     <?php elseif ($userRole === 'manager'): ?>
-                    <a href="/evaluation/create.php" class="btn btn-primary">
-                        <i class="fas fa-plus me-2"></i>Create Evaluation
-                    </a>
-                    <a href="/employees/team.php" class="btn btn-outline-primary">
+                    <a href="/employees/list.php" class="btn btn-primary">
                         <i class="fas fa-users me-2"></i>View Team
+                    </a>
+                    <a href="/evaluation/create.php" class="btn btn-outline-primary">
+                        <i class="fas fa-plus me-2"></i>Create Evaluation
                     </a>
                     <a href="/evaluation/my-evaluations.php" class="btn btn-outline-secondary">
                         <i class="fas fa-clipboard-list me-2"></i>My Evaluations

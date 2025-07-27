@@ -98,6 +98,10 @@ CREATE TABLE evaluations (
     overall_rating DECIMAL(3,2) CHECK (overall_rating IS NULL OR (overall_rating >= 0.00 AND overall_rating <= 5.00)),
     overall_comments TEXT,
     
+    -- Evidence-based evaluation fields
+    evidence_rating DECIMAL(4,2) NULL,
+    evidence_summary TEXT NULL,
+    
     -- Goals and development
     goals_next_period TEXT,
     development_areas TEXT,

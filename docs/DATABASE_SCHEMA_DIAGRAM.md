@@ -197,6 +197,8 @@ erDiagram
         json living_values
         decimal living_values_score
         decimal living_values_weight
+        decimal evidence_rating
+        text evidence_summary
         decimal overall_rating
         text overall_comments
         text goals_next_period
@@ -208,6 +210,55 @@ erDiagram
         timestamp approved_at
         timestamp created_at
         timestamp updated_at
+    }
+
+    %% Evidence-Based Evaluation System
+    growth_evidence_entries {
+        int entry_id PK
+        int employee_id FK
+        int manager_id FK
+        text content
+        tinyint star_rating "1-5 rating scale"
+        enum dimension "responsibilities, kpis, competencies, values"
+        date entry_date
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    evidence_attachments {
+        int attachment_id PK
+        int entry_id FK
+        string filename
+        string original_name
+        enum file_type "image, video, document"
+        int file_size
+        string mime_type
+        string storage_path
+        string thumbnail_path
+        timestamp uploaded_at
+    }
+
+    evidence_evaluation_results {
+        int result_id PK
+        int evaluation_id FK
+        enum dimension "responsibilities, kpis, competencies, values"
+        int evidence_count
+        decimal avg_star_rating
+        int total_positive_entries
+        int total_negative_entries
+        decimal calculated_score
+    }
+
+    evidence_aggregations {
+        int aggregation_id PK
+        int employee_id FK
+        int period_id FK
+        int total_entries
+        decimal avg_star_rating
+        int positive_entries
+        int negative_entries
+        date last_entry_date
+        timestamp created_at
     }
 
     %% Evaluation Results Tables
@@ -361,6 +412,14 @@ erDiagram
 
     %% Junction Table Relationships
     job_template_responsibilities ||--o{ evaluation_responsibility_results : "measured in"
+
+    %% Evidence-Based Evaluation System Relationships
+    employees ||--o{ growth_evidence_entries : "has feedback entries"
+    employees ||--o{ growth_evidence_entries : "manages entries for"
+    growth_evidence_entries ||--o{ evidence_attachments : "has media attachments"
+    evaluations ||--o{ evidence_evaluation_results : "has evidence results"
+    employees ||--o{ evidence_aggregations : "has aggregations"
+    evaluation_periods ||--o{ evidence_aggregations : "for period"
 ```
 
 ## Table Descriptions
@@ -392,6 +451,12 @@ erDiagram
 - **evaluation_value_results**: Company values demonstration scores
 - **evaluation_section_weights**: Flexible weighting system for evaluation sections
 
+### Evidence-Based Evaluation System
+- **growth_evidence_entries**: Continuous feedback entries with star ratings (1-5) and dimension classification
+- **evidence_attachments**: Media file attachments (images, videos, documents) for evidence entries
+- **evidence_evaluation_results**: Aggregated evidence data used in formal evaluations
+- **evidence_aggregations**: Statistical summaries of employee evidence over time periods
+
 ### Supporting Tables
 - **evaluation_comments**: Additional feedback and comments
 - **system_settings**: Application configuration
@@ -407,3 +472,6 @@ erDiagram
 5. **Department Management**: Organizational structure with manager assignments and soft delete capability
 6. **Comprehensive Audit Trail**: Full tracking of system changes and user actions
 7. **Migration System**: Structured database version control
+8. **Evidence-Based Continuous Feedback System**: Real-time performance evidence capture with star ratings
+9. **Media Attachment Support**: Rich media (images, videos, documents) for evidence entries
+10. **Real-time Performance Evidence Aggregation**: Automatic synthesis of continuous feedback into formal evaluations

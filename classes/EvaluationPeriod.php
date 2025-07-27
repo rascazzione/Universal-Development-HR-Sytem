@@ -1,7 +1,7 @@
 <?php
 /**
- * Evaluation Period Management Class
- * Performance Evaluation System
+ * Evaluation Period Management Class for Continuous Performance System
+ * Enhanced for evidence-based evaluations
  */
 
 require_once __DIR__ . '/../config/config.php';
@@ -366,7 +366,7 @@ class EvaluationPeriod {
     }
     
     /**
-     * Get period statistics
+     * Get period statistics with evidence metrics
      * @param int $periodId
      * @return array
      */
@@ -392,8 +392,8 @@ class EvaluationPeriod {
             ? round(($completedCount / $stats['total_evaluations']) * 100, 1) 
             : 0;
         
-        // Average rating
-        $sql = "SELECT AVG(overall_rating) as avg_rating FROM evaluations WHERE period_id = ? AND overall_rating IS NOT NULL";
+        // Average evidence rating
+        $sql = "SELECT AVG(evidence_rating) as avg_rating FROM evaluations WHERE period_id = ? AND evidence_rating IS NOT NULL";
         $result = fetchOne($sql, [$periodId]);
         $stats['average_rating'] = $result['avg_rating'] ? round($result['avg_rating'], 2) : 0;
         
@@ -406,6 +406,17 @@ class EvaluationPeriod {
                 ORDER BY count DESC";
         $result = fetchAll($sql, [$periodId]);
         $stats['by_department'] = $result;
+        
+        // Evidence metrics
+        $sql = "SELECT 
+                    COUNT(DISTINCT gee.employee_id) as employees_with_evidence,
+                    COUNT(gee.entry_id) as total_evidence_entries,
+                    AVG(gee.star_rating) as avg_evidence_rating
+                FROM growth_evidence_entries gee
+                JOIN evaluations ev ON gee.employee_id = ev.employee_id
+                WHERE ev.period_id = ?";
+        $result = fetchOne($sql, [$periodId]);
+        $stats['evidence_metrics'] = $result;
         
         return $stats;
     }
@@ -523,6 +534,99 @@ class EvaluationPeriod {
         
         // Completed and archived periods are not editable
         return false;
+    }
+    
+    /**
+     * Get manager dashboard data for period
+     * @param int $managerId
+     * @param int $periodId
+     * @return array
+     */
+    public function getManagerDashboard($managerId, $periodId) {
+        $dashboard = [];
+        
+        // Get period details
+        $dashboard['period'] = $this->getPeriodById($periodId);
+        
+        // Get manager's team evaluations for this period
+        $sql = "SELECT e.*, 
+                       emp.first_name, emp.last_name, emp.employee_number,
+                       e.evidence_rating as rating
+                FROM evaluations e
+                JOIN employees emp ON e.employee_id = emp.employee_id
+                WHERE e.manager_id = ? AND e.period_id = ?
+                ORDER BY e.created_at DESC";
+        
+        $dashboard['team_evaluations'] = fetchAll($sql, [$managerId, $periodId]);
+        
+        // Get evidence summary for manager's team
+        $sql = "SELECT 
+                    COUNT(DISTINCT gee.employee_id) as team_members_with_evidence,
+                    COUNT(gee.entry_id) as total_team_evidence_entries,
+                    AVG(gee.star_rating) as avg_team_evidence_rating
+                FROM growth_evidence_entries gee
+                JOIN employees emp ON gee.employee_id = emp.employee_id
+                WHERE emp.manager_id = ? 
+                AND gee.entry_date BETWEEN ? AND ?";
+        
+        $period = $this->getPeriodById($periodId);
+        $dashboard['team_evidence_summary'] = fetchOne($sql, [
+            $managerId, 
+            $period['start_date'], 
+            $period['end_date']
+        ]);
+        
+        return $dashboard;
+    }
+    
+    /**
+     * Auto-generate evaluations for all employees in period
+     * @param int $periodId
+     * @param int $evaluatorId (typically HR or admin)
+     * @return array
+     */
+    public function autoGenerateEvaluations($periodId, $evaluatorId) {
+        $results = [
+            'created' => 0,
+            'skipped' => 0,
+            'errors' => []
+        ];
+        
+        try {
+            // Get all employees
+            $sql = "SELECT employee_id FROM employees WHERE active = 1";
+            $employees = fetchAll($sql);
+            
+            $evaluationClass = new Evaluation();
+            
+            foreach ($employees as $employee) {
+                try {
+                    // Check if evaluation already exists for this employee and period
+                    $sql = "SELECT COUNT(*) as count FROM evaluations WHERE employee_id = ? AND period_id = ?";
+                    $result = fetchOne($sql, [$employee['employee_id'], $periodId]);
+                    
+                    if ($result['count'] == 0) {
+                        // Create new evaluation
+                        $evaluationClass->createFromEvidenceJournal(
+                            $employee['employee_id'], 
+                            $periodId, 
+                            $evaluatorId
+                        );
+                        $results['created']++;
+                    } else {
+                        $results['skipped']++;
+                    }
+                } catch (Exception $e) {
+                    $results['errors'][] = "Employee ID {$employee['employee_id']}: " . $e->getMessage();
+                    error_log("Auto-generate evaluation error for employee {$employee['employee_id']}: " . $e->getMessage());
+                }
+            }
+            
+            return $results;
+        } catch (Exception $e) {
+            error_log("Auto-generate evaluations error: " . $e->getMessage());
+            throw $e;
+        }
     }
 }
 ?>

@@ -7,6 +7,10 @@ DROP TABLE IF EXISTS evaluation_competency_results;
 DROP TABLE IF EXISTS evaluation_responsibility_results;
 DROP TABLE IF EXISTS evaluation_value_results;
 DROP TABLE IF EXISTS evaluation_section_weights;
+DROP TABLE IF EXISTS evidence_attachments;
+DROP TABLE IF EXISTS evidence_evaluation_results;
+DROP TABLE IF EXISTS growth_evidence_entries;
+DROP TABLE IF EXISTS evidence_aggregations;
 
 -- Create the growth evidence entries table
 CREATE TABLE growth_evidence_entries (
@@ -61,15 +65,45 @@ CREATE TABLE evidence_evaluation_results (
 -- Simplify the evaluations table by removing complex scoring fields
 -- We'll keep the basic structure but remove the manual scoring fields
 ALTER TABLE evaluations 
-DROP COLUMN IF EXISTS expected_results,
-DROP COLUMN IF EXISTS skills_competencies,
-DROP COLUMN IF EXISTS key_responsibilities,
-DROP COLUMN IF EXISTS living_values;
+DROP COLUMN expected_results;
 
--- Add fields for evidence-based evaluations
-ALTER TABLE evaluations
-ADD COLUMN evidence_summary TEXT NULL,
-ADD COLUMN evidence_rating DECIMAL(4,2) NULL;
+ALTER TABLE evaluations 
+DROP COLUMN skills_competencies;
+
+ALTER TABLE evaluations 
+DROP COLUMN key_responsibilities;
+
+ALTER TABLE evaluations 
+DROP COLUMN living_values;
+
+-- Add fields for evidence-based evaluations (if they don't exist)
+-- These columns are now part of the base schema, so we check if they exist before adding
+-- This is for backward compatibility with existing installations
+SET @column_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+                      WHERE TABLE_SCHEMA = 'performance_evaluation' 
+                      AND TABLE_NAME = 'evaluations' 
+                      AND COLUMN_NAME = 'evidence_summary');
+                      
+SET @sql = IF(@column_exists = 0, 
+              'ALTER TABLE evaluations ADD COLUMN evidence_summary TEXT NULL', 
+              'SELECT ''Column evidence_summary already exists'' AS message');
+              
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @column_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+                      WHERE TABLE_SCHEMA = 'performance_evaluation' 
+                      AND TABLE_NAME = 'evaluations' 
+                      AND COLUMN_NAME = 'evidence_rating');
+                      
+SET @sql = IF(@column_exists = 0, 
+              'ALTER TABLE evaluations ADD COLUMN evidence_rating DECIMAL(4,2) NULL', 
+              'SELECT ''Column evidence_rating already exists'' AS message');
+              
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 -- Create a table for storing evidence aggregation statistics
 CREATE TABLE evidence_aggregations (

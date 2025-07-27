@@ -159,6 +159,24 @@ include __DIR__ . '/../../templates/header.php';
                     <a href="/evaluation/create.php?employee_id=<?php echo $employee['employee_id']; ?>" class="btn btn-success">
                         <i class="fas fa-plus me-2"></i>Create Evaluation
                     </a>
+                    <a href="/employees/view-feedback.php?employee_id=<?php echo $employee['employee_id']; ?>" class="btn btn-info">
+                        <i class="fas fa-comments me-2"></i>View Feedback
+                    </a>
+                </div>
+                <?php elseif ($userRole === 'manager' && $employee['manager_id'] == $currentEmployeeId): ?>
+                <div class="d-grid gap-2 mt-3">
+                    <a href="/employees/give-feedback.php?employee_id=<?php echo $employee['employee_id']; ?>" class="btn btn-primary">
+                        <i class="fas fa-comment-medical me-2"></i>Give Feedback
+                    </a>
+                    <a href="/employees/view-feedback.php?employee_id=<?php echo $employee['employee_id']; ?>" class="btn btn-info">
+                        <i class="fas fa-comments me-2"></i>View Feedback
+                    </a>
+                </div>
+                <?php elseif ($userRole === 'employee' && $employeeId == $currentEmployeeId): ?>
+                <div class="d-grid gap-2 mt-3">
+                    <a href="/employees/view-feedback.php?employee_id=<?php echo $employee['employee_id']; ?>" class="btn btn-info">
+                        <i class="fas fa-comments me-2"></i>View My Feedback
+                    </a>
                 </div>
                 <?php endif; ?>
             </div>
