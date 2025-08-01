@@ -6,6 +6,8 @@
 
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/Employee.php';
+require_once __DIR__ . '/EvaluationPeriod.php';
+require_once __DIR__ . '/GrowthEvidenceJournal.php';
 
 class Evaluation {
     private $pdo;
@@ -58,6 +60,18 @@ class Evaluation {
                 $evaluationData['period_id']
             ]);
             
+            // Get evaluation period for evidence aggregation
+            $periodClass = new EvaluationPeriod();
+            $period = $periodClass->getPeriodById($evaluationData['period_id']);
+            
+            if ($period) {
+                // Automatically aggregate evidence for the new evaluation
+                $this->aggregateEvidence($evaluationId, $evaluationData['employee_id'], $period);
+                error_log("Evidence aggregated for new evaluation ID: $evaluationId");
+            } else {
+                error_log("WARNING: Could not find period {$evaluationData['period_id']} for evidence aggregation");
+            }
+            
             // Log evaluation creation
             logActivity($_SESSION['user_id'] ?? null, 'evaluation_created', 'evaluations', $evaluationId, null, $evaluationData);
             
@@ -84,112 +98,504 @@ class Evaluation {
     }
     
     /**
-     * Aggregate evidence for an evaluation
+     * Aggregate evidence for an evaluation with enhanced algorithms
      * @param int $evaluationId
      * @param int $employeeId
-     * @param DateRange $period
+     * @param array $period
      * @return bool
      */
     public function aggregateEvidence(int $evaluationId, int $employeeId, $period): bool {
         try {
+            $startTime = microtime(true);
+            error_log("Starting evidence aggregation for evaluation $evaluationId, employee $employeeId");
+            
+            // Validate inputs
+            if (!$this->validateAggregationInputs($evaluationId, $employeeId, $period)) {
+                throw new Exception("Invalid aggregation inputs");
+            }
+            
             // Get evidence journal data for the period
             $journalClass = new GrowthEvidenceJournal();
             $evidenceByDimension = $journalClass->getEvidenceByDimension($employeeId, $period['start_date'], $period['end_date']);
             
-            // Store aggregated results
+            if (empty($evidenceByDimension)) {
+                error_log("No evidence found for employee $employeeId in period {$period['start_date']} to {$period['end_date']}");
+                // Create empty results for all dimensions to maintain consistency
+                $this->createEmptyEvidenceResults($evaluationId);
+                return true;
+            }
+            
+            // Clear existing results for this evaluation
+            $this->clearExistingEvidenceResults($evaluationId);
+            
+            $aggregationResults = [];
+            $totalWeightedScore = 0;
+            $totalWeight = 0;
+            
+            // Process each dimension with enhanced calculations
             foreach ($evidenceByDimension as $dimensionData) {
-                $sql = "INSERT INTO evidence_evaluation_results 
+                $enhancedResult = $this->calculateEnhancedDimensionMetrics($dimensionData);
+                $aggregationResults[] = $enhancedResult;
+                
+                // Store aggregated results with enhanced metrics
+                $sql = "INSERT INTO evidence_evaluation_results
                         (evaluation_id, dimension, evidence_count, avg_star_rating, total_positive_entries, total_negative_entries, calculated_score)
                         VALUES (?, ?, ?, ?, ?, ?, ?)";
                 
                 insertRecord($sql, [
                     $evaluationId,
                     $dimensionData['dimension'],
-                    $dimensionData['entry_count'],
-                    round($dimensionData['avg_rating'], 2),
-                    $dimensionData['positive_count'],
-                    $dimensionData['negative_count'],
-                    $this->calculateDimensionScore($dimensionData)
+                    $enhancedResult['entry_count'],
+                    $enhancedResult['avg_rating'],
+                    $enhancedResult['positive_count'],
+                    $enhancedResult['negative_count'],
+                    $enhancedResult['calculated_score']
                 ]);
+                
+                // Calculate weighted contribution to overall score
+                $dimensionWeight = $this->getDimensionWeight($dimensionData['dimension']);
+                $totalWeightedScore += $enhancedResult['calculated_score'] * $dimensionWeight;
+                $totalWeight += $dimensionWeight;
             }
             
-            // Update overall evaluation with evidence rating
-            $overallRating = $this->calculateOverallEvidenceRating($evaluationId);
-            $this->updateEvaluation($evaluationId, ['evidence_rating' => $overallRating]);
+            // Calculate overall evidence rating with confidence metrics
+            $overallMetrics = $this->calculateOverallEvidenceMetrics($evaluationId, $aggregationResults);
+            
+            // Update evaluation with comprehensive evidence data
+            $this->updateEvaluation($evaluationId, [
+                'evidence_rating' => $overallMetrics['overall_rating'],
+                'evidence_summary' => $this->generateEnhancedEvidenceSummary($evaluationId, $overallMetrics)
+            ]);
+            
+            // Log performance metrics
+            $executionTime = microtime(true) - $startTime;
+            error_log("Evidence aggregation completed for evaluation $evaluationId in {$executionTime}s");
             
             return true;
         } catch (Exception $e) {
-            error_log("Aggregate evidence error: " . $e->getMessage());
+            error_log("Aggregate evidence error for evaluation $evaluationId: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
             return false;
         }
     }
     
     /**
-     * Calculate dimension score based on evidence
+     * Validate aggregation inputs
+     * @param int $evaluationId
+     * @param int $employeeId
+     * @param array $period
+     * @return bool
+     */
+    private function validateAggregationInputs(int $evaluationId, int $employeeId, array $period): bool {
+        if ($evaluationId <= 0 || $employeeId <= 0) {
+            error_log("Invalid evaluation ID ($evaluationId) or employee ID ($employeeId)");
+            return false;
+        }
+        
+        if (empty($period['start_date']) || empty($period['end_date'])) {
+            error_log("Invalid period dates: start={$period['start_date']}, end={$period['end_date']}");
+            return false;
+        }
+        
+        if (strtotime($period['start_date']) > strtotime($period['end_date'])) {
+            error_log("Start date cannot be after end date");
+            return false;
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Clear existing evidence results for re-aggregation
+     * @param int $evaluationId
+     * @return bool
+     */
+    private function clearExistingEvidenceResults(int $evaluationId): bool {
+        try {
+            $sql = "DELETE FROM evidence_evaluation_results WHERE evaluation_id = ?";
+            updateRecord($sql, [$evaluationId]);
+            return true;
+        } catch (Exception $e) {
+            error_log("Error clearing existing evidence results: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Create empty evidence results for all dimensions when no evidence exists
+     * @param int $evaluationId
+     * @return bool
+     */
+    private function createEmptyEvidenceResults(int $evaluationId): bool {
+        try {
+            $dimensions = ['responsibilities', 'kpis', 'competencies', 'values'];
+            
+            foreach ($dimensions as $dimension) {
+                $sql = "INSERT INTO evidence_evaluation_results
+                        (evaluation_id, dimension, evidence_count, avg_star_rating, total_positive_entries, total_negative_entries, calculated_score)
+                        VALUES (?, ?, 0, 0.00, 0, 0, 0.00)";
+                
+                insertRecord($sql, [$evaluationId, $dimension]);
+            }
+            
+            // Update evaluation with zero evidence rating
+            $this->updateEvaluation($evaluationId, ['evidence_rating' => 0.00]);
+            
+            return true;
+        } catch (Exception $e) {
+            error_log("Error creating empty evidence results: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Calculate enhanced dimension metrics with advanced algorithms
+     * @param array $dimensionData
+     * @return array
+     */
+    private function calculateEnhancedDimensionMetrics(array $dimensionData): array {
+        $entryCount = (int)$dimensionData['entry_count'];
+        $avgRating = (float)$dimensionData['avg_rating'];
+        $positiveCount = (int)$dimensionData['positive_count'];
+        $negativeCount = (int)$dimensionData['negative_count'];
+        
+        // Calculate confidence factor based on sample size
+        $confidenceFactor = $this->calculateConfidenceFactor($entryCount);
+        
+        // Calculate trend factor (positive vs negative ratio)
+        $trendFactor = $this->calculateTrendFactor($positiveCount, $negativeCount, $entryCount);
+        
+        // Calculate recency factor (if we had entry dates, we could weight recent entries more)
+        $recencyFactor = 1.0; // Default to neutral for now
+        
+        // Enhanced score calculation with multiple factors
+        $baseScore = $avgRating;
+        $enhancedScore = $baseScore * $confidenceFactor * $trendFactor * $recencyFactor;
+        
+        // Ensure score stays within valid range (0-5)
+        $enhancedScore = max(0, min(5, $enhancedScore));
+        
+        return [
+            'entry_count' => $entryCount,
+            'avg_rating' => round($avgRating, 2),
+            'positive_count' => $positiveCount,
+            'negative_count' => $negativeCount,
+            'calculated_score' => round($enhancedScore, 2),
+            'confidence_factor' => round($confidenceFactor, 3),
+            'trend_factor' => round($trendFactor, 3),
+            'recency_factor' => round($recencyFactor, 3)
+        ];
+    }
+    
+    /**
+     * Calculate confidence factor based on sample size
+     * @param int $entryCount
+     * @return float
+     */
+    private function calculateConfidenceFactor(int $entryCount): float {
+        if ($entryCount == 0) return 0.0;
+        if ($entryCount == 1) return 0.5; // Low confidence with single entry
+        if ($entryCount <= 3) return 0.7; // Moderate confidence
+        if ($entryCount <= 7) return 0.85; // Good confidence
+        if ($entryCount <= 15) return 0.95; // High confidence
+        return 1.0; // Maximum confidence with 15+ entries
+    }
+    
+    /**
+     * Calculate trend factor based on positive/negative ratio
+     * @param int $positiveCount
+     * @param int $negativeCount
+     * @param int $totalCount
+     * @return float
+     */
+    private function calculateTrendFactor(int $positiveCount, int $negativeCount, int $totalCount): float {
+        if ($totalCount == 0) return 1.0;
+        
+        $neutralCount = $totalCount - $positiveCount - $negativeCount;
+        
+        // Calculate weighted trend score
+        $trendScore = ($positiveCount * 1.0 + $neutralCount * 0.5 + $negativeCount * 0.0) / $totalCount;
+        
+        // Convert to factor (0.8 to 1.2 range)
+        return 0.8 + ($trendScore * 0.4);
+    }
+    
+    /**
+     * Get dimension weight for overall calculation
+     * @param string $dimension
+     * @return float
+     */
+    private function getDimensionWeight(string $dimension): float {
+        $weights = [
+            'kpis' => 0.30,           // 30% - Key Performance Indicators
+            'competencies' => 0.25,   // 25% - Skills and Competencies
+            'responsibilities' => 0.25, // 25% - Key Responsibilities
+            'values' => 0.20          // 20% - Company Values
+        ];
+        
+        return $weights[$dimension] ?? 0.25; // Default equal weight
+    }
+    
+    /**
+     * Calculate overall evidence metrics with confidence indicators
+     * @param int $evaluationId
+     * @param array $aggregationResults
+     * @return array
+     */
+    private function calculateOverallEvidenceMetrics(int $evaluationId, array $aggregationResults): array {
+        if (empty($aggregationResults)) {
+            return [
+                'overall_rating' => 0.00,
+                'confidence_level' => 'none',
+                'total_entries' => 0,
+                'coverage_score' => 0.0
+            ];
+        }
+        
+        $totalWeightedScore = 0;
+        $totalWeight = 0;
+        $totalEntries = 0;
+        $dimensionsWithEvidence = 0;
+        $totalConfidence = 0;
+        
+        foreach ($aggregationResults as $result) {
+            $dimension = $result['dimension'] ?? '';
+            $weight = $this->getDimensionWeight($dimension);
+            $entryCount = $result['entry_count'] ?? 0;
+            $confidenceFactor = $result['confidence_factor'] ?? 0;
+            
+            $totalWeightedScore += $result['calculated_score'] * $weight;
+            $totalWeight += $weight;
+            $totalEntries += $entryCount;
+            
+            if ($entryCount > 0) {
+                $dimensionsWithEvidence++;
+                $totalConfidence += $confidenceFactor;
+            }
+        }
+        
+        $overallRating = $totalWeight > 0 ? $totalWeightedScore / $totalWeight : 0;
+        $coverageScore = $dimensionsWithEvidence / 4.0; // 4 total dimensions
+        $avgConfidence = $dimensionsWithEvidence > 0 ? $totalConfidence / $dimensionsWithEvidence : 0;
+        
+        // Determine confidence level
+        $confidenceLevel = $this->determineConfidenceLevel($avgConfidence, $coverageScore, $totalEntries);
+        
+        return [
+            'overall_rating' => round($overallRating, 2),
+            'confidence_level' => $confidenceLevel,
+            'total_entries' => $totalEntries,
+            'coverage_score' => round($coverageScore, 2),
+            'dimensions_with_evidence' => $dimensionsWithEvidence,
+            'average_confidence' => round($avgConfidence, 3)
+        ];
+    }
+    
+    /**
+     * Determine confidence level based on multiple factors
+     * @param float $avgConfidence
+     * @param float $coverageScore
+     * @param int $totalEntries
+     * @return string
+     */
+    private function determineConfidenceLevel(float $avgConfidence, float $coverageScore, int $totalEntries): string {
+        if ($totalEntries == 0) return 'none';
+        if ($totalEntries < 3 || $coverageScore < 0.5) return 'low';
+        if ($totalEntries < 8 || $coverageScore < 0.75 || $avgConfidence < 0.7) return 'moderate';
+        if ($totalEntries < 15 || $avgConfidence < 0.85) return 'good';
+        return 'high';
+    }
+    
+    /**
+     * Calculate dimension score based on evidence (legacy compatibility)
      * @param array $dimensionData
      * @return float
      */
     private function calculateDimensionScore(array $dimensionData): float {
-        // Simple weighted calculation based on average rating and entry count
-        $avgRating = $dimensionData['avg_rating'];
-        $entryCount = $dimensionData['entry_count'];
-        
-        // Weight more heavily when there are more entries
-        $weight = min(1.0, $entryCount / 10); // Max weight at 10 entries
-        
-        return round($avgRating * $weight, 2);
+        $enhanced = $this->calculateEnhancedDimensionMetrics($dimensionData);
+        return $enhanced['calculated_score'];
     }
     
     /**
-     * Calculate overall evidence rating
+     * Calculate overall evidence rating with enhanced weighting
      * @param int $evaluationId
      * @return float
      */
     public function calculateOverallEvidenceRating(int $evaluationId): float {
         try {
-            $sql = "SELECT AVG(calculated_score) as avg_score FROM evidence_evaluation_results WHERE evaluation_id = ?";
-            $result = fetchOne($sql, [$evaluationId]);
+            $sql = "SELECT dimension, calculated_score, evidence_count FROM evidence_evaluation_results WHERE evaluation_id = ?";
+            $results = fetchAll($sql, [$evaluationId]);
             
-            return $result['avg_score'] ? round($result['avg_score'], 2) : 0;
+            if (empty($results)) {
+                return 0.0;
+            }
+            
+            $totalWeightedScore = 0;
+            $totalWeight = 0;
+            
+            foreach ($results as $result) {
+                $weight = $this->getDimensionWeight($result['dimension']);
+                $score = (float)$result['calculated_score'];
+                
+                // Apply evidence count factor for reliability
+                $evidenceCountFactor = $this->calculateConfidenceFactor((int)$result['evidence_count']);
+                $adjustedScore = $score * $evidenceCountFactor;
+                
+                $totalWeightedScore += $adjustedScore * $weight;
+                $totalWeight += $weight;
+            }
+            
+            return $totalWeight > 0 ? round($totalWeightedScore / $totalWeight, 2) : 0.0;
         } catch (Exception $e) {
             error_log("Calculate overall evidence rating error: " . $e->getMessage());
-            return 0;
+            return 0.0;
         }
     }
     
     /**
-     * Generate evidence summary for evaluation
+     * Generate enhanced evidence summary for evaluation
      * @param int $evaluationId
+     * @param array $overallMetrics
      * @return string
      */
-    public function generateEvidenceSummary(int $evaluationId): string {
+    public function generateEnhancedEvidenceSummary(int $evaluationId, array $overallMetrics = null): string {
         try {
-            $sql = "SELECT dimension, evidence_count, avg_star_rating, total_positive_entries, total_negative_entries
-                    FROM evidence_evaluation_results 
-                    WHERE evaluation_id = ? 
-                    ORDER BY avg_star_rating DESC";
+            $sql = "SELECT dimension, evidence_count, avg_star_rating, total_positive_entries, total_negative_entries, calculated_score
+                    FROM evidence_evaluation_results
+                    WHERE evaluation_id = ?
+                    ORDER BY calculated_score DESC, avg_star_rating DESC";
             
             $results = fetchAll($sql, [$evaluationId]);
             
             if (empty($results)) {
-                return "No evidence entries found for this evaluation period.";
+                return "No evidence entries found for this evaluation period. Consider collecting more feedback data for a comprehensive assessment.";
             }
             
-            $summary = "Evidence-Based Evaluation Summary:\n\n";
+            // Get overall metrics if not provided
+            if ($overallMetrics === null) {
+                $overallMetrics = $this->calculateOverallEvidenceMetrics($evaluationId, $results);
+            }
+            
+            $summary = "=== EVIDENCE-BASED EVALUATION SUMMARY ===\n\n";
+            
+            // Overall performance section
+            $summary .= "OVERALL PERFORMANCE:\n";
+            $summary .= "• Overall Rating: " . $overallMetrics['overall_rating'] . "/5.0\n";
+            $summary .= "• Confidence Level: " . ucfirst($overallMetrics['confidence_level']) . "\n";
+            $summary .= "• Total Evidence Entries: " . $overallMetrics['total_entries'] . "\n";
+            $summary .= "• Dimension Coverage: " . ($overallMetrics['dimensions_with_evidence'] ?? 0) . "/4 areas\n\n";
+            
+            // Performance by dimension
+            $summary .= "PERFORMANCE BY DIMENSION:\n";
             
             foreach ($results as $result) {
-                $summary .= ucfirst($result['dimension']) . ":\n";
-                $summary .= "  - Entries: " . $result['evidence_count'] . "\n";
-                $summary .= "  - Average Rating: " . round($result['avg_star_rating'], 2) . "/5\n";
-                $summary .= "  - Positive Feedback: " . $result['total_positive_entries'] . "\n";
-                $summary .= "  - Areas for Improvement: " . $result['total_negative_entries'] . "\n\n";
+                $dimensionName = ucfirst(str_replace('_', ' ', $result['dimension']));
+                $weight = $this->getDimensionWeight($result['dimension']) * 100;
+                
+                $summary .= "\n{$dimensionName} (Weight: {$weight}%):\n";
+                $summary .= "  • Score: " . $result['calculated_score'] . "/5.0\n";
+                $summary .= "  • Evidence Entries: " . $result['evidence_count'] . "\n";
+                
+                if ($result['evidence_count'] > 0) {
+                    $summary .= "  • Average Rating: " . round($result['avg_star_rating'], 2) . "/5.0\n";
+                    $summary .= "  • Positive Feedback: " . $result['total_positive_entries'] . " entries\n";
+                    $summary .= "  • Development Areas: " . $result['total_negative_entries'] . " entries\n";
+                    
+                    // Performance indicator
+                    $performance = $this->getPerformanceIndicator($result['calculated_score']);
+                    $summary .= "  • Performance Level: {$performance}\n";
+                } else {
+                    $summary .= "  • Status: No evidence collected for this dimension\n";
+                }
             }
+            
+            // Recommendations section
+            $summary .= "\n" . $this->generateRecommendations($results, $overallMetrics);
             
             return $summary;
         } catch (Exception $e) {
-            error_log("Generate evidence summary error: " . $e->getMessage());
-            return "Error generating evidence summary.";
+            error_log("Generate enhanced evidence summary error: " . $e->getMessage());
+            return "Error generating evidence summary. Please contact system administrator.";
         }
+    }
+    
+    /**
+     * Generate evidence summary for evaluation (legacy compatibility)
+     * @param int $evaluationId
+     * @return string
+     */
+    public function generateEvidenceSummary(int $evaluationId): string {
+        return $this->generateEnhancedEvidenceSummary($evaluationId);
+    }
+    
+    /**
+     * Get performance indicator based on score
+     * @param float $score
+     * @return string
+     */
+    private function getPerformanceIndicator(float $score): string {
+        if ($score >= 4.5) return "Exceptional";
+        if ($score >= 4.0) return "Exceeds Expectations";
+        if ($score >= 3.5) return "Meets Expectations";
+        if ($score >= 2.5) return "Below Expectations";
+        if ($score >= 1.0) return "Needs Significant Improvement";
+        return "No Evidence Available";
+    }
+    
+    /**
+     * Generate recommendations based on evidence analysis
+     * @param array $results
+     * @param array $overallMetrics
+     * @return string
+     */
+    private function generateRecommendations(array $results, array $overallMetrics): string {
+        $recommendations = "RECOMMENDATIONS:\n";
+        
+        // Overall confidence recommendations
+        switch ($overallMetrics['confidence_level']) {
+            case 'none':
+            case 'low':
+                $recommendations .= "• Increase feedback frequency - more evidence needed for reliable assessment\n";
+                break;
+            case 'moderate':
+                $recommendations .= "• Continue regular feedback collection to improve assessment reliability\n";
+                break;
+            case 'good':
+            case 'high':
+                $recommendations .= "• Excellent evidence collection - assessment is highly reliable\n";
+                break;
+        }
+        
+        // Dimension-specific recommendations
+        $strengthAreas = [];
+        $developmentAreas = [];
+        $noEvidenceAreas = [];
+        
+        foreach ($results as $result) {
+            $dimension = ucfirst(str_replace('_', ' ', $result['dimension']));
+            
+            if ($result['evidence_count'] == 0) {
+                $noEvidenceAreas[] = $dimension;
+            } elseif ($result['calculated_score'] >= 4.0) {
+                $strengthAreas[] = $dimension;
+            } elseif ($result['calculated_score'] < 3.0) {
+                $developmentAreas[] = $dimension;
+            }
+        }
+        
+        if (!empty($strengthAreas)) {
+            $recommendations .= "• Strengths to leverage: " . implode(', ', $strengthAreas) . "\n";
+        }
+        
+        if (!empty($developmentAreas)) {
+            $recommendations .= "• Areas for development: " . implode(', ', $developmentAreas) . "\n";
+        }
+        
+        if (!empty($noEvidenceAreas)) {
+            $recommendations .= "• Collect evidence for: " . implode(', ', $noEvidenceAreas) . "\n";
+        }
+        
+        return $recommendations;
     }
     
     /**
@@ -291,6 +697,24 @@ class Evaluation {
         
         $evaluation = fetchOne($sql, [$evaluationId]);
         
+        if ($evaluation) {
+            // Check if evidence has been aggregated for this evaluation
+            $evidenceResults = $this->getEvidenceResults($evaluationId);
+            
+            // If no evidence results exist, try to aggregate evidence
+            if (empty($evidenceResults)) {
+                $period = [
+                    'start_date' => $evaluation['start_date'],
+                    'end_date' => $evaluation['end_date']
+                ];
+                
+                $aggregated = $this->aggregateEvidence($evaluationId, $evaluation['employee_id'], $period);
+                if ($aggregated) {
+                    error_log("Evidence auto-aggregated for evaluation ID: $evaluationId");
+                }
+            }
+        }
+        
         return $evaluation;
     }
     
@@ -311,6 +735,70 @@ class Evaluation {
         // Get evidence summary
         $evaluation['evidence_summary_text'] = $this->generateEvidenceSummary($evaluationId);
         
+        // For backward compatibility, also include the job template structure
+        // This ensures the edit page works with both evidence-based and legacy evaluations
+        $evaluation['kpi_results'] = [];
+        $evaluation['competency_results'] = [];
+        $evaluation['responsibility_results'] = [];
+        $evaluation['value_results'] = [];
+        $evaluation['section_weights'] = [
+            'kpis' => 25,
+            'competencies' => 25,
+            'responsibilities' => 25,
+            'values' => 25
+        ];
+        
+        // Convert evidence results to the format expected by the edit page
+        if (!empty($evaluation['evidence_results'])) {
+            foreach ($evaluation['evidence_results'] as $result) {
+                // Create compatibility entries that show evidence-based ratings
+                switch ($result['dimension']) {
+                    case 'kpis':
+                        $evaluation['kpi_results'][] = [
+                            'kpi_id' => 'evidence_' . $result['dimension'],
+                            'kpi_name' => 'Evidence-Based KPI Assessment',
+                            'category' => 'Performance Evidence',
+                            'target_value' => 5.0,
+                            'measurement_unit' => 'Stars',
+                            'achieved_value' => $result['avg_star_rating'],
+                            'score' => $result['calculated_score'],
+                            'comments' => "Based on {$result['evidence_count']} evidence entries (Positive: {$result['total_positive_entries']}, Areas for improvement: {$result['total_negative_entries']})"
+                        ];
+                        break;
+                    case 'competencies':
+                        $evaluation['competency_results'][] = [
+                            'competency_id' => 'evidence_' . $result['dimension'],
+                            'competency_name' => 'Evidence-Based Competency Assessment',
+                            'category_name' => 'Performance Evidence',
+                            'competency_type' => 'evidence_based',
+                            'required_level' => 'advanced',
+                            'achieved_level' => $this->getAchievedLevel($result['avg_star_rating']),
+                            'score' => $result['calculated_score'],
+                            'comments' => "Based on {$result['evidence_count']} evidence entries (Positive: {$result['total_positive_entries']}, Areas for improvement: {$result['total_negative_entries']})"
+                        ];
+                        break;
+                    case 'responsibilities':
+                        $evaluation['responsibility_results'][] = [
+                            'responsibility_id' => 'evidence_' . $result['dimension'],
+                            'sort_order' => 1,
+                            'responsibility_text' => 'Evidence-Based Responsibility Assessment',
+                            'score' => $result['calculated_score'],
+                            'comments' => "Based on {$result['evidence_count']} evidence entries (Positive: {$result['total_positive_entries']}, Areas for improvement: {$result['total_negative_entries']})"
+                        ];
+                        break;
+                    case 'values':
+                        $evaluation['value_results'][] = [
+                            'value_id' => 'evidence_' . $result['dimension'],
+                            'value_name' => 'Evidence-Based Values Assessment',
+                            'description' => 'Assessment based on evidence of living company values',
+                            'score' => $result['calculated_score'],
+                            'comments' => "Based on {$result['evidence_count']} evidence entries (Positive: {$result['total_positive_entries']}, Areas for improvement: {$result['total_negative_entries']})"
+                        ];
+                        break;
+                }
+            }
+        }
+        
         return $evaluation;
     }
     
@@ -320,6 +808,51 @@ class Evaluation {
     private function getEvidenceResults(int $evaluationId): array {
         $sql = "SELECT * FROM evidence_evaluation_results WHERE evaluation_id = ? ORDER BY dimension";
         return fetchAll($sql, [$evaluationId]);
+    }
+    
+    /**
+     * Get detailed evidence entries for a specific dimension
+     * @param int $evaluationId
+     * @param string $dimension
+     * @return array
+     */
+    public function getEvidenceEntriesByDimension(int $evaluationId, string $dimension): array {
+        try {
+            // Get evaluation details to find employee and period
+            $evaluation = $this->getEvaluationById($evaluationId);
+            if (!$evaluation) {
+                return [];
+            }
+            
+            // Get period details
+            $periodClass = new EvaluationPeriod();
+            $period = $periodClass->getPeriodById($evaluation['period_id']);
+            if (!$period) {
+                return [];
+            }
+            
+            // Get evidence entries for the dimension within the evaluation period
+            $sql = "SELECT gee.*,
+                           emp.first_name as manager_first_name,
+                           emp.last_name as manager_last_name
+                    FROM growth_evidence_entries gee
+                    LEFT JOIN employees emp ON gee.manager_id = emp.user_id
+                    WHERE gee.employee_id = ?
+                    AND gee.dimension = ?
+                    AND gee.entry_date >= ?
+                    AND gee.entry_date <= ?
+                    ORDER BY gee.entry_date DESC";
+            
+            return fetchAll($sql, [
+                $evaluation['employee_id'],
+                $dimension,
+                $period['start_date'],
+                $period['end_date']
+            ]);
+        } catch (Exception $e) {
+            error_log("Get evidence entries by dimension error: " . $e->getMessage());
+            return [];
+        }
     }
     
     /**
@@ -768,6 +1301,272 @@ class Evaluation {
             'action' => 'Proceed with evidence collection',
             'job_template_title' => 'Evidence-Based Evaluation'
         ];
+    }
+    
+    /**
+     * Convert star rating to achievement level
+     * @param float $starRating
+     * @return string
+     */
+    private function getAchievedLevel(float $starRating): string {
+        if ($starRating >= 4.5) return 'expert';
+        if ($starRating >= 3.5) return 'advanced';
+        if ($starRating >= 2.5) return 'intermediate';
+        return 'basic';
+    }
+    
+    /**
+     * Batch aggregate evidence for multiple evaluations (performance optimization)
+     * @param array $evaluationIds
+     * @return array Results array with success/failure for each evaluation
+     */
+    public function batchAggregateEvidence(array $evaluationIds): array {
+        $results = [];
+        $startTime = microtime(true);
+        
+        error_log("Starting batch evidence aggregation for " . count($evaluationIds) . " evaluations");
+        
+        try {
+            // Begin transaction for consistency
+            $this->pdo->beginTransaction();
+            
+            foreach ($evaluationIds as $evaluationId) {
+                try {
+                    // Get evaluation details
+                    $evaluation = $this->getEvaluationById($evaluationId);
+                    if (!$evaluation) {
+                        $results[$evaluationId] = ['success' => false, 'error' => 'Evaluation not found'];
+                        continue;
+                    }
+                    
+                    $period = [
+                        'start_date' => $evaluation['start_date'],
+                        'end_date' => $evaluation['end_date']
+                    ];
+                    
+                    // Aggregate evidence
+                    $success = $this->aggregateEvidence($evaluationId, $evaluation['employee_id'], $period);
+                    $results[$evaluationId] = ['success' => $success];
+                    
+                } catch (Exception $e) {
+                    $results[$evaluationId] = ['success' => false, 'error' => $e->getMessage()];
+                    error_log("Batch aggregation error for evaluation $evaluationId: " . $e->getMessage());
+                }
+            }
+            
+            // Commit transaction
+            $this->pdo->commit();
+            
+            $executionTime = microtime(true) - $startTime;
+            $successCount = count(array_filter($results, fn($r) => $r['success']));
+            
+            error_log("Batch evidence aggregation completed: $successCount/" . count($evaluationIds) . " successful in {$executionTime}s");
+            
+        } catch (Exception $e) {
+            $this->pdo->rollBack();
+            error_log("Batch evidence aggregation failed: " . $e->getMessage());
+            
+            // Mark all as failed
+            foreach ($evaluationIds as $evaluationId) {
+                if (!isset($results[$evaluationId])) {
+                    $results[$evaluationId] = ['success' => false, 'error' => 'Transaction failed'];
+                }
+            }
+        }
+        
+        return $results;
+    }
+    
+    /**
+     * Re-aggregate evidence for all evaluations in a period (maintenance function)
+     * @param int $periodId
+     * @return array
+     */
+    public function reAggregateEvidenceForPeriod(int $periodId): array {
+        try {
+            // Get all evaluations for the period
+            $sql = "SELECT evaluation_id FROM evaluations WHERE period_id = ?";
+            $evaluations = fetchAll($sql, [$periodId]);
+            
+            if (empty($evaluations)) {
+                return ['success' => true, 'message' => 'No evaluations found for period', 'processed' => 0];
+            }
+            
+            $evaluationIds = array_column($evaluations, 'evaluation_id');
+            $results = $this->batchAggregateEvidence($evaluationIds);
+            
+            $successCount = count(array_filter($results, fn($r) => $r['success']));
+            
+            return [
+                'success' => true,
+                'message' => "Re-aggregated evidence for $successCount/" . count($evaluationIds) . " evaluations",
+                'processed' => $successCount,
+                'total' => count($evaluationIds),
+                'details' => $results
+            ];
+            
+        } catch (Exception $e) {
+            error_log("Re-aggregate evidence for period error: " . $e->getMessage());
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+    
+    /**
+     * Get evidence aggregation statistics for monitoring
+     * @param int $periodId Optional period filter
+     * @return array
+     */
+    public function getEvidenceAggregationStats(int $periodId = null): array {
+        try {
+            $whereClause = "";
+            $params = [];
+            
+            if ($periodId) {
+                $whereClause = "WHERE e.period_id = ?";
+                $params[] = $periodId;
+            }
+            
+            // Get evaluation counts
+            $sql = "SELECT
+                        COUNT(*) as total_evaluations,
+                        COUNT(e.evidence_rating) as evaluations_with_evidence,
+                        AVG(e.evidence_rating) as avg_evidence_rating,
+                        MIN(e.evidence_rating) as min_evidence_rating,
+                        MAX(e.evidence_rating) as max_evidence_rating
+                    FROM evaluations e
+                    $whereClause";
+            
+            $stats = fetchOne($sql, $params);
+            
+            // Get evidence entry counts
+            $evidenceSql = "SELECT
+                               COUNT(*) as total_evidence_results,
+                               AVG(evidence_count) as avg_evidence_per_dimension,
+                               SUM(evidence_count) as total_evidence_entries
+                           FROM evidence_evaluation_results eer
+                           JOIN evaluations e ON eer.evaluation_id = e.evaluation_id
+                           $whereClause";
+            
+            $evidenceStats = fetchOne($evidenceSql, $params);
+            
+            // Get dimension coverage
+            $dimensionSql = "SELECT
+                                dimension,
+                                COUNT(*) as evaluation_count,
+                                AVG(calculated_score) as avg_score,
+                                AVG(evidence_count) as avg_evidence_count
+                            FROM evidence_evaluation_results eer
+                            JOIN evaluations e ON eer.evaluation_id = e.evaluation_id
+                            $whereClause
+                            GROUP BY dimension
+                            ORDER BY avg_score DESC";
+            
+            $dimensionStats = fetchAll($dimensionSql, $params);
+            
+            return [
+                'evaluation_stats' => $stats,
+                'evidence_stats' => $evidenceStats,
+                'dimension_stats' => $dimensionStats,
+                'coverage_percentage' => $stats['total_evaluations'] > 0 ?
+                    round(($stats['evaluations_with_evidence'] / $stats['total_evaluations']) * 100, 2) : 0
+            ];
+            
+        } catch (Exception $e) {
+            error_log("Get evidence aggregation stats error: " . $e->getMessage());
+            return ['error' => $e->getMessage()];
+        }
+    }
+    
+    /**
+     * Validate evidence data integrity for an evaluation
+     * @param int $evaluationId
+     * @return array
+     */
+    public function validateEvidenceIntegrity(int $evaluationId): array {
+        try {
+            $issues = [];
+            
+            // Check if evaluation exists
+            $evaluation = $this->getEvaluationById($evaluationId);
+            if (!$evaluation) {
+                return ['valid' => false, 'issues' => ['Evaluation not found']];
+            }
+            
+            // Check evidence results exist
+            $evidenceResults = $this->getEvidenceResults($evaluationId);
+            if (empty($evidenceResults)) {
+                $issues[] = "No evidence results found";
+            }
+            
+            // Check for missing dimensions
+            $expectedDimensions = ['responsibilities', 'kpis', 'competencies', 'values'];
+            $foundDimensions = array_column($evidenceResults, 'dimension');
+            $missingDimensions = array_diff($expectedDimensions, $foundDimensions);
+            
+            if (!empty($missingDimensions)) {
+                $issues[] = "Missing dimensions: " . implode(', ', $missingDimensions);
+            }
+            
+            // Check for invalid scores
+            foreach ($evidenceResults as $result) {
+                if ($result['calculated_score'] < 0 || $result['calculated_score'] > 5) {
+                    $issues[] = "Invalid calculated score for {$result['dimension']}: {$result['calculated_score']}";
+                }
+                
+                if ($result['avg_star_rating'] < 0 || $result['avg_star_rating'] > 5) {
+                    $issues[] = "Invalid average rating for {$result['dimension']}: {$result['avg_star_rating']}";
+                }
+                
+                if ($result['evidence_count'] < 0) {
+                    $issues[] = "Invalid evidence count for {$result['dimension']}: {$result['evidence_count']}";
+                }
+            }
+            
+            // Check overall rating consistency
+            $calculatedOverall = $this->calculateOverallEvidenceRating($evaluationId);
+            $storedOverall = (float)$evaluation['evidence_rating'];
+            
+            if (abs($calculatedOverall - $storedOverall) > 0.01) {
+                $issues[] = "Overall rating mismatch: calculated=$calculatedOverall, stored=$storedOverall";
+            }
+            
+            return [
+                'valid' => empty($issues),
+                'issues' => $issues,
+                'evaluation_id' => $evaluationId,
+                'evidence_results_count' => count($evidenceResults)
+            ];
+            
+        } catch (Exception $e) {
+            error_log("Validate evidence integrity error: " . $e->getMessage());
+            return ['valid' => false, 'issues' => ['Validation error: ' . $e->getMessage()]];
+        }
+    }
+    
+    /**
+     * Performance monitoring for evidence aggregation
+     * @param int $evaluationId
+     * @param float $executionTime
+     * @param array $metrics
+     */
+    private function logPerformanceMetrics(int $evaluationId, float $executionTime, array $metrics = []): void {
+        try {
+            $logData = [
+                'evaluation_id' => $evaluationId,
+                'execution_time' => round($executionTime, 4),
+                'timestamp' => date('Y-m-d H:i:s'),
+                'metrics' => $metrics
+            ];
+            
+            // Log to application log
+            error_log("Evidence aggregation performance: " . json_encode($logData));
+            
+            // Could also log to a dedicated performance table if needed
+            // This would be useful for monitoring and optimization
+            
+        } catch (Exception $e) {
+            error_log("Performance logging error: " . $e->getMessage());
+        }
     }
 }
 ?>

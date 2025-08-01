@@ -251,7 +251,7 @@ class GrowthEvidenceJournal {
     }
     
     /**
-     * Get evidence by dimension for an employee
+     * Get evidence by dimension for an employee with enhanced metrics
      * @param int $employeeId
      * @param string $startDate
      * @param string $endDate
@@ -275,7 +275,13 @@ class GrowthEvidenceJournal {
                        COUNT(*) as entry_count,
                        AVG(gee.star_rating) as avg_rating,
                        SUM(CASE WHEN gee.star_rating >= 4 THEN 1 ELSE 0 END) as positive_count,
-                       SUM(CASE WHEN gee.star_rating <= 2 THEN 1 ELSE 0 END) as negative_count
+                       SUM(CASE WHEN gee.star_rating <= 2 THEN 1 ELSE 0 END) as negative_count,
+                       MIN(gee.star_rating) as min_rating,
+                       MAX(gee.star_rating) as max_rating,
+                       STDDEV(gee.star_rating) as rating_stddev,
+                       MIN(gee.entry_date) as first_entry_date,
+                       MAX(gee.entry_date) as last_entry_date,
+                       COUNT(DISTINCT gee.manager_id) as unique_managers
                 FROM growth_evidence_entries gee
                 $whereClause
                 GROUP BY gee.dimension
@@ -434,6 +440,212 @@ class GrowthEvidenceJournal {
                 ORDER BY entry_count DESC";
         
         return fetchAll($sql, $params);
+    }
+    /**
+     * Get evidence entries with recency weighting for enhanced calculations
+     * @param int $employeeId
+     * @param string $startDate
+     * @param string $endDate
+     * @param string $dimension
+     * @return array
+     */
+    public function getEvidenceWithRecencyWeighting($employeeId, $startDate, $endDate, $dimension = null) {
+        $whereClause = "WHERE gee.employee_id = ? AND gee.entry_date BETWEEN ? AND ?";
+        $params = [$employeeId, $startDate, $endDate];
+        
+        if ($dimension) {
+            $whereClause .= " AND gee.dimension = ?";
+            $params[] = $dimension;
+        }
+        
+        $sql = "SELECT gee.*,
+                       DATEDIFF(?, gee.entry_date) as days_ago,
+                       CASE
+                           WHEN DATEDIFF(?, gee.entry_date) <= 30 THEN 1.0
+                           WHEN DATEDIFF(?, gee.entry_date) <= 60 THEN 0.8
+                           WHEN DATEDIFF(?, gee.entry_date) <= 90 THEN 0.6
+                           ELSE 0.4
+                       END as recency_weight
+                FROM growth_evidence_entries gee
+                $whereClause
+                ORDER BY gee.entry_date DESC";
+        
+        // Add current date parameters for recency calculation
+        $currentDate = date('Y-m-d');
+        $recencyParams = array_merge([$currentDate, $currentDate, $currentDate, $currentDate], $params);
+        
+        return fetchAll($sql, $recencyParams);
+    }
+    
+    /**
+     * Get evidence quality metrics for validation
+     * @param int $employeeId
+     * @param string $startDate
+     * @param string $endDate
+     * @return array
+     */
+    public function getEvidenceQualityMetrics($employeeId, $startDate, $endDate) {
+        $whereClause = "WHERE gee.employee_id = ? AND gee.entry_date BETWEEN ? AND ?";
+        $params = [$employeeId, $startDate, $endDate];
+        
+        $sql = "SELECT
+                    COUNT(*) as total_entries,
+                    COUNT(DISTINCT gee.dimension) as dimensions_covered,
+                    COUNT(DISTINCT gee.manager_id) as unique_evaluators,
+                    AVG(LENGTH(gee.content)) as avg_content_length,
+                    MIN(LENGTH(gee.content)) as min_content_length,
+                    MAX(LENGTH(gee.content)) as max_content_length,
+                    COUNT(CASE WHEN LENGTH(gee.content) < 50 THEN 1 END) as short_entries,
+                    COUNT(CASE WHEN LENGTH(gee.content) > 200 THEN 1 END) as detailed_entries,
+                    DATEDIFF(MAX(gee.entry_date), MIN(gee.entry_date)) as date_range_days,
+                    COUNT(DISTINCT DATE(gee.entry_date)) as unique_entry_dates
+                FROM growth_evidence_entries gee
+                $whereClause";
+        
+        return fetchOne($sql, $params);
+    }
+    
+    /**
+     * Batch retrieve evidence for multiple employees (performance optimization)
+     * @param array $employeeIds
+     * @param string $startDate
+     * @param string $endDate
+     * @return array Grouped by employee_id
+     */
+    public function batchGetEvidenceByDimension(array $employeeIds, $startDate, $endDate) {
+        if (empty($employeeIds)) {
+            return [];
+        }
+        
+        $placeholders = str_repeat('?,', count($employeeIds) - 1) . '?';
+        $params = array_merge($employeeIds, [$startDate, $endDate]);
+        
+        $sql = "SELECT gee.employee_id,
+                       gee.dimension,
+                       COUNT(*) as entry_count,
+                       AVG(gee.star_rating) as avg_rating,
+                       SUM(CASE WHEN gee.star_rating >= 4 THEN 1 ELSE 0 END) as positive_count,
+                       SUM(CASE WHEN gee.star_rating <= 2 THEN 1 ELSE 0 END) as negative_count,
+                       MIN(gee.star_rating) as min_rating,
+                       MAX(gee.star_rating) as max_rating,
+                       STDDEV(gee.star_rating) as rating_stddev
+                FROM growth_evidence_entries gee
+                WHERE gee.employee_id IN ($placeholders)
+                AND gee.entry_date BETWEEN ? AND ?
+                GROUP BY gee.employee_id, gee.dimension
+                ORDER BY gee.employee_id, avg_rating DESC";
+        
+        $results = fetchAll($sql, $params);
+        
+        // Group by employee_id
+        $grouped = [];
+        foreach ($results as $result) {
+            $employeeId = $result['employee_id'];
+            unset($result['employee_id']); // Remove employee_id from individual result
+            $grouped[$employeeId][] = $result;
+        }
+        
+        return $grouped;
+    }
+    
+    /**
+     * Get evidence trend analysis for an employee
+     * @param int $employeeId
+     * @param string $startDate
+     * @param string $endDate
+     * @return array
+     */
+    public function getEvidenceTrendAnalysis($employeeId, $startDate, $endDate) {
+        $sql = "SELECT
+                    DATE_FORMAT(gee.entry_date, '%Y-%m') as month_year,
+                    gee.dimension,
+                    COUNT(*) as entry_count,
+                    AVG(gee.star_rating) as avg_rating,
+                    SUM(CASE WHEN gee.star_rating >= 4 THEN 1 ELSE 0 END) as positive_count,
+                    SUM(CASE WHEN gee.star_rating <= 2 THEN 1 ELSE 0 END) as negative_count
+                FROM growth_evidence_entries gee
+                WHERE gee.employee_id = ?
+                AND gee.entry_date BETWEEN ? AND ?
+                GROUP BY DATE_FORMAT(gee.entry_date, '%Y-%m'), gee.dimension
+                ORDER BY month_year, gee.dimension";
+        
+        return fetchAll($sql, [$employeeId, $startDate, $endDate]);
+    }
+    
+    /**
+     * Validate evidence data consistency
+     * @param int $employeeId
+     * @param string $startDate
+     * @param string $endDate
+     * @return array
+     */
+    public function validateEvidenceConsistency($employeeId, $startDate, $endDate) {
+        $issues = [];
+        
+        try {
+            // Check for entries with invalid ratings
+            $sql = "SELECT COUNT(*) as invalid_ratings
+                    FROM growth_evidence_entries
+                    WHERE employee_id = ?
+                    AND entry_date BETWEEN ? AND ?
+                    AND (star_rating < 1 OR star_rating > 5)";
+            
+            $result = fetchOne($sql, [$employeeId, $startDate, $endDate]);
+            if ($result['invalid_ratings'] > 0) {
+                $issues[] = "Found {$result['invalid_ratings']} entries with invalid star ratings";
+            }
+            
+            // Check for entries with empty content
+            $sql = "SELECT COUNT(*) as empty_content
+                    FROM growth_evidence_entries
+                    WHERE employee_id = ?
+                    AND entry_date BETWEEN ? AND ?
+                    AND (content IS NULL OR TRIM(content) = '')";
+            
+            $result = fetchOne($sql, [$employeeId, $startDate, $endDate]);
+            if ($result['empty_content'] > 0) {
+                $issues[] = "Found {$result['empty_content']} entries with empty content";
+            }
+            
+            // Check for entries with invalid dimensions
+            $sql = "SELECT COUNT(*) as invalid_dimensions
+                    FROM growth_evidence_entries
+                    WHERE employee_id = ?
+                    AND entry_date BETWEEN ? AND ?
+                    AND dimension NOT IN ('responsibilities', 'kpis', 'competencies', 'values')";
+            
+            $result = fetchOne($sql, [$employeeId, $startDate, $endDate]);
+            if ($result['invalid_dimensions'] > 0) {
+                $issues[] = "Found {$result['invalid_dimensions']} entries with invalid dimensions";
+            }
+            
+            // Check for future-dated entries
+            $sql = "SELECT COUNT(*) as future_entries
+                    FROM growth_evidence_entries
+                    WHERE employee_id = ?
+                    AND entry_date BETWEEN ? AND ?
+                    AND entry_date > CURDATE()";
+            
+            $result = fetchOne($sql, [$employeeId, $startDate, $endDate]);
+            if ($result['future_entries'] > 0) {
+                $issues[] = "Found {$result['future_entries']} entries with future dates";
+            }
+            
+            return [
+                'valid' => empty($issues),
+                'issues' => $issues,
+                'employee_id' => $employeeId,
+                'period' => "$startDate to $endDate"
+            ];
+            
+        } catch (Exception $e) {
+            error_log("Evidence consistency validation error: " . $e->getMessage());
+            return [
+                'valid' => false,
+                'issues' => ['Validation error: ' . $e->getMessage()],
+                'employee_id' => $employeeId
+            ];
+        }
     }
 }
 ?>

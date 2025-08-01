@@ -26,6 +26,9 @@ require_once __DIR__ . '/../classes/CompanyValues.php';
 require_once __DIR__ . '/../classes/JobTemplate.php';
 require_once __DIR__ . '/../classes/EvaluationPeriod.php';
 require_once __DIR__ . '/../classes/Evaluation.php';
+require_once __DIR__ . '/../classes/GrowthEvidenceJournal.php';
+require_once __DIR__ . '/../classes/NotificationManager.php';
+require_once __DIR__ . '/../classes/EvidenceManager.php';
 
 class TestDataPopulator {
     private $pdo;
@@ -38,6 +41,9 @@ class TestDataPopulator {
     private $jobTemplateIds = [];
     private $periodIds = [];
     private $credentials = [];
+    private $evidenceEntryIds = [];
+    private $notificationIds = [];
+    private $evidenceTagIds = [];
     
     // Test data arrays
     private $firstNames = [
@@ -109,6 +115,12 @@ class TestDataPopulator {
             $this->createJobTemplatesAndAssignToEmployees();
             $this->createEvaluationPeriods();
             $this->createEvaluations();
+            $this->createGrowthEvidenceEntries();
+            $this->createEvidenceTags();
+            $this->createNotifications();
+            $this->createPhase3Features();
+            $this->applyPhase3Schema();
+            $this->aggregateAllEvidence();
             $this->generateDocumentation();
             
             echo "\n✅ Test data population completed successfully!\n";
@@ -1502,7 +1514,634 @@ class TestDataPopulator {
     }
     
     /**
+     * Create Growth Evidence entries
+     */
+    private function createGrowthEvidenceEntries() {
+        echo "📝 Creating Growth Evidence entries...\n";
+        
+        $evidenceJournal = new GrowthEvidenceJournal();
+        $dimensions = ['kpis', 'competencies', 'responsibilities', 'values'];
+        
+        $evidenceTemplates = [
+            'kpis' => [
+                'Exceeded monthly sales target by 15% through strategic client outreach and relationship building.',
+                'Delivered project 2 weeks ahead of schedule while maintaining high quality standards.',
+                'Achieved 98% customer satisfaction rating through exceptional service delivery.',
+                'Reduced bug resolution time by 40% through improved debugging processes.',
+                'Increased team productivity by 25% through process optimization initiatives.',
+                'Generated $50K in additional revenue through upselling existing clients.',
+                'Improved code quality score from 85% to 95% through rigorous testing practices.',
+                'Reduced customer support tickets by 30% through proactive issue resolution.',
+                'Achieved 100% project delivery rate for Q4 objectives.',
+                'Increased user engagement metrics by 35% through UX improvements.'
+            ],
+            'competencies' => [
+                'Demonstrated excellent leadership during cross-functional project coordination.',
+                'Applied advanced analytical thinking to solve complex technical challenges.',
+                'Showed strong communication skills in client presentations and stakeholder meetings.',
+                'Exhibited creative problem-solving in developing innovative solutions.',
+                'Displayed exceptional collaboration skills in team-based initiatives.',
+                'Mentored 3 junior developers, significantly improving their technical skills.',
+                'Led successful knowledge transfer sessions for new team members.',
+                'Demonstrated adaptability by quickly learning new technologies for project needs.',
+                'Applied strategic thinking to long-term project planning and resource allocation.',
+                'Showed excellent decision-making skills under pressure during critical incidents.'
+            ],
+            'responsibilities' => [
+                'Successfully managed department budget with 5% under-spend while meeting all objectives.',
+                'Led team of 8 developers through successful product launch.',
+                'Maintained comprehensive documentation for all project deliverables.',
+                'Conducted thorough code reviews ensuring quality and knowledge transfer.',
+                'Coordinated cross-departmental initiatives improving overall efficiency.',
+                'Implemented new onboarding process reducing time-to-productivity by 40%.',
+                'Managed vendor relationships resulting in 15% cost savings.',
+                'Established quality assurance protocols improving product reliability.',
+                'Developed training materials used across multiple teams.',
+                'Maintained 99.9% system uptime through proactive monitoring and maintenance.'
+            ],
+            'values' => [
+                'Demonstrated integrity by transparently communicating project risks to stakeholders.',
+                'Showed commitment to excellence by going above and beyond in client service.',
+                'Exhibited innovation by proposing and implementing new efficiency improvements.',
+                'Displayed strong collaboration by facilitating cross-team knowledge sharing.',
+                'Maintained customer focus by prioritizing user experience in all decisions.',
+                'Upheld company values during difficult client negotiations.',
+                'Promoted diversity and inclusion through inclusive team practices.',
+                'Demonstrated accountability by taking ownership of project outcomes.',
+                'Showed respect for colleagues by actively listening and incorporating feedback.',
+                'Exhibited continuous learning by pursuing professional development opportunities.'
+            ]
+        ];
+        
+        $entriesCreated = 0;
+        
+        // Create evidence entries for each employee
+        foreach ($this->employeeIds as $username => $employeeId) {
+            // Skip admin user
+            if ($username === 'admin.system') continue;
+            
+            // Get manager for this employee
+            $managerId = $this->getManagerUserIdForEmployee($username);
+            if (!$managerId) continue;
+            
+            // Create 10-15 evidence entries per employee across different dimensions
+            $entryCount = rand(10, 15);
+            
+            for ($i = 0; $i < $entryCount; $i++) {
+                $dimension = $dimensions[array_rand($dimensions)];
+                $content = $evidenceTemplates[$dimension][array_rand($evidenceTemplates[$dimension])];
+                
+                // Generate realistic entry date within evaluation periods
+                $entryDate = $this->generateRealisticEvidenceDate();
+                
+                $entryData = [
+                    'employee_id' => $employeeId,
+                    'manager_id' => $managerId,
+                    'content' => $content,
+                    'star_rating' => $this->generateEvidenceRating(),
+                    'dimension' => $dimension,
+                    'entry_date' => $entryDate
+                ];
+                
+                try {
+                    $entryId = $evidenceJournal->createEntry($entryData);
+                    $this->evidenceEntryIds[] = $entryId;
+                    
+                    // Add tags to some evidence entries (60% chance)
+                    if (rand(1, 100) <= 60) {
+                        $this->addTagsToEvidence($entryId, $dimension);
+                    }
+                    
+                    $entriesCreated++;
+                } catch (Exception $e) {
+                    echo "    ⚠️  Warning: Could not create evidence entry for $username: " . $e->getMessage() . "\n";
+                }
+            }
+        }
+        
+        echo "  ✓ Created $entriesCreated Growth Evidence entries\n\n";
+    }
+    
+    /**
+     * Get manager user ID for employee
+     */
+    private function getManagerUserIdForEmployee($username) {
+        foreach ($this->credentials as $cred) {
+            if ($cred['username'] === $username && isset($cred['department'])) {
+                $department = $cred['department'];
+                
+                // Find manager for this department
+                foreach ($this->credentials as $managerCred) {
+                    if ($managerCred['role'] === 'manager' &&
+                        isset($managerCred['department']) &&
+                        $managerCred['department'] === $department) {
+                        return $this->userIds[$managerCred['username']];
+                    }
+                }
+            }
+        }
+        
+        // Fallback to HR admin
+        return $this->userIds['admin.system'];
+    }
+    
+    /**
+     * Generate realistic evidence date within evaluation periods
+     */
+    private function generateRealisticEvidenceDate() {
+        $periods = [
+            ['start' => '2024-07-01', 'end' => '2024-09-30'],
+            ['start' => '2024-10-01', 'end' => '2024-12-31'],
+            ['start' => '2025-01-01', 'end' => '2025-03-31']
+        ];
+        
+        $period = $periods[array_rand($periods)];
+        $startTime = strtotime($period['start']);
+        $endTime = strtotime($period['end']);
+        
+        $randomTime = rand($startTime, $endTime);
+        return date('Y-m-d', $randomTime);
+    }
+    
+    /**
+     * Generate evidence rating (1-5 stars)
+     */
+    private function generateEvidenceRating() {
+        $rand = rand(1, 100);
+        
+        if ($rand <= 30) return 5; // 30% excellent
+        if ($rand <= 70) return 4; // 40% good
+        if ($rand <= 90) return 3; // 20% satisfactory
+        if ($rand <= 98) return 2; // 8% needs improvement
+        return 1; // 2% poor
+    }
+    
+    /**
+     * Create evidence tags
+     */
+    private function createEvidenceTags() {
+        echo "🏷️  Creating evidence tags...\n";
+        
+        $tags = [
+            ['name' => 'Leadership', 'color' => '#007bff', 'description' => 'Leadership and management activities'],
+            ['name' => 'Innovation', 'color' => '#28a745', 'description' => 'Creative and innovative solutions'],
+            ['name' => 'Teamwork', 'color' => '#ffc107', 'description' => 'Collaborative team activities'],
+            ['name' => 'Client Success', 'color' => '#dc3545', 'description' => 'Client-focused achievements'],
+            ['name' => 'Process Improvement', 'color' => '#6f42c1', 'description' => 'Process optimization and efficiency'],
+            ['name' => 'Mentoring', 'color' => '#fd7e14', 'description' => 'Knowledge sharing and mentoring'],
+            ['name' => 'Quality', 'color' => '#20c997', 'description' => 'Quality assurance and excellence'],
+            ['name' => 'Strategic', 'color' => '#6c757d', 'description' => 'Strategic thinking and planning'],
+            ['name' => 'Technical Excellence', 'color' => '#17a2b8', 'description' => 'Technical skills and expertise'],
+            ['name' => 'Communication', 'color' => '#e83e8c', 'description' => 'Communication and presentation skills']
+        ];
+        
+        $tagsCreated = 0;
+        
+        foreach ($tags as $tag) {
+            $sql = "INSERT INTO evidence_tags (tag_name, tag_color, description, created_by) VALUES (?, ?, ?, ?)";
+            try {
+                $tagId = insertRecord($sql, [
+                    $tag['name'],
+                    $tag['color'],
+                    $tag['description'],
+                    $this->userIds['admin.system']
+                ]);
+                $this->evidenceTagIds[$tag['name']] = $tagId;
+                $tagsCreated++;
+            } catch (Exception $e) {
+                echo "    ⚠️  Warning: Could not create tag {$tag['name']}: " . $e->getMessage() . "\n";
+            }
+        }
+        
+        echo "  ✓ Created $tagsCreated evidence tags\n\n";
+    }
+    
+    /**
+     * Add tags to evidence entry
+     */
+    private function addTagsToEvidence($entryId, $dimension) {
+        // Map dimensions to relevant tags
+        $dimensionTags = [
+            'kpis' => ['Quality', 'Technical Excellence', 'Process Improvement'],
+            'competencies' => ['Leadership', 'Communication', 'Innovation'],
+            'responsibilities' => ['Strategic', 'Quality', 'Process Improvement'],
+            'values' => ['Teamwork', 'Client Success', 'Innovation']
+        ];
+        
+        $relevantTags = $dimensionTags[$dimension] ?? [];
+        if (empty($relevantTags)) return;
+        
+        // Add 1-2 random tags
+        $tagCount = rand(1, 2);
+        $selectedTags = array_rand(array_flip($relevantTags), min($tagCount, count($relevantTags)));
+        if (!is_array($selectedTags)) $selectedTags = [$selectedTags];
+        
+        foreach ($selectedTags as $tagName) {
+            if (isset($this->evidenceTagIds[$tagName])) {
+                $sql = "INSERT INTO evidence_entry_tags (entry_id, tag_id) VALUES (?, ?)";
+                try {
+                    executeQuery($sql, [$entryId, $this->evidenceTagIds[$tagName]]);
+                } catch (Exception $e) {
+                    // Ignore duplicate tag assignments
+                }
+            }
+        }
+    }
+    
+    /**
+     * Create notifications
+     */
+    private function createNotifications() {
+        echo "🔔 Creating notifications...\n";
+        
+        $notificationManager = new NotificationManager();
+        
+        $notificationTemplates = [
+            [
+                'type' => 'evidence_reminder',
+                'title' => 'Weekly Evidence Reminder',
+                'message' => 'Remember to capture evidence for your team members this week.',
+                'priority' => 'medium'
+            ],
+            [
+                'type' => 'evidence_reminder',
+                'title' => 'Evidence Entry Overdue',
+                'message' => 'You have not captured evidence for your team in the past 2 weeks.',
+                'priority' => 'high'
+            ],
+            [
+                'type' => 'evaluation_summary',
+                'title' => 'Evaluation Period Summary',
+                'message' => 'Q4 evaluation period is ending soon. Please review all evidence entries.',
+                'priority' => 'high'
+            ],
+            [
+                'type' => 'milestone_alert',
+                'title' => 'Performance Milestone Achieved',
+                'message' => 'Congratulations! You have achieved your quarterly performance milestone.',
+                'priority' => 'medium'
+            ],
+            [
+                'type' => 'milestone_alert',
+                'title' => 'Evidence Goal Reached',
+                'message' => 'Great job! You have captured evidence across all 4 dimensions this month.',
+                'priority' => 'low'
+            ],
+            [
+                'type' => 'system_announcement',
+                'title' => 'Growth Evidence System Update',
+                'message' => 'New features have been added to the Growth Evidence System. Check them out!',
+                'priority' => 'low'
+            ]
+        ];
+        
+        $notificationsCreated = 0;
+        
+        // Create notifications for managers and employees
+        foreach ($this->userIds as $username => $userId) {
+            if ($username === 'admin.system') continue;
+            
+            // Create 2-5 notifications per user
+            $notificationCount = rand(2, 5);
+            
+            for ($i = 0; $i < $notificationCount; $i++) {
+                $template = $notificationTemplates[array_rand($notificationTemplates)];
+                
+                $notificationData = [
+                    'user_id' => $userId,
+                    'type' => $template['type'],
+                    'title' => $template['title'],
+                    'message' => $template['message'],
+                    'priority' => $template['priority'],
+                    'expires_at' => date('Y-m-d H:i:s', strtotime('+30 days'))
+                ];
+                
+                try {
+                    $notificationId = $notificationManager->createNotification($notificationData);
+                    $this->notificationIds[] = $notificationId;
+                    $notificationsCreated++;
+                } catch (Exception $e) {
+                    echo "    ⚠️  Warning: Could not create notification for $username: " . $e->getMessage() . "\n";
+                }
+            }
+        }
+        
+        echo "  ✓ Created $notificationsCreated notifications\n\n";
+    }
+    
+    /**
+     * Create Phase 3 advanced features
+     */
+    private function createPhase3Features() {
+        echo "⚡ Creating Phase 3 advanced features...\n";
+        
+        $this->createNotificationTemplates();
+        $this->createEvidenceApprovals();
+        $this->createScheduledReports();
+        $this->demonstrateEvidenceAggregation();
+        
+        echo "  ✓ Phase 3 features created\n\n";
+    }
+    
+    /**
+     * Create notification templates
+     */
+    private function createNotificationTemplates() {
+        $templates = [
+            [
+                'template_key' => 'evidence_reminder_weekly',
+                'type' => 'evidence_reminder',
+                'title_template' => 'Weekly Evidence Reminder for {{manager_name}}',
+                'message_template' => 'Hi {{manager_name}}, remember to capture evidence for your team this week. You have {{team_size}} team members.',
+                'variables' => json_encode(['manager_name', 'team_size'])
+            ],
+            [
+                'template_key' => 'evaluation_period_ending',
+                'type' => 'evaluation_summary',
+                'title_template' => 'Evaluation Period Ending: {{period_name}}',
+                'message_template' => 'The {{period_name}} evaluation period ends on {{end_date}}. Please review all evidence entries for your team.',
+                'variables' => json_encode(['period_name', 'end_date'])
+            ],
+            [
+                'template_key' => 'milestone_achievement',
+                'type' => 'milestone_alert',
+                'title_template' => 'Milestone Achieved: {{milestone_name}}',
+                'message_template' => 'Congratulations {{employee_name}}! You have achieved {{milestone_name}} with a rating of {{rating}} stars.',
+                'variables' => json_encode(['employee_name', 'milestone_name', 'rating'])
+            ],
+            [
+                'template_key' => 'evidence_goal_reached',
+                'type' => 'milestone_alert',
+                'title_template' => 'Evidence Collection Goal Reached',
+                'message_template' => 'Excellent work {{manager_name}}! You have captured {{evidence_count}} evidence entries across all dimensions.',
+                'variables' => json_encode(['manager_name', 'evidence_count'])
+            ]
+        ];
+        
+        foreach ($templates as $template) {
+            $sql = "INSERT INTO notification_templates (template_key, type, title_template, message_template, variables)
+                    VALUES (?, ?, ?, ?, ?)";
+            try {
+                insertRecord($sql, [
+                    $template['template_key'],
+                    $template['type'],
+                    $template['title_template'],
+                    $template['message_template'],
+                    $template['variables']
+                ]);
+            } catch (Exception $e) {
+                echo "    ⚠️  Warning: Could not create notification template {$template['template_key']}: " . $e->getMessage() . "\n";
+            }
+        }
+    }
+    
+    /**
+     * Create evidence approvals
+     */
+    private function createEvidenceApprovals() {
+        // Create approval workflows for some evidence entries
+        $approvalCount = 0;
+        $sampleEntries = array_slice($this->evidenceEntryIds, 0, min(20, count($this->evidenceEntryIds)));
+        
+        foreach ($sampleEntries as $entryId) {
+            $status = ['pending', 'approved', 'approved', 'approved'][array_rand(['pending', 'approved', 'approved', 'approved'])];
+            $comments = $status === 'approved' ? 'Evidence approved - excellent documentation.' : 'Pending review.';
+            
+            $sql = "INSERT INTO evidence_approvals (entry_id, approver_id, status, comments, approved_at)
+                    VALUES (?, ?, ?, ?, ?)";
+            try {
+                insertRecord($sql, [
+                    $entryId,
+                    $this->userIds['admin.system'], // Admin user as approver
+                    $status,
+                    $comments,
+                    $status === 'approved' ? date('Y-m-d H:i:s') : null
+                ]);
+                $approvalCount++;
+            } catch (Exception $e) {
+                echo "    ⚠️  Warning: Could not create approval for entry $entryId: " . $e->getMessage() . "\n";
+            }
+        }
+        
+        echo "    ✓ Created $approvalCount evidence approvals\n";
+    }
+    
+    /**
+     * Create scheduled reports
+     */
+    private function createScheduledReports() {
+        $reports = [
+            [
+                'report_name' => 'Weekly Evidence Summary',
+                'report_type' => 'evidence_summary',
+                'parameters' => json_encode(['period' => 'weekly', 'include_ratings' => true, 'group_by_dimension' => true]),
+                'recipients' => json_encode([$this->userIds['admin.system']]),
+                'schedule_frequency' => 'weekly',
+                'schedule_day_of_week' => 1, // Monday
+                'next_run_at' => date('Y-m-d H:i:s', strtotime('next Monday 09:00'))
+            ],
+            [
+                'report_name' => 'Monthly Performance Trends',
+                'report_type' => 'performance_trends',
+                'parameters' => json_encode(['period' => 'monthly', 'include_analytics' => true, 'trend_analysis' => true]),
+                'recipients' => json_encode([$this->userIds['admin.system']]),
+                'schedule_frequency' => 'monthly',
+                'schedule_day_of_month' => 1,
+                'next_run_at' => date('Y-m-d H:i:s', strtotime('first day of next month 09:00'))
+            ],
+            [
+                'report_name' => 'Manager Evidence Overview',
+                'report_type' => 'manager_overview',
+                'parameters' => json_encode(['include_team_summary' => true, 'evidence_quality_metrics' => true]),
+                'recipients' => json_encode([$this->userIds['admin.system']]),
+                'schedule_frequency' => 'weekly',
+                'schedule_day_of_week' => 5, // Friday
+                'next_run_at' => date('Y-m-d H:i:s', strtotime('next Friday 17:00'))
+            ]
+        ];
+        
+        foreach ($reports as $report) {
+            $sql = "INSERT INTO scheduled_reports (report_name, report_type, parameters, recipients,
+                    schedule_frequency, schedule_day_of_week, schedule_day_of_month, next_run_at, created_by)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            try {
+                insertRecord($sql, [
+                    $report['report_name'],
+                    $report['report_type'],
+                    $report['parameters'],
+                    $report['recipients'],
+                    $report['schedule_frequency'],
+                    $report['schedule_day_of_week'] ?? null,
+                    $report['schedule_day_of_month'] ?? null,
+                    $report['next_run_at'],
+                    $this->userIds['admin.system']
+                ]);
+            } catch (Exception $e) {
+                echo "    ⚠️  Warning: Could not create scheduled report {$report['report_name']}: " . $e->getMessage() . "\n";
+            }
+        }
+    }
+    
+    /**
+     * Demonstrate evidence aggregation capabilities
+     */
+    private function demonstrateEvidenceAggregation() {
+        echo "    🔍 Demonstrating evidence aggregation capabilities...\n";
+        
+        if (!empty($this->employeeIds)) {
+            $employeeUsernames = array_keys($this->employeeIds);
+            $randomEmployee = $employeeUsernames[array_rand($employeeUsernames)];
+            $employeeId = $this->employeeIds[$randomEmployee];
+            
+            echo "    Testing evidence aggregation for $randomEmployee...\n";
+            
+            // Get evidence summary for this employee
+            $sql = "SELECT dimension, COUNT(*) as count, ROUND(AVG(star_rating), 2) as avg_rating
+                    FROM growth_evidence_entries
+                    WHERE employee_id = ?
+                    GROUP BY dimension";
+            
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$employeeId]);
+            $results = $stmt->fetchAll();
+            
+            if ($results) {
+                echo "    ✓ Evidence aggregation successful:\n";
+                foreach ($results as $result) {
+                    echo "      - {$result['dimension']}: {$result['count']} entries, avg rating: {$result['avg_rating']}\n";
+                }
+            }
+        }
+    }
+    
+    /**
+     * Apply Phase 3 schema automatically
+     */
+    private function applyPhase3Schema() {
+        echo "⚡ Applying Phase 3 database schema...\n";
+        
+        try {
+            $schemaFile = __DIR__ . '/../sql/003_phase3_advanced_features.sql';
+            if (!file_exists($schemaFile)) {
+                echo "  ⚠️  Warning: Phase 3 schema file not found, skipping schema application\n";
+                return;
+            }
+            
+            $sql = file_get_contents($schemaFile);
+            
+            // Remove the USE statement as we're already connected to the right database
+            $sql = preg_replace('/USE\s+web_object_classification\s*;/', '', $sql);
+            
+            // Split into individual statements and execute
+            $statements = array_filter(array_map('trim', explode(';', $sql)));
+            
+            $this->pdo->beginTransaction();
+            
+            $executed = 0;
+            foreach ($statements as $statement) {
+                if (!empty($statement) && !preg_match('/^\s*--/', $statement)) {
+                    try {
+                        $this->pdo->exec($statement);
+                        $executed++;
+                    } catch (Exception $e) {
+                        // Ignore table already exists errors
+                        if (strpos($e->getMessage(), 'already exists') === false) {
+                            echo "    ⚠️  Warning: " . $e->getMessage() . "\n";
+                        }
+                    }
+                }
+            }
+            
+            $this->pdo->commit();
+            echo "  ✓ Phase 3 schema applied successfully ($executed statements executed)\n\n";
+            
+        } catch (Exception $e) {
+            echo "  ❌ Error applying Phase 3 schema: " . $e->getMessage() . "\n";
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollback();
+            }
+        }
+    }
+    
+    /**
      * Generate comprehensive documentation
+    /**
+     * Aggregate evidence for all evaluations
+     * This ensures that evidence data flows correctly to evaluation forms
+     */
+    private function aggregateAllEvidence() {
+        echo "🔄 Aggregating evidence for all evaluations...\n";
+        
+        try {
+            $evaluationClass = new Evaluation();
+            
+            // Find all evaluations that have employees with evidence entries
+            $sql = "SELECT DISTINCT e.evaluation_id, e.employee_id, emp.first_name, emp.last_name,
+                           ep.period_name, ep.start_date, ep.end_date
+                    FROM evaluations e
+                    JOIN employees emp ON e.employee_id = emp.employee_id
+                    JOIN evaluation_periods ep ON e.period_id = ep.period_id
+                    WHERE e.employee_id IN (
+                        SELECT DISTINCT employee_id FROM growth_evidence_entries
+                    )
+                    ORDER BY e.evaluation_id";
+            
+            $evaluationsToProcess = fetchAll($sql);
+            
+            if (empty($evaluationsToProcess)) {
+                echo "   ⚠️  No evaluations found with evidence entries.\n";
+                return;
+            }
+            
+            echo "   📊 Processing " . count($evaluationsToProcess) . " evaluations...\n";
+            
+            $successCount = 0;
+            $errorCount = 0;
+            
+            foreach ($evaluationsToProcess as $evaluation) {
+                $evaluationId = $evaluation['evaluation_id'];
+                $employeeId = $evaluation['employee_id'];
+                
+                // Prepare period data
+                $period = [
+                    'period_id' => null,
+                    'period_name' => $evaluation['period_name'],
+                    'start_date' => $evaluation['start_date'],
+                    'end_date' => $evaluation['end_date']
+                ];
+                
+                try {
+                    $result = $evaluationClass->aggregateEvidence($evaluationId, $employeeId, $period);
+                    if ($result) {
+                        $successCount++;
+                    } else {
+                        $errorCount++;
+                    }
+                } catch (Exception $e) {
+                    $errorCount++;
+                    error_log("Evidence aggregation error for evaluation $evaluationId: " . $e->getMessage());
+                }
+            }
+            
+            echo "   ✅ Successfully aggregated: $successCount evaluations\n";
+            if ($errorCount > 0) {
+                echo "   ❌ Errors: $errorCount evaluations\n";
+            }
+            
+            // Verify aggregation results
+            $sql = "SELECT COUNT(DISTINCT evaluation_id) as count FROM evidence_evaluation_results WHERE evidence_count > 0";
+            $result = fetchAll($sql);
+            $aggregatedCount = $result[0]['count'] ?? 0;
+            
+            echo "   📈 Total evaluations with evidence aggregation: $aggregatedCount\n";
+            
+        } catch (Exception $e) {
+            echo "   ❌ Error during evidence aggregation: " . $e->getMessage() . "\n";
+            throw $e;
+        }
+    }
+
+    /**
      */
     private function generateDocumentation() {
         echo "📚 Generating documentation...\n";
@@ -1599,7 +2238,56 @@ class TestDataPopulator {
         $content .= "- Evaluation Periods: $periodCount\n";
         $content .= "- Total Evaluations: $evaluationCount\n\n";
         
-        $content .= "EVALUATION PERIODS:\n";
+        // Count Growth Evidence System data
+        $evidenceCount = 0;
+        $tagCount = count($this->evidenceTagIds);
+        $notificationCount = count($this->notificationIds);
+        
+        try {
+            $result = $this->pdo->query("SELECT COUNT(*) as count FROM growth_evidence_entries");
+            $evidenceCount = $result->fetch()['count'];
+        } catch (Exception $e) {
+            // Table might not exist yet
+        }
+        
+        $content .= "GROWTH EVIDENCE SYSTEM:\n";
+        $content .= "- Evidence Entries: $evidenceCount\n";
+        $content .= "- Evidence Tags: $tagCount\n";
+        $content .= "- Notifications: $notificationCount\n";
+        
+        // Evidence by dimension
+        try {
+            $stmt = $this->pdo->query("
+                SELECT dimension, COUNT(*) as count, ROUND(AVG(star_rating), 2) as avg_rating
+                FROM growth_evidence_entries
+                GROUP BY dimension
+            ");
+            $dimensionStats = $stmt->fetchAll();
+            if ($dimensionStats) {
+                $content .= "- Evidence by Dimension:\n";
+                foreach ($dimensionStats as $stat) {
+                    $content .= "  • {$stat['dimension']}: {$stat['count']} entries, avg rating: {$stat['avg_rating']}\n";
+                }
+            }
+        } catch (Exception $e) {
+            // Table might not exist yet
+        }
+        
+        // Phase 3 features
+        try {
+            $templateCount = $this->pdo->query("SELECT COUNT(*) FROM notification_templates")->fetchColumn();
+            $approvalCount = $this->pdo->query("SELECT COUNT(*) FROM evidence_approvals")->fetchColumn();
+            $reportCount = $this->pdo->query("SELECT COUNT(*) FROM scheduled_reports")->fetchColumn();
+            
+            $content .= "- Phase 3 Features:\n";
+            $content .= "  • Notification Templates: $templateCount\n";
+            $content .= "  • Evidence Approvals: $approvalCount\n";
+            $content .= "  • Scheduled Reports: $reportCount\n";
+        } catch (Exception $e) {
+            // Tables might not exist yet
+        }
+        
+        $content .= "\nEVALUATION PERIODS:\n";
         foreach ($this->periodIds as $periodName => $periodId) {
             $result = $this->pdo->query("SELECT COUNT(*) as count FROM evaluations WHERE period_id = $periodId");
             $count = $result->fetch()['count'];
@@ -1616,19 +2304,34 @@ class TestDataPopulator {
         $content .= "   - Login as admin.system\n";
         $content .= "   - View all employees and evaluations\n";
         $content .= "   - Create new evaluation periods\n";
-        $content .= "   - Generate reports\n\n";
+        $content .= "   - Generate reports\n";
+        $content .= "   - Review evidence approvals\n";
+        $content .= "   - Manage notification templates\n\n";
         
         $content .= "2. Manager Testing:\n";
         $content .= "   - Login as any manager.* account\n";
         $content .= "   - View team members\n";
         $content .= "   - Create/edit evaluations for direct reports\n";
+        $content .= "   - Capture evidence entries across 4 dimensions\n";
+        $content .= "   - Tag evidence entries for categorization\n";
         $content .= "   - Review evaluation progress\n\n";
         
         $content .= "3. Employee Testing:\n";
         $content .= "   - Login as any employee account\n";
         $content .= "   - View personal evaluations\n";
         $content .= "   - Check performance history\n";
-        $content .= "   - Update profile information\n";
+        $content .= "   - View evidence entries captured by manager\n";
+        $content .= "   - Check notifications and alerts\n";
+        $content .= "   - Update profile information\n\n";
+        
+        $content .= "4. Growth Evidence System Testing:\n";
+        $content .= "   - Evidence capture across KPIs, competencies, responsibilities, values\n";
+        $content .= "   - Evidence tagging and categorization\n";
+        $content .= "   - Real-time notifications and alerts\n";
+        $content .= "   - Evidence approval workflows\n";
+        $content .= "   - Scheduled reporting system\n";
+        $content .= "   - Evidence aggregation for evaluations\n";
+        $content .= "   - Analytics and performance insights\n";
         
         file_put_contents(__DIR__ . '/test_data_summary.txt', $content);
         echo "  ✓ Created summary file: test_data_summary.txt\n";

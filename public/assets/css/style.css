@@ -521,3 +521,462 @@ body {
         color: var(--dark-color);
     }
 }
+/* Dashboard Specific Styles */
+
+/* Dashboard Metric Cards */
+.dashboard-metric-card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: all 0.15s ease-in-out;
+    border-left: 4px solid transparent;
+}
+
+.dashboard-metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.metric-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.metric-icon.bg-primary {
+    background: linear-gradient(135deg, var(--primary-color), #0056b3);
+}
+
+.metric-icon.bg-success {
+    background: linear-gradient(135deg, var(--success-color), #146c43);
+}
+
+.metric-icon.bg-info {
+    background: linear-gradient(135deg, var(--info-color), #0aa2c0);
+}
+
+.metric-icon.bg-warning {
+    background: linear-gradient(135deg, var(--warning-color), #d39e00);
+}
+
+.metric-icon.bg-danger {
+    background: linear-gradient(135deg, var(--danger-color), #b02a37);
+}
+
+.metric-value {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--dark-color);
+}
+
+.metric-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--secondary-color);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.metric-subtitle {
+    font-size: 0.75rem;
+    color: var(--secondary-color);
+}
+
+/* Dashboard Charts */
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+.chart-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+}
+
+/* Performance Categories */
+.performance-category-excellent {
+    color: var(--success-color);
+    font-weight: 600;
+}
+
+.performance-category-good {
+    color: #20c997;
+    font-weight: 600;
+}
+
+.performance-category-satisfactory {
+    color: var(--warning-color);
+    font-weight: 600;
+}
+
+.performance-category-needs_improvement {
+    color: #fd7e14;
+    font-weight: 600;
+}
+
+.performance-category-unsatisfactory {
+    color: var(--danger-color);
+    font-weight: 600;
+}
+
+/* Rating Stars */
+.rating-stars {
+    display: inline-flex;
+    gap: 2px;
+}
+
+.rating-star {
+    font-size: 0.875rem;
+}
+
+.rating-star.active {
+    color: var(--warning-color);
+}
+
+.rating-display {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Status Badges */
+.status-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.status-draft {
+    background-color: var(--secondary-color);
+}
+
+.status-submitted {
+    background-color: var(--info-color);
+}
+
+.status-reviewed {
+    background-color: var(--warning-color);
+}
+
+.status-approved {
+    background-color: var(--success-color);
+}
+
+.status-rejected {
+    background-color: var(--danger-color);
+}
+
+/* Dashboard Widgets */
+.dashboard-widget {
+    background: white;
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    box-shadow: var(--box-shadow);
+    transition: var(--transition);
+    border-left: 4px solid transparent;
+    height: 100%;
+}
+
+.dashboard-widget:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.widget-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: white;
+    margin-bottom: 1rem;
+}
+
+.widget-icon.primary {
+    background: linear-gradient(135deg, var(--primary-color), #0056b3);
+}
+
+.widget-icon.success {
+    background: linear-gradient(135deg, var(--success-color), #146c43);
+}
+
+.widget-icon.warning {
+    background: linear-gradient(135deg, var(--warning-color), #d39e00);
+}
+
+.widget-icon.info {
+    background: linear-gradient(135deg, var(--info-color), #0aa2c0);
+}
+
+.widget-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--secondary-color);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.widget-value {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--dark-color);
+    margin-bottom: 0.5rem;
+}
+
+.widget-change {
+    font-size: 0.75rem;
+    color: var(--secondary-color);
+}
+
+/* Team Members List */
+.team-members-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.team-member-item {
+    transition: var(--transition);
+}
+
+.team-member-item:hover {
+    background-color: var(--light-color);
+}
+
+/* Coaching Opportunities */
+.coaching-opportunities-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.coaching-opportunity-item {
+    transition: var(--transition);
+}
+
+.coaching-opportunity-item:hover {
+    background-color: var(--light-color);
+}
+
+.opportunity-detail {
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+/* Quality Metrics */
+.quality-metric {
+    padding: 1rem;
+    text-align: center;
+}
+
+.quality-metric .metric-value {
+    font-size: 1.75rem;
+    margin-bottom: 0.25rem;
+}
+
+.quality-metric .metric-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+/* Evidence Timeline */
+.evidence-timeline {
+    position: relative;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 1rem;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: var(--light-color);
+}
+
+.timeline-item:last-child::before {
+    display: none;
+}
+
+.timeline-date {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.timeline-entry {
+    background-color: #f8f9fa;
+    border-radius: var(--border-radius);
+    margin-bottom: 0.5rem;
+}
+
+/* Development Recommendations */
+.recommendations-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.recommendation-item {
+    transition: var(--transition);
+}
+
+.recommendation-item:hover {
+    background-color: var(--light-color);
+}
+
+/* Goal Progress */
+.goals-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.goal-item {
+    padding: 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: var(--border-radius);
+    margin-bottom: 1rem;
+    transition: var(--transition);
+}
+
+.goal-item:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 0.125rem 0.25rem rgba(13, 110, 253, 0.15);
+}
+
+/* Peer Comparison */
+.peer-comparison {
+    padding: 1rem 0;
+}
+
+.comparison-item {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.comparison-item:last-child {
+    border-bottom: none;
+}
+
+/* Feedback Summary */
+.feedback-summary {
+    padding: 1rem 0;
+}
+
+.summary-item {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.summary-item:last-child {
+    border-bottom: none;
+}
+
+.dimension-item {
+    margin-bottom: 1rem;
+}
+
+/* Action Items */
+.action-item {
+    text-align: center;
+    padding: 2rem 1rem;
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+}
+
+.action-item:hover {
+    background-color: var(--light-color);
+    transform: translateY(-2px);
+}
+
+.action-item i {
+    margin-bottom: 1rem;
+}
+
+.action-item h6 {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+/* Custom Grid for 5 columns */
+.col-xl-2-4 {
+    flex: 0 0 auto;
+    width: 20%;
+}
+
+@media (max-width: 1199.98px) {
+    .col-xl-2-4 {
+        width: 50%;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .col-xl-2-4 {
+        width: 100%;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .metric-value {
+        font-size: 1.5rem;
+    }
+    
+    .widget-value {
+        font-size: 1.5rem;
+    }
+    
+    .metric-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
+    }
+    
+    .dashboard-metric-card .card-body {
+        padding: 1rem;
+    }
+    
+    .action-item {
+        padding: 1.5rem 1rem;
+    }
+    
+    .team-members-list,
+    .coaching-opportunities-list,
+    .recommendations-list,
+    .goals-list {
+        max-height: 300px;
+    }
+}
+
+/* Loading States */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.spinner-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
