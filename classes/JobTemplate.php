@@ -264,6 +264,62 @@ class JobTemplate {
     }
     
     /**
+     * Get template KPIs
+     * @param int $templateId
+     * @return array
+     */
+    public function getTemplateKPIs($templateId) {
+        $sql = "SELECT tk.*, k.kpi_name, k.kpi_description, k.measurement_unit, k.category
+                FROM job_template_kpis tk
+                JOIN company_kpis k ON tk.kpi_id = k.id
+                WHERE tk.job_template_id = ? AND k.is_active = 1
+                ORDER BY k.category, k.kpi_name";
+        return fetchAll($sql, [$templateId]);
+    }
+
+    /**
+     * Get template competencies
+     * @param int $templateId
+     * @return array
+     */
+    public function getTemplateCompetencies($templateId) {
+        $sql = "SELECT tc.*, c.competency_name, c.description, c.competency_type,
+                       cc.category_name
+                FROM job_template_competencies tc
+                JOIN competencies c ON tc.competency_id = c.id
+                LEFT JOIN competency_categories cc ON c.category_id = cc.id
+                WHERE tc.job_template_id = ? AND c.is_active = 1
+                ORDER BY cc.category_name, c.competency_name";
+        return fetchAll($sql, [$templateId]);
+    }
+
+    /**
+     * Get template responsibilities
+     * @param int $templateId
+     * @return array
+     */
+    public function getTemplateResponsibilities($templateId) {
+        $sql = "SELECT * FROM job_template_responsibilities
+                WHERE job_template_id = ?
+                ORDER BY sort_order, id";
+        return fetchAll($sql, [$templateId]);
+    }
+
+    /**
+     * Get template values
+     * @param int $templateId
+     * @return array
+     */
+    public function getTemplateValues($templateId) {
+        $sql = "SELECT tv.*, v.value_name, v.description
+                FROM job_template_values tv
+                JOIN company_values v ON tv.value_id = v.id
+                WHERE tv.job_template_id = ? AND v.is_active = 1
+                ORDER BY v.sort_order, v.value_name";
+        return fetchAll($sql, [$templateId]);
+    }
+
+    /**
      * Get complete job template with all components
      * @param int $templateId
      * @return array

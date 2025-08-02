@@ -62,10 +62,26 @@ body {
 .btn {
     font-weight: 500;
     transition: var(--transition);
+    margin: 0.25rem;
 }
 
 .btn-outline-primary:hover {
     transform: translateY(-1px);
+}
+
+/* Consistent button positioning in cards */
+.card-header .btn {
+    margin: 0 0.25rem;
+}
+
+/* Consistent button positioning for remove buttons */
+.btn-remove {
+    margin: 0 0.125rem;
+}
+
+/* Add spacing for action buttons */
+.btn-group .btn {
+    margin: 0 0.125rem;
 }
 
 /* Forms */
@@ -979,4 +995,92 @@ body {
     align-items: center;
     justify-content: center;
     z-index: 10;
+}
+
+/* New Item Animation Effects */
+@keyframes highlightNewItem {
+    0% {
+        background-color: #d1ecf1;
+        transform: scale(1.02);
+        box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.3);
+    }
+    50% {
+        background-color: #bee5eb;
+        transform: scale(1.01);
+    }
+    100% {
+        background-color: transparent;
+        transform: scale(1);
+        box-shadow: none;
+    }
+}
+
+@keyframes slideInFromTop {
+    0% {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.new-item-highlight {
+    animation: highlightNewItem 2s ease-in-out;
+}
+
+.new-item-slide-in {
+    animation: slideInFromTop 0.5s ease-out;
+}
+
+/* Scroll preservation helper */
+.scroll-anchor {
+    scroll-margin-top: 100px;
+}
+
+/* Enhanced modal backdrop for better focus */
+.modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Smooth scrolling for better UX */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Enhanced button states for AJAX operations */
+.btn-ajax-loading {
+    position: relative;
+    color: transparent;
+}
+
+.btn-ajax-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 1rem;
+    height: 1rem;
+    margin: -0.5rem 0 0 -0.5rem;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Success feedback for added items */
+.add-success-feedback {
+    background-color: #d4edda;
+    border-left: 4px solid #28a745;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border-radius: 0.375rem;
+    animation: slideInFromTop 0.3s ease-out;
 }
