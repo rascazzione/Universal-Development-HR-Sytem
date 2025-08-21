@@ -56,6 +56,18 @@ class CompanyKPI {
         
         return fetchAll($sql);
     }
+
+    /**
+     * Get all distinct measurement units
+     * @return array
+     */
+    public function getMeasurementUnits() {
+        $sql = "SELECT DISTINCT measurement_unit
+                FROM company_kpis
+                WHERE is_active = 1 AND measurement_unit IS NOT NULL AND measurement_unit != ''
+                ORDER BY measurement_unit";
+        return fetchAll($sql);
+    }
     
     /**
      * Create new KPI

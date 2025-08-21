@@ -82,6 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $selectedCategory = $_GET['category'] ?? null;
 $kpis = $kpiClass->getKPIs($selectedCategory);
 $categories = $kpiClass->getKPICategories();
+$measurementUnits = $kpiClass->getMeasurementUnits();
 $editKPI = null;
 
 if (isset($_GET['edit'])) {
@@ -243,14 +244,18 @@ include __DIR__ . '/../../templates/header.php';
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="category" class="form-label">Category</label>
-                                <input type="text" class="form-control" id="category" name="category" 
-                                       list="categoryList" placeholder="e.g., Sales, Quality, Efficiency">
-                                <datalist id="categoryList">
+                                <label for="category_select" class="form-label">Category</label>
+                                <select class="form-select" id="category_select" onchange="handleCategoryChange()">
+                                    <option value="">Select existing category...</option>
                                     <?php foreach ($categories as $category): ?>
                                     <option value="<?php echo htmlspecialchars($category['category']); ?>">
+                                        <?php echo htmlspecialchars($category['category']); ?>
+                                    </option>
                                     <?php endforeach; ?>
-                                </datalist>
+                                    <option value="__new__">Create new category...</option>
+                                </select>
+                                <input type="text" class="form-control mt-2" id="category_new" placeholder="Enter new category" style="display: none;">
+                                <input type="hidden" name="category" id="category_final">
                             </div>
                         </div>
                     </div>
@@ -263,9 +268,18 @@ include __DIR__ . '/../../templates/header.php';
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="measurement_unit" class="form-label">Measurement Unit</label>
-                                <input type="text" class="form-control" id="measurement_unit" name="measurement_unit" 
-                                       placeholder="e.g., %, $, units, hours">
+                                <label for="measurement_unit_select" class="form-label">Measurement Unit</label>
+                                <select class="form-select" id="measurement_unit_select" onchange="handleMeasurementUnitChange()">
+                                    <option value="">Select existing unit...</option>
+                                    <?php foreach ($measurementUnits as $unit): ?>
+                                    <option value="<?php echo htmlspecialchars($unit['measurement_unit']); ?>">
+                                        <?php echo htmlspecialchars($unit['measurement_unit']); ?>
+                                    </option>
+                                    <?php endforeach; ?>
+                                    <option value="__new__">Create new unit...</option>
+                                </select>
+                                <input type="text" class="form-control mt-2" id="measurement_unit_new" placeholder="Enter new measurement unit" style="display: none;">
+                                <input type="hidden" name="measurement_unit" id="measurement_unit_final">
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -415,6 +429,49 @@ include __DIR__ . '/../../templates/header.php';
 </div>
 
 <script>
+// Handle category selection in Create modal
+function handleCategoryChange() {
+    const select = document.getElementById('category_select');
+    const newInput = document.getElementById('category_new');
+    const finalInput = document.getElementById('category_final');
+    
+    if (select.value === '__new__') {
+        newInput.style.display = 'block';
+        newInput.focus();
+        finalInput.value = '';
+    } else {
+        newInput.style.display = 'none';
+        finalInput.value = select.value;
+    }
+}
+
+// Handle measurement unit selection in Create modal
+function handleMeasurementUnitChange() {
+    const select = document.getElementById('measurement_unit_select');
+    const newInput = document.getElementById('measurement_unit_new');
+    const finalInput = document.getElementById('measurement_unit_final');
+    
+    if (select.value === '__new__') {
+        newInput.style.display = 'block';
+        newInput.focus();
+        finalInput.value = '';
+    } else {
+        newInput.style.display = 'none';
+        finalInput.value = select.value;
+    }
+}
+
+// Update final values when typing in new inputs
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('category_new').addEventListener('input', function() {
+        document.getElementById('category_final').value = this.value;
+    });
+    
+    document.getElementById('measurement_unit_new').addEventListener('input', function() {
+        document.getElementById('measurement_unit_final').value = this.value;
+    });
+});
+
 function editKPI(kpiId) {
     // Fetch KPI data and populate edit modal
     fetch(`/api/kpi.php?id=${kpiId}`)
