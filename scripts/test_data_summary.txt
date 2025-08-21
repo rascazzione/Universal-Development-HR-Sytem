@@ -1,5 +1,5 @@
 === TEST DATA SUMMARY ===
-Generated on: 2025-07-28 11:28:08
+Generated on: 2025-08-21 11:46:13
 
 USERS CREATED: 31
 - HR Admins: 1
@@ -23,12 +23,12 @@ EVALUATION DATA:
 GROWTH EVIDENCE SYSTEM:
 - Evidence Entries: 368
 - Evidence Tags: 5
-- Notifications: 93
+- Notifications: 104
 - Evidence by Dimension:
-  • responsibilities: 96 entries, avg rating: 4.10
-  • kpis: 92 entries, avg rating: 3.78
-  • competencies: 89 entries, avg rating: 3.96
-  • values: 91 entries, avg rating: 3.92
+  • responsibilities: 83 entries, avg rating: 3.86
+  • kpis: 90 entries, avg rating: 3.69
+  • competencies: 112 entries, avg rating: 4.01
+  • values: 83 entries, avg rating: 3.57
 - Phase 3 Features:
   • Notification Templates: 9
   • Evidence Approvals: 20
