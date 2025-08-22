@@ -125,7 +125,7 @@ class CompanyValues {
      * @return array
      */
     public function getValueStatistics($valueId, $periodStart = null, $periodEnd = null) {
-        $sql = "SELECT 
+        $sql = "SELECT
                     COUNT(*) as total_evaluations,
                     AVG(evr.score) as average_score,
                     MIN(evr.score) as min_score,
@@ -133,7 +133,7 @@ class CompanyValues {
                     COUNT(CASE WHEN evr.score >= 4.0 THEN 1 END) as high_performers,
                     COUNT(CASE WHEN evr.score < 3.0 THEN 1 END) as low_performers
                 FROM evaluation_value_results evr
-                JOIN evaluations e ON evr.evaluation_id = e.id
+                JOIN evaluations e ON evr.evaluation_id = e.evaluation_id
                 WHERE evr.value_id = ?";
         
         $params = [$valueId];
@@ -154,7 +154,7 @@ class CompanyValues {
      * @return array
      */
     public function getAllValuesStatistics($periodStart = null, $periodEnd = null) {
-        $sql = "SELECT 
+        $sql = "SELECT
                     cv.value_name,
                     cv.description,
                     COUNT(evr.id) as total_evaluations,
@@ -163,7 +163,7 @@ class CompanyValues {
                     MAX(evr.score) as max_score
                 FROM company_values cv
                 LEFT JOIN evaluation_value_results evr ON cv.id = evr.value_id
-                LEFT JOIN evaluations e ON evr.evaluation_id = e.id
+                LEFT JOIN evaluations e ON evr.evaluation_id = e.evaluation_id
                 WHERE cv.is_active = 1";
         
         $params = [];
