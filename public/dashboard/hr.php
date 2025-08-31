@@ -482,6 +482,222 @@ include __DIR__ . '/../../templates/header.php';
         </div>
     </div>
 
+    <!-- 360-Degree Features System Administration -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-sync-alt me-2"></i>
+                        360° System Administration
+                    </h5>
+                    <a href="/360-features/index.php" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-th me-1"></i>View All Features
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <div class="admin-quick-action">
+                                <div class="text-center mb-3">
+                                    <div class="action-icon-admin mb-2">
+                                        <i class="fas fa-gift fa-3x text-warning"></i>
+                                    </div>
+                                    <h6>KUDOS Categories</h6>
+                                    <small class="text-muted">Manage recognition types</small>
+                                </div>
+                                <div class="stats-bar mb-2">
+                                    <div class="d-flex justify-content-between">
+                                        <small>Active Categories</small>
+                                        <span class="badge bg-warning">8</span>
+                                    </div>
+                                </div>
+                                <a href="/admin/kudos-categories.php" class="btn btn-sm btn-outline-warning w-100">Configure</a>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <div class="admin-quick-action">
+                                <div class="text-center mb-3">
+                                    <div class="action-icon-admin mb-2">
+                                        <i class="fas fa-arrow-up fa-3x text-danger"></i>
+                                    </div>
+                                    <h6>Upward Feedback</h6>
+                                    <small class="text-muted">Manage feedback processes</small>
+                                </div>
+                                <div class="stats-bar mb-2">
+                                    <div class="d-flex justify-content-between">
+                                        <small>Active Programs</small>
+                                        <span class="badge bg-danger">3</span>
+                                    </div>
+                                </div>
+                                <a href="/admin/upward-feedback.php" class="btn btn-sm btn-outline-danger w-100">Manage</a>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <div class="admin-quick-action">
+                                <div class="text-center mb-3">
+                                    <div class="action-icon-admin mb-2">
+                                        <i class="fas fa-chart-line fa-3x text-info"></i>
+                                    </div>
+                                    <h6>360° Analytics</h6>
+                                    <small class="text-muted">Comprehensive insights</small>
+                                </div>
+                                <div class="stats-bar mb-2">
+                                    <div class="d-flex justify-content-between">
+                                        <small>Reports Available</small>
+                                        <span class="badge bg-info">12</span>
+                                    </div>
+                                </div>
+                                <a href="/admin/360-analytics.php" class="btn btn-sm btn-outline-info w-100">Analytics</a>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <div class="admin-quick-action">
+                                <div class="text-center mb-3">
+                                    <div class="action-icon-admin mb-2">
+                                        <i class="fas fa-cogs fa-3x text-primary"></i>
+                                    </div>
+                                    <h6>Feature Settings</h6>
+                                    <small class="text-muted">System configuration</small>
+                                </div>
+                                <div class="stats-bar mb-2">
+                                    <div class="d-flex justify-content-between">
+                                        <small>Active Features</small>
+                                        <span class="badge bg-primary">5/5</span>
+                                    </div>
+                                </div>
+                                <a href="/admin/360-settings.php" class="btn btn-sm btn-outline-primary w-100">Settings</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 360-Degree System Health & Adoption -->
+    <div class="row mb-4">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-heartbeat me-2"></i>
+                        360° System Health
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center mb-3">
+                        <div class="col-4">
+                            <div class="health-metric">
+                                <div class="metric-value text-success">
+                                    <i class="fas fa-check-circle"></i> 100%
+                                </div>
+                                <div class="metric-label">System Uptime</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="health-metric">
+                                <div class="metric-value text-primary">
+                                    <i class="fas fa-users"></i> 92%
+                                </div>
+                                <div class="metric-label">User Adoption</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="health-metric">
+                                <div class="metric-value text-info">
+                                    <i class="fas fa-chart-line"></i> Good
+                                </div>
+                                <div class="metric-label">Performance</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h6 class="mb-3">Feature Status</h6>
+                    <div class="feature-status-list">
+                        <div class="feature-status-item mb-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-file-alt text-primary me-2"></i>Self-Assessment</span>
+                                <span class="badge bg-success">Active</span>
+                            </div>
+                        </div>
+                        <div class="feature-status-item mb-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-trophy text-success me-2"></i>Achievements</span>
+                                <span class="badge bg-success">Active</span>
+                            </div>
+                        </div>
+                        <div class="feature-status-item mb-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-gift text-warning me-2"></i>KUDOS</span>
+                                <span class="badge bg-success">Active</span>
+                            </div>
+                        </div>
+                        <div class="feature-status-item mb-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-bullseye text-info me-2"></i>OKR</span>
+                                <span class="badge bg-success">Active</span>
+                            </div>
+                        </div>
+                        <div class="feature-status-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-arrow-up text-danger me-2"></i>Upward Feedback</span>
+                                <span class="badge bg-success">Active</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie me-2"></i>
+                        360° Usage Analytics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="mb-3">Feature Usage This Month</h6>
+                    <canvas id="featureUsageChart" height="200"></canvas>
+                    
+                    <div class="mt-3">
+                        <div class="row text-center">
+                            <div class="col-3">
+                                <div class="usage-stat">
+                                    <div class="stat-number">1,247</div>
+                                    <div class="stat-label small">Self-Assessments</div>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="usage-stat">
+                                    <div class="stat-number">856</div>
+                                    <div class="stat-label small">Achievements</div>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="usage-stat">
+                                    <div class="stat-number">423</div>
+                                    <div class="stat-label small">KUDOS Given</div>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="usage-stat">
+                                    <div class="stat-number">189</div>
+                                    <div class="stat-label small">OKR Updates</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Quick Actions & System Health -->
     <div class="row mb-4">
         <div class="col-12">
@@ -517,11 +733,11 @@ include __DIR__ . '/../../templates/header.php';
                         <div class="col-md-3 text-center">
                             <div class="action-item p-3">
                                 <i class="fas fa-file-export fa-2x text-info mb-2"></i>
-                                <h6>Generate Reports</h6>
-                                <p class="text-muted small">Export comprehensive performance reports</p>
-                                <button class="btn btn-outline-info btn-sm" onclick="generateReport()">
-                                    Generate
-                                </button>
+                                <h6>360° Reports</h6>
+                                <p class="text-muted small">Export comprehensive 360° reports</p>
+                                <a href="/admin/360-analytics.php" class="btn btn-outline-info btn-sm">
+                                    Export
+                                </a>
                             </div>
                         </div>
                         <div class="col-md-3 text-center">

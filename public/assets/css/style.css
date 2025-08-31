@@ -1084,3 +1084,402 @@ html {
     border-radius: 0.375rem;
     animation: slideInFromTop 0.3s ease-out;
 }
+/* 360-Degree Features Navigation Styles */
+
+/* Quick Action Widgets */
+.quick-action-widget {
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    border: 1px solid #e9ecef;
+    transition: var(--transition);
+    height: 100%;
+    background: white;
+}
+
+.quick-action-widget:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+}
+
+.action-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.05);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+.action-icon-lg {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.05);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.action-icon-admin {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.05);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.75rem;
+}
+
+/* Manager Quick Actions */
+.manager-quick-action {
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    border: 1px solid #e9ecef;
+    transition: var(--transition);
+    height: 100%;
+    background: white;
+}
+
+.manager-quick-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+}
+
+.status-bar {
+    padding: 0.5rem 0;
+}
+
+/* Admin Quick Actions */
+.admin-quick-action {
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    border: 1px solid #e9ecef;
+    transition: var(--transition);
+    height: 100%;
+    background: white;
+}
+
+.admin-quick-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+}
+
+.stats-bar {
+    padding: 0.5rem 0;
+}
+
+.stats-row {
+    padding: 0.5rem 0;
+}
+
+.stat-number {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: var(--secondary-color);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Action Recommendations */
+.action-recommendation {
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    border: 1px solid #e9ecef;
+    background: white;
+    transition: var(--transition);
+}
+
+.action-recommendation:hover {
+    background: #f8f9fa;
+}
+
+/* Status Items */
+.status-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.status-item:last-child {
+    border-bottom: none;
+}
+
+/* Feature Cards for 360° Features Page */
+.feature-card {
+    border: 1px solid #e9ecef;
+    transition: var(--transition);
+    background: white;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.feature-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+}
+
+.feature-status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Step Cards for Guide */
+.step-card {
+    border: 1px solid #e9ecef;
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    text-align: center;
+    background: white;
+    transition: var(--transition);
+}
+
+.step-card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.125rem;
+    margin: 0 auto 1rem;
+}
+
+/* engagement Metrics */
+.engagement-metric {
+    text-align: center;
+    padding: 1rem;
+}
+
+.engagement-metric .metric-value {
+    font-size: 1.75rem;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+
+.engagement-metric .metric-label {
+    font-size: 0.875rem;
+    color: var(--secondary-color);
+    margin-bottom: 0.25rem;
+}
+
+/* Health Metrics */
+.health-metric {
+    text-align: center;
+    padding: 1rem;
+}
+
+.health-metric .metric-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+
+.health-metric .metric-label {
+    font-size: 0.875rem;
+    color: var(--secondary-color);
+}
+
+/* Feature Status Lists */
+.feature-status-list {
+    margin-top: 1rem;
+}
+
+.feature-status-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.feature-status-item:last-child {
+    border-bottom: none;
+}
+
+/* Usage Statistics */
+.usage-stat {
+    text-align: center;
+    padding: 0.5rem;
+}
+
+.usage-stat .stat-number {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.usage-stat .stat-label {
+    font-size: 0.75rem;
+    color: var(--secondary-color);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Navigation Menu Enhancement */
+.navbar-nav .nav-link .fa-sync-alt {
+    animation: rotate 20s linear infinite;
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Notification Badges */
+.navbar-nav .nav-link .badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    font-size: 0.625rem;
+    padding: 2px 5px;
+    min-width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Responsive Design Adjustments */
+@media (max-width: 768px) {
+    .quick-action-widget {
+        margin-bottom: 1rem;
+    }
+    
+    .manager-quick-action {
+        margin-bottom: 1rem;
+    }
+    
+    .admin-quick-action {
+        margin-bottom: 1rem;
+    }
+    
+    .action-icon-lg {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .action-icon-admin {
+        width: 70px;
+        height: 70px;
+    }
+    
+    .stat-number {
+        font-size: 1.25rem;
+    }
+    
+    .engagement-metric .metric-value {
+        font-size: 1.5rem;
+    }
+    
+    .health-metric .metric-value {
+        font-size: 1.25rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .feature-card {
+        margin-bottom: 1rem;
+    }
+    
+    .step-card {
+        margin-bottom: 1rem;
+    }
+    
+    .action-recommendation {
+        margin-bottom: 0.5rem;
+    }
+    
+    .btn-group .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+}
+
+/* Loading States */
+.widget-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.widget-loading::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Focus States for Accessibility */
+button:focus,
+a:focus,
+.btn:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Print Styles */
+@media print {
+    .quick-action-widget,
+    .manager-quick-action,
+    .admin-quick-action,
+    .feature-card {
+        box-shadow: none;
+        border: 1px solid #ddd;
+    }
+    
+    .action-icon,
+    .action-icon-lg,
+    .action-icon-admin {
+        background: #f8f9fa;
+    }
+    
+    .feature-status .badge {
+        background: #ddd !important;
+        color: #333 !important;
+    }
+}

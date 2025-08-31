@@ -240,79 +240,177 @@ include __DIR__ . '/../../templates/header.php';
         </div>
     </div>
 
-    <!-- Quick Widgets Row: Self-Assessment, Achievements, KUDOS, OKRs, Development -->
+    <!-- 360-Degree Features Navigation Section -->
     <div class="row mb-4">
-        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
-            <div class="card h-100" id="widget-self-assessment">
-                <div class="card-body text-center">
-                    <div class="mb-2"><i class="fas fa-file-alt fa-2x text-primary"></i></div>
-                    <h6 class="mb-1">Self-Assessment</h6>
-                    <div id="saStatusWidget" class="mb-2">
-                        <div class="text-muted small">Loading...</div>
-                    </div>
-                    <a href="/self-assessment/dashboard.php" class="btn btn-sm btn-outline-primary">Manage</a>
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-sync-alt me-2"></i>
+                        360° Quick Actions
+                    </h5>
+                    <a href="/360-features/index.php" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-th me-1"></i>View All Features
+                    </a>
                 </div>
-            </div>
-        </div>
-
-        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
-            <div class="card h-100" id="widget-achievements">
-                <div class="card-body text-center">
-                    <div class="mb-2"><i class="fas fa-trophy fa-2x text-success"></i></div>
-                    <h6 class="mb-1">Recent Achievements</h6>
-                    <div id="achievementsWidget" class="mb-2">
-                        <div class="text-muted small">Loading...</div>
-                    </div>
-                    <a href="/achievements/journal.php" class="btn btn-sm btn-outline-success">View Journal</a>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
-            <div class="card h-100" id="widget-kudos">
-                <div class="card-body text-center">
-                    <div class="mb-2"><i class="fas fa-gift fa-2x text-warning"></i></div>
-                    <h6 class="mb-1">KUDOS Received</h6>
-                    <div id="kudosWidget" class="mb-2">
-                        <div class="text-muted small">Loading...</div>
-                    </div>
-                    <a href="/kudos/feed.php" class="btn btn-sm btn-outline-warning">KUDOS</a>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
-            <div class="card h-100" id="widget-okr">
                 <div class="card-body">
-                    <div class="d-flex align-items-center mb-2">
-                        <i class="fas fa-bullseye fa-2x text-info me-3"></i>
-                        <div>
-                            <h6 class="mb-0">OKR Progress</h6>
-                            <small class="text-muted">Summary of active objectives</small>
+                    <div class="row">
+                        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                            <div class="quick-action-widget text-center" id="widget-self-assessment">
+                                <div class="action-icon mb-2">
+                                    <i class="fas fa-file-alt fa-2x text-primary"></i>
+                                </div>
+                                <h6 class="mb-1">Self-Assessment</h6>
+                                <div id="saStatusWidget" class="mb-2">
+                                    <div class="text-muted small">Loading...</div>
+                                </div>
+                                <a href="/self-assessment/dashboard.php" class="btn btn-sm btn-primary">Start</a>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                            <div class="quick-action-widget text-center" id="widget-achievements">
+                                <div class="action-icon mb-2">
+                                    <i class="fas fa-trophy fa-2x text-success"></i>
+                                </div>
+                                <h6 class="mb-1">Achievements</h6>
+                                <div id="achievementsWidget" class="mb-2">
+                                    <div class="text-muted small">Loading...</div>
+                                </div>
+                                <a href="/achievements/journal.php" class="btn btn-sm btn-success">Journal</a>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                            <div class="quick-action-widget text-center" id="widget-kudos">
+                                <div class="action-icon mb-2">
+                                    <i class="fas fa-gift fa-2x text-warning"></i>
+                                </div>
+                                <h6 class="mb-1">KUDOS</h6>
+                                <div id="kudosWidget" class="mb-2">
+                                    <div class="text-muted small">Loading...</div>
+                                </div>
+                                <a href="/kudos/feed.php" class="btn btn-sm btn-warning">Feed</a>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+                            <div class="quick-action-widget" id="widget-okr">
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="action-icon me-3">
+                                        <i class="fas fa-bullseye fa-2x text-info"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">OKR Progress</h6>
+                                        <small class="text-muted">Active objectives summary</small>
+                                    </div>
+                                </div>
+                                <div id="okrWidget" class="mb-2">
+                                    <div class="text-muted small">Loading...</div>
+                                </div>
+                                <a href="/okr/dashboard.php" class="btn btn-sm btn-info">Manage OKRs</a>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-3 col-md-6 col-sm-12 mb-3">
+                            <div class="quick-action-widget" id="widget-idp">
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="action-icon me-3">
+                                        <i class="fas fa-graduation-cap fa-2x text-secondary"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">Development</h6>
+                                        <small class="text-muted">IDP and learning progress</small>
+                                    </div>
+                                </div>
+                                <div id="idpWidget" class="mb-2">
+                                    <div class="text-muted small">Loading...</div>
+                                </div>
+                                <a href="/idp/dashboard.php" class="btn btn-sm btn-secondary">View IDP</a>
+                            </div>
                         </div>
                     </div>
-                    <div id="okrWidget" class="mb-2">
-                        <div class="text-muted small">Loading...</div>
-                    </div>
-                    <a href="/okr/dashboard.php" class="btn btn-sm btn-outline-info">Manage OKRs</a>
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="col-lg-3 col-md-6 col-sm-12 mb-3">
-            <div class="card h-100" id="widget-idp">
+    <!-- Status Notifications and Recommendations -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card" id="quick-actions-card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tasks me-2"></i>
+                        Recommended Actions
+                    </h5>
+                </div>
                 <div class="card-body">
-                    <div class="d-flex align-items-center mb-2">
-                        <i class="fas fa-graduation-cap fa-2x text-secondary me-3"></i>
-                        <div>
-                            <h6 class="mb-0">Development Activities</h6>
-                            <small class="text-muted">IDP and learning progress</small>
+                    <div class="action-recommendation mb-3">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-file-alt text-primary me-3"></i>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">Complete Self-Assessment</h6>
+                                <small class="text-muted">Reflect on your performance and evidence</small>
+                            </div>
+                            <a href="/self-assessment/dashboard.php" class="btn btn-sm btn-primary">Start</a>
                         </div>
                     </div>
-                    <div id="idpWidget" class="mb-2">
-                        <div class="text-muted small">Loading...</div>
+                    <div class="action-recommendation mb-3">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-trophy text-success me-3"></i>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">Document Recent Achievements</h6>
+                                <small class="text-muted">Add your latest successes to your journal</small>
+                            </div>
+                            <a href="/achievements/journal.php" class="btn btn-sm btn-success">Add</a>
+                        </div>
                     </div>
-                    <a href="/idp/dashboard.php" class="btn btn-sm btn-outline-secondary">View IDP</a>
+                    <div class="action-recommendation">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-bullseye text-info me-3"></i>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">Update OKR Progress</h6>
+                                <small class="text-muted">Track progress on your key objectives</small>
+                            </div>
+                            <a href="/okr/dashboard.php" class="btn btn-sm btn-info">Update</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card" id="status-alerts-card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bell me-2"></i>
+                        Status & Notifications
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Getting Started:</strong> New to 360° features?
+                        <a href="/360-features/index.php" class="alert-link">Take the tour</a>
+                    </div>
+                    <div class="status-item mb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Self-Assessment Period</span>
+                            <span class="badge bg-success">Active</span>
+                        </div>
+                    </div>
+                    <div class="status-item mb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>KUDOS Points Available</span>
+                            <span class="badge bg-warning">5</span>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Pending Reviews</span>
+                            <span class="badge bg-secondary">0</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

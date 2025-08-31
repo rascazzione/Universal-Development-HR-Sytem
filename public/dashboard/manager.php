@@ -353,6 +353,233 @@ include __DIR__ . '/../../templates/header.php';
         </div>
     </div>
 
+    <!-- 360-Degree Features Manager Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-sync-alt me-2"></i>
+                        360° Management Tools
+                    </h5>
+                    <a href="/360-features/index.php" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-th me-1"></i>View All Features
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <div class="manager-quick-action" id="manager-widget-self-assessment">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="action-icon-lg me-3">
+                                        <i class="fas fa-file-alt fa-2x text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">Team Self-Assessments</h6>
+                                        <small class="text-muted">Monitor completeness and progress</small>
+                                    </div>
+                                </div>
+                                <div class="status-bar mb-2">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <small>Completion Rate</small>
+                                        <small class="fw-bold">75%</small>
+                                    </div>
+                                    <div class="progress" style="height: 6px;">
+                                        <div class="progress-bar bg-primary" style="width: 75%"></div>
+                                    </div>
+                                </div>
+                                <a href="/self-assessment/dashboard.php" class="btn btn-sm btn-outline-primary w-100">View Details</a>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <div class="manager-quick-action" id="manager-widget-kudos">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="action-icon-lg me-3">
+                                        <i class="fas fa-gift fa-2x text-warning"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">Team KUDOS</h6>
+                                        <small class="text-muted">Recognition and engagement metrics</small>
+                                    </div>
+                                </div>
+                                <div class="stats-row mb-2">
+                                    <div class="row text-center">
+                                        <div class="col-6">
+                                            <div class="stat-number">24</div>
+                                            <div class="stat-label">Given</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="stat-number">18</div>
+                                            <div class="stat-label">Received</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <a href="/kudos/feed.php" class="btn btn-sm btn-outline-warning w-100">KUDOS Feed</a>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <div class="manager-quick-action" id="manager-widget-okr">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="action-icon-lg me-3">
+                                        <i class="fas fa-bullseye fa-2x text-info"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">Team OKRs</h6>
+                                        <small class="text-muted">Objectives and results tracking</small>
+                                    </div>
+                                </div>
+                                <div class="status-bar mb-2">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <small>Overall Progress</small>
+                                        <small class="fw-bold">82%</small>
+                                    </div>
+                                    <div class="progress" style="height: 6px;">
+                                        <div class="progress-bar bg-info" style="width: 82%"></div>
+                                    </div>
+                                </div>
+                                <a href="/okr/dashboard.php" class="btn btn-sm btn-outline-info w-100">Manage OKRs</a>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <div class="manager-quick-action" id="manager-widget-upward">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="action-icon-lg me-3">
+                                        <i class="fas fa-arrow-up fa-2x text-danger"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">Upward Feedback</h6>
+                                        <small class="text-muted">Anonymous team feedback</small>
+                                    </div>
+                                </div>
+                                <div class="stats-row mb-2">
+                                    <div class="row text-center">
+                                        <div class="col-6">
+                                            <div class="stat-number">3</div>
+                                            <div class="stat-label">New</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="stat-number">4.2</div>
+                                            <div class="stat-label">Rating</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <a href="/upward-feedback/dashboard.php" class="btn btn-sm btn-outline-danger w-100">View Feedback</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Management Actions Overview -->
+    <div class="row mb-4">
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clipboard-list me-2"></i>
+                        Action Items
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="action-item mb-3">
+                        <div class="d-flex align-items-start">
+                            <i class="fas fa-exclamation-circle text-warning me-2 mt-1"></i>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">Review Pending Self-Assessments</h6>
+                                <small class="text-muted">3 team members haven't started</small>
+                            </div>
+                            <span class="badge bg-warning">3</span>
+                        </div>
+                    </div>
+                    <div class="action-item mb-3">
+                        <div class="d-flex align-items-start">
+                            <i class="fas fa-star text-success me-2 mt-1"></i>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">Give Team Recognition</h6>
+                                <small class="text-muted">Recent achievements deserve KUDOS</small>
+                            </div>
+                            <span class="badge bg-success">2</span>
+                        </div>
+                    </div>
+                    <div class="action-item">
+                        <div class="d-flex align-items-start">
+                            <i class="fas fa-arrow-up text-info me-2 mt-1"></i>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">New Upward Feedback</h6>
+                                <small class="text-muted">Anonymous comments available</small>
+                            </div>
+                            <span class="badge bg-info">New</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Team 360° Engagement
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 text-center mb-3">
+                            <div class="engagement-metric">
+                                <div class="metric-value text-primary">85%</div>
+                                <div class="metric-label">Self-Assessment</div>
+                                <small class="text-muted">Completion Rate</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <div class="engagement-metric">
+                                <div class="metric-value text-success">92%</div>
+                                <div class="metric-label">KUDOS Active</div>
+                                <small class="text-muted">Team Participation</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <div class="engagement-metric">
+                                <div class="metric-value text-info">78%</div>
+                                <div class="metric-label">OKR Updates</div>
+                                <small class="text-muted">Weekly Progress</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center mb-3">
+                            <div class="engagement-metric">
+                                <div class="metric-value text-warning">65%</div>
+                                <div class="metric-label">Feedback Given</div>
+                                <small class="text-muted">Peer Reviews</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <h6 class="mb-2">Quick Links</h6>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <a href="/360-features/index.php" class="btn btn-outline-primary">
+                                <i class="fas fa-th me-1"></i>All Features
+                            </a>
+                            <a href="/self-assessment/dashboard.php" class="btn btn-outline-primary">
+                                <i class="fas fa-file-alt me-1"></i>Self-Assessment
+                            </a>
+                            <a href="/kudos/feed.php" class="btn btn-outline-warning">
+                                <i class="fas fa-gift me-1"></i>KUDOS
+                            </a>
+                            <a href="/upward-feedback/dashboard.php" class="btn btn-outline-danger">
+                                <i class="fas fa-arrow-up me-1"></i>Upward Feedback
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Quality Indicators -->
     <div class="row mb-4">
         <div class="col-12">

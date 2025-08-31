@@ -383,6 +383,26 @@ function getNavigationMenu() {
         'icon' => 'fas fa-tachometer-alt'
     ];
     
+    // 360-Degree Feedback Features Menu - available to all authenticated users
+    $menu[] = [
+        'title' => '360° Features',
+        'url' => '/360-features/',
+        'icon' => 'fas fa-sync-alt',
+        'submenu' => [
+            ['title' => 'Self-Assessment', 'url' => '/self-assessment/dashboard.php'],
+            ['title' => 'Achievement Journal', 'url' => '/achievements/journal.php'],
+            ['title' => 'KUDOS Recognition', 'url' => '/kudos/feed.php'],
+            ['title' => 'OKR Management', 'url' => '/okr/dashboard.php'],
+            ['title' => 'Development Plans', 'url' => '/idp/dashboard.php']
+        ]
+    ];
+    
+    // Upward Feedback - only visible to managers
+    if ($userRole === 'hr_admin' || $userRole === 'manager') {
+        // Add Upward Feedback to the 360° submenu for managers
+        $menu[count($menu) - 1]['submenu'][] = ['title' => 'Upward Feedback', 'url' => '/upward-feedback/dashboard.php'];
+    }
+    
     // Evaluations menu
     if ($userRole === 'hr_admin' || $userRole === 'manager') {
         $menu[] = [
@@ -430,7 +450,10 @@ function getNavigationMenu() {
                 ['title' => 'Departments', 'url' => '/admin/departments.php'],
                 ['title' => 'Evaluation Periods', 'url' => '/admin/periods.php'],
                 ['title' => 'System Settings', 'url' => '/admin/settings.php'],
-                ['title' => 'Audit Log', 'url' => '/admin/audit.php']
+                ['title' => 'Audit Log', 'url' => '/admin/audit.php'],
+                ['title' => 'KUDOS Categories', 'url' => '/admin/kudos-categories.php'],
+                ['title' => 'Upward Feedback', 'url' => '/admin/upward-feedback.php'],
+                ['title' => '360° Analytics', 'url' => '/admin/360-analytics.php']
             ]
         ];
     }
