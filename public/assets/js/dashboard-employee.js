@@ -13,6 +13,7 @@ const EmployeeDashboard = {
         this.initCharts();
         this.initEventListeners();
         this.initFilters();
+        this.initWidgets(); // new: load quick widgets
         console.log('Employee Dashboard initialized');
     },
     
@@ -455,8 +456,94 @@ const EmployeeDashboard = {
             }
         });
         this.charts = {};
+    },
+  
+    // Fetch and populate dashboard widgets: Self-Assessment, Achievements, KUDOS, OKR, IDP
+    initWidgets: function() {
+        this.fetchSelfAssessmentWidget();
+        this.fetchAchievementsWidget();
+        this.fetchKudosWidget();
+        this.fetchOkrWidget();
+        this.fetchIdpWidget();
+    },
+  
+    async fetchSelfAssessmentWidget() {
+        try {
+            const res = await fetch('/api/self-assessment/get.php?employee_id=' + window.employeeId);
+            const data = await res.json();
+            const widget = document.getElementById('saStatusWidget');
+            if (data?.assessments?.length) {
+                const latest = data.assessments[0];
+                widget.innerHTML = `<div class="badge bg-${latest.status === 'draft' ? 'warning' : 'success'}">${latest.status}</div>
+                                    <div class="small">${latest.period_name}</div>`;
+            } else {
+                widget.innerHTML = '<div class="badge bg-secondary">None</div>';
+            }
+        } catch {
+            document.getElementById('saStatusWidget').innerHTML = '<div class="text-danger small">Error</div>';
+        }
+    },
+  
+    async fetchAchievementsWidget() {
+        try {
+            const res = await fetch('/api/achievements/list.php?limit=3');
+            const data = await res.json();
+            const widget = document.getElementById('achievementsWidget');
+            if (data?.entries?.length) {
+                widget.innerHTML = `<div class="badge bg-success">${data.entries.length} entries</div>`;
+            } else {
+                widget.innerHTML = '<div class="badge bg-secondary">None</div>';
+            }
+        } catch {
+            document.getElementById('achievementsWidget').innerHTML = '<div class="text-danger small">Error</div>';
+        }
+    },
+  
+    async fetchKudosWidget() {
+        try {
+            const res = await fetch('/api/kudos/feed.php?limit=3');
+            const data = await res.json();
+            const widget = document.getElementById('kudosWidget');
+            const received = data?.filter(k => k.receiver_id == window.employeeId)?.length || 0;
+            widget.innerHTML = `<div class="badge bg-warning">${received} received</div>`;
+        } catch {
+            document.getElementById('kudosWidget').innerHTML = '<div class="text-danger small">Error</div>';
+        }
+    },
+  
+    async fetchOkrWidget() {
+        try {
+            // Placeholder logic for OKR API (assume endpoint exists)
+            const res = await fetch('/api/okr/list.php?employee_id=' + window.employeeId);
+            const data = await res.json();
+            const widget = document.getElementById('okrWidget');
+            if (data?.objectives?.length) {
+                const completed = data.objectives.filter(obj => obj.progress >= 100).length;
+                widget.innerHTML = `<div class="badge bg-info">${completed}/${data.objectives.length} complete</div>`;
+            } else {
+                widget.innerHTML = '<div class="small text-muted">None active</div>';
+            }
+        } catch {
+            document.getElementById('okrWidget').innerHTML = '<div class="text-danger small">Error</div>';
+        }
+    },
+  
+    async fetchIdpWidget() {
+        try {
+            // Placeholder logic for IDP API (assume endpoint exists)
+            const res = await fetch('/api/idp/list.php?employee_id=' + window.employeeId);
+            const data = await res.json();
+            const widget = document.getElementById('idpWidget');
+            if (data?.plans?.length) {
+                const pending = data.plans.filter(plan => plan.status === 'active').length;
+                widget.innerHTML = `<div class="badge bg-secondary">${pending} active</div>`;
+            } else {
+                widget.innerHTML = '<div class="small text-muted">None active</div>';
+            }
+        } catch {
+            document.getElementById('idpWidget').innerHTML = '<div class="text-danger small">Error</div>';
+        }
     }
-};
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {

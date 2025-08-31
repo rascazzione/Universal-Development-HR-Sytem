@@ -240,7 +240,85 @@ include __DIR__ . '/../../templates/header.php';
         </div>
     </div>
 
-    <!-- Development & Goals Row -->
+    <!-- Quick Widgets Row: Self-Assessment, Achievements, KUDOS, OKRs, Development -->
+    <div class="row mb-4">
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="card h-100" id="widget-self-assessment">
+                <div class="card-body text-center">
+                    <div class="mb-2"><i class="fas fa-file-alt fa-2x text-primary"></i></div>
+                    <h6 class="mb-1">Self-Assessment</h6>
+                    <div id="saStatusWidget" class="mb-2">
+                        <div class="text-muted small">Loading...</div>
+                    </div>
+                    <a href="/self-assessment/dashboard.php" class="btn btn-sm btn-outline-primary">Manage</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="card h-100" id="widget-achievements">
+                <div class="card-body text-center">
+                    <div class="mb-2"><i class="fas fa-trophy fa-2x text-success"></i></div>
+                    <h6 class="mb-1">Recent Achievements</h6>
+                    <div id="achievementsWidget" class="mb-2">
+                        <div class="text-muted small">Loading...</div>
+                    </div>
+                    <a href="/achievements/journal.php" class="btn btn-sm btn-outline-success">View Journal</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="card h-100" id="widget-kudos">
+                <div class="card-body text-center">
+                    <div class="mb-2"><i class="fas fa-gift fa-2x text-warning"></i></div>
+                    <h6 class="mb-1">KUDOS Received</h6>
+                    <div id="kudosWidget" class="mb-2">
+                        <div class="text-muted small">Loading...</div>
+                    </div>
+                    <a href="/kudos/feed.php" class="btn btn-sm btn-outline-warning">KUDOS</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+            <div class="card h-100" id="widget-okr">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-bullseye fa-2x text-info me-3"></i>
+                        <div>
+                            <h6 class="mb-0">OKR Progress</h6>
+                            <small class="text-muted">Summary of active objectives</small>
+                        </div>
+                    </div>
+                    <div id="okrWidget" class="mb-2">
+                        <div class="text-muted small">Loading...</div>
+                    </div>
+                    <a href="/okr/dashboard.php" class="btn btn-sm btn-outline-info">Manage OKRs</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 col-sm-12 mb-3">
+            <div class="card h-100" id="widget-idp">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-graduation-cap fa-2x text-secondary me-3"></i>
+                        <div>
+                            <h6 class="mb-0">Development Activities</h6>
+                            <small class="text-muted">IDP and learning progress</small>
+                        </div>
+                    </div>
+                    <div id="idpWidget" class="mb-2">
+                        <div class="text-muted small">Loading...</div>
+                    </div>
+                    <a href="/idp/dashboard.php" class="btn btn-sm btn-outline-secondary">View IDP</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Development & Goals Row (unchanged content preserved below) -->
     <div class="row mb-4">
         <!-- Development Recommendations -->
         <div class="col-lg-6 mb-4">
@@ -303,9 +381,9 @@ include __DIR__ . '/../../templates/header.php';
                                 <span class="text-muted"><?php echo $goal['progress_percentage']; ?>%</span>
                             </div>
                             <div class="progress mb-2" style="height: 8px;">
-                                <div class="progress-bar" role="progressbar" 
+                                <div class="progress-bar" role="progressbar"
                                      style="width: <?php echo $goal['progress_percentage']; ?>%"
-                                     aria-valuenow="<?php echo $goal['progress_percentage']; ?>" 
+                                     aria-valuenow="<?php echo $goal['progress_percentage']; ?>"
                                      aria-valuemin="0" aria-valuemax="100">
                                 </div>
                             </div>
