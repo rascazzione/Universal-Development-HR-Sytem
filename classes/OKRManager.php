@@ -1,4 +1,3 @@
-
 <?php
 /**
  * OKRManager Class
@@ -221,4 +220,68 @@ class OKRManager {
 
             return $checkinId;
         } catch (Exception $e) {
-           
+            error_log("Conduct checkin error: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Get objectives for an employee with optional filters
+     * @param int $employeeId
+     * @param array $filters Optional filters ['period_id' => int, 'status' => string]
+     * @return array
+     * @throws Exception
+     */
+    public function getObjectives($employeeId, $filters = []) {
+        try {
+            // Validate employee ID
+            if (!is_numeric($employeeId) || $employeeId <= 0) {
+                throw new Exception("Invalid employee ID");
+            }
+
+            // Build base query
+            $where = ["okr_objective = TRUE", "employee_id = ?"];
+            $params = [$employeeId];
+
+            // Apply filters
+            if (!empty($filters['period_id'])) {
+                $where[] = "evaluation_period_id = ?";
+                $params[] = intval($filters['period_id']);
+            }
+
+            if (!empty($filters['status'])) {
+                $where[] = "status = ?";
+                $params[] = sanitizeInput($filters['status']);
+            }
+
+            $whereSql = "WHERE " . implode(" AND ", $where);
+
+            // Get objectives
+            $sql = "SELECT goal_id, employee_id, title, description, target_date, okr_progress,
+                    okr_confidence, okr_cycle, parent_goal_id, evaluation_period_id,
+                    okr_key_results, status, created_at, updated_at
+                    FROM performance_goals
+                    $whereSql
+                    ORDER BY created_at DESC";
+
+            $objectives = fetchAll($sql, $params);
+
+            // Process key results if they're stored as JSON
+            foreach ($objectives as &$objective) {
+                if (!empty($objective['okr_key_results'])) {
+                    $keyResults = json_decode($objective['okr_key_results'], true);
+                    if (is_array($keyResults)) {
+                        $objective['key_results'] = $keyResults;
+                    }
+                }
+                unset($objective['okr_key_results']);
+            }
+
+            return $objectives;
+        } catch (Exception $e) {
+            error_log("Get objectives error: " . $e->getMessage());
+            throw $e;
+        }
+    }
+}
+?>

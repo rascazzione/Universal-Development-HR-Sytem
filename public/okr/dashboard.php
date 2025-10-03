@@ -14,7 +14,7 @@ $pageHeader = true;
 $pageDescription = 'Manage Objectives and Key Results for yourself and your team';
 
 // Initialize classes
-$okrManager = new OKR();
+$okrManager = new OKRManager();
 $currentUser = getCurrentUser();
 $userRole = $_SESSION['user_role'] ?? 'employee';
 $employeeId = (int)($_SESSION['employee_id'] ?? 0);
