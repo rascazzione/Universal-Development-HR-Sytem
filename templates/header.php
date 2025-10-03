@@ -93,7 +93,7 @@ $bodyClass = $bodyClass ?? '';
                                 <i class="fas fa-user me-2"></i>My Profile
                             </a></li>
                             <?php endif; ?>
-                            <li><a class="dropdown-item" href="#" onclick="alert('Change password functionality coming soon!');">
+                            <li><a class="dropdown-item" href="/change-password.php">
                                 <i class="fas fa-key me-2"></i>Change Password
                             </a></li>
                             <li><hr class="dropdown-divider"></li>

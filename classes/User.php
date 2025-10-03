@@ -454,5 +454,64 @@ class User {
             throw $e;
         }
     }
+    
+    /**
+     * Reset user password by admin
+     * @param int $adminUserId
+     * @param string $adminPassword
+     * @param int $targetUserId
+     * @param string $newPassword
+     * @return bool
+     */
+    public function resetPasswordByAdmin($adminUserId, $adminPassword, $targetUserId, $newPassword) {
+        try {
+            // Get admin user
+            $adminUser = $this->getUserById($adminUserId);
+            if (!$adminUser) {
+                throw new Exception("Admin user not found");
+            }
+            
+            // Verify admin password for authorization
+            if (!verifyPassword($adminPassword, $adminUser['password_hash'])) {
+                throw new Exception("Admin password is incorrect");
+            }
+            
+            // Check if admin has HR admin role
+            if ($adminUser['role'] !== 'hr_admin') {
+                throw new Exception("Only HR administrators can reset passwords");
+            }
+            
+            // Get target user
+            $targetUser = $this->getUserById($targetUserId);
+            if (!$targetUser) {
+                throw new Exception("Target user not found");
+            }
+            
+            // Validate new password
+            if (strlen($newPassword) < PASSWORD_MIN_LENGTH) {
+                throw new Exception("New password must be at least " . PASSWORD_MIN_LENGTH . " characters long");
+            }
+            
+            // Update target user's password
+            $sql = "UPDATE users SET password_hash = ? WHERE user_id = ?";
+            $affected = updateRecord($sql, [hashPassword($newPassword), $targetUserId]);
+            
+            if ($affected > 0) {
+                // Log admin password reset action
+                logActivity($adminUserId, 'password_reset_by_admin', 'users', $targetUserId, null, [
+                    'target_user' => $targetUser['username'],
+                    'admin_user' => $adminUser['username']
+                ]);
+                
+                // Also log for the target user
+                logActivity($targetUserId, 'password_reset_by_admin');
+            }
+            
+            return $affected > 0;
+        } catch (Exception $e) {
+            error_log("Reset password by admin error: " . $e->getMessage());
+            throw $e;
+        }
+    }
 }
 ?>

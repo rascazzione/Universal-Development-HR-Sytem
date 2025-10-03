@@ -50,63 +50,108 @@ $pageHeader = true;
 $pageDescription = $isSelfEdit ? 'Update your profile information' : 'Update employee information';
 
 // Handle form submission
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-        // Base fields that employees can edit about themselves (employees table)
-        $employeeUpdateData = [
-            'first_name' => trim($_POST['first_name']),
-            'last_name' => trim($_POST['last_name']),
-            'phone' => trim($_POST['phone']) ?: null,
-            'address' => trim($_POST['address']) ?: null,
-        ];
-
-        // Additional employee fields only HR Admin can modify
-        if (isHRAdmin()) {
-            $employeeUpdateData['position'] = trim($_POST['position'] ?? '') ?: null;
-            $employeeUpdateData['department'] = trim($_POST['department'] ?? '') ?: null;
-            $employeeUpdateData['manager_id'] = ($_POST['manager_id'] ?? '') ?: null;
-            $employeeUpdateData['hire_date'] = ($_POST['hire_date'] ?? '') ?: null;
-            $employeeUpdateData['active'] = isset($_POST['active']) ? 1 : 0;
+        // Check if this is a password reset request
+        if (isset($_POST['action']) && $_POST['action'] === 'reset_password' && isHRAdmin()) {
+            // Handle password reset by admin
+            $adminPassword = $_POST['admin_password'] ?? '';
+            $newPassword = $_POST['new_password'] ?? '';
+            $confirmPassword = $_POST['confirm_password'] ?? '';
             
-            // Add job_template_id (including empty values for unassignment)
-            if (isset($_POST['job_template_id'])) {
-                $employeeUpdateData['job_template_id'] = $_POST['job_template_id'] ?: null;
+            // Validation
+            if (empty($adminPassword)) {
+                throw new Exception('Admin password is required for authorization');
             }
-        }
-
-        
-        // Update employee table
-        $result = $employeeClass->updateEmployee($employeeId, $employeeUpdateData);
-        
-        // Update user table fields (HR Admin only)
-        if (isHRAdmin() && !empty($employee['user_id'])) {
+            
+            if (empty($newPassword)) {
+                throw new Exception('New password is required');
+            }
+            
+            if (strlen($newPassword) < 8) {
+                throw new Exception('New password must be at least 8 characters long');
+            }
+            
+            if ($newPassword !== $confirmPassword) {
+                throw new Exception('New password and confirmation do not match');
+            }
+            
+            if (empty($employee['user_id'])) {
+                throw new Exception('Employee does not have a user account');
+            }
+            
+            // Reset password using admin method
             $userClass = new User();
-            $userUpdateData = [];
+            $result = $userClass->resetPasswordByAdmin(
+                $_SESSION['user_id'], 
+                $adminPassword, 
+                $employee['user_id'], 
+                $newPassword
+            );
             
-            if (!empty($_POST['email'])) {
-                $userUpdateData['email'] = trim($_POST['email']);
+            if ($result) {
+                setFlashMessage('Password reset successfully for ' . $employee['first_name'] . ' ' . $employee['last_name'] . '!', 'success');
+                redirect('/employees/view.php?id=' . $employeeId);
+            } else {
+                throw new Exception('Failed to reset password. Please try again.');
             }
-            if (!empty($_POST['username'])) {
-                $userUpdateData['username'] = trim($_POST['username']);
-            }
-            if (!empty($_POST['role'])) {
-                $userUpdateData['role'] = $_POST['role'];
-            }
-            
-            if (!empty($userUpdateData)) {
-                $userResult = $userClass->updateUser($employee['user_id'], $userUpdateData);
-                if (!$userResult) {
-                    throw new Exception('Failed to update user account information');
+        } else {
+            // Handle regular employee update
+            // Base fields that employees can edit about themselves (employees table)
+            $employeeUpdateData = [
+                'first_name' => trim($_POST['first_name']),
+                'last_name' => trim($_POST['last_name']),
+                'phone' => trim($_POST['phone']) ?: null,
+                'address' => trim($_POST['address']) ?: null,
+            ];
+
+            // Additional employee fields only HR Admin can modify
+            if (isHRAdmin()) {
+                $employeeUpdateData['position'] = trim($_POST['position'] ?? '') ?: null;
+                $employeeUpdateData['department'] = trim($_POST['department'] ?? '') ?: null;
+                $employeeUpdateData['manager_id'] = ($_POST['manager_id'] ?? '') ?: null;
+                $employeeUpdateData['hire_date'] = ($_POST['hire_date'] ?? '') ?: null;
+                $employeeUpdateData['active'] = isset($_POST['active']) ? 1 : 0;
+                
+                // Add job_template_id (including empty values for unassignment)
+                if (isset($_POST['job_template_id'])) {
+                    $employeeUpdateData['job_template_id'] = $_POST['job_template_id'] ?: null;
                 }
             }
-        }
-        
-        if ($result) {
-            setFlashMessage('Employee updated successfully!', 'success');
-            redirect('/employees/view.php?id=' . $employeeId);
-        } else {
-            setFlashMessage('Failed to update employee. Please try again.', 'error');
+
+            
+            // Update employee table
+            $result = $employeeClass->updateEmployee($employeeId, $employeeUpdateData);
+            
+            // Update user table fields (HR Admin only)
+            if (isHRAdmin() && !empty($employee['user_id'])) {
+                $userClass = new User();
+                $userUpdateData = [];
+                
+                if (!empty($_POST['email'])) {
+                    $userUpdateData['email'] = trim($_POST['email']);
+                }
+                if (!empty($_POST['username'])) {
+                    $userUpdateData['username'] = trim($_POST['username']);
+                }
+                if (!empty($_POST['role'])) {
+                    $userUpdateData['role'] = $_POST['role'];
+                }
+                
+                if (!empty($userUpdateData)) {
+                    $userResult = $userClass->updateUser($employee['user_id'], $userUpdateData);
+                    if (!$userResult) {
+                        throw new Exception('Failed to update user account information');
+                    }
+                }
+            }
+            
+            if ($result) {
+                setFlashMessage('Employee updated successfully!', 'success');
+                redirect('/employees/view.php?id=' . $employeeId);
+            } else {
+                setFlashMessage('Failed to update employee. Please try again.', 'error');
+            }
         }
     } catch (Exception $e) {
         error_log('Employee update error: ' . $e->getMessage());
@@ -330,6 +375,102 @@ include __DIR__ . '/../../templates/header.php';
     </div>
 </div>
 
+<!-- Password Reset Section (HR Admin only) -->
+<?php if (isHRAdmin() && !empty($employee['user_id'])): ?>
+<div class="row justify-content-center mt-4">
+    <div class="col-md-8">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-key me-2"></i>Reset Employee Password
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Security Notice:</strong> You must enter your own password to authorize this password reset.
+                </div>
+                
+                <button class="btn btn-warning" type="button" data-bs-toggle="collapse" data-bs-target="#passwordResetForm" aria-expanded="false">
+                    <i class="fas fa-unlock-alt me-2"></i>Reset Password for <?php echo htmlspecialchars($employee['first_name'] . ' ' . $employee['last_name']); ?>
+                </button>
+                
+                <div class="collapse mt-3" id="passwordResetForm">
+                    <form method="POST" id="resetPasswordForm">
+                        <input type="hidden" name="action" value="reset_password">
+                        <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="admin_password" class="form-label">Your Password (Admin Authorization) *</label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="admin_password" name="admin_password" required>
+                                        <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordReset('admin_password')">
+                                            <i class="fas fa-eye" id="admin_password_icon"></i>
+                                        </button>
+                                    </div>
+                                    <div class="form-text">Enter your own password to authorize this action.</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="new_password" class="form-label">New Password for Employee *</label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="new_password" name="new_password" required minlength="8">
+                                        <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordReset('new_password')">
+                                            <i class="fas fa-eye" id="new_password_icon"></i>
+                                        </button>
+                                    </div>
+                                    <div class="form-text">Minimum 8 characters.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="confirm_password" class="form-label">Confirm New Password *</label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required minlength="8">
+                                        <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordReset('confirm_password')">
+                                            <i class="fas fa-eye" id="confirm_password_icon"></i>
+                                        </button>
+                                    </div>
+                                    <div class="invalid-feedback" id="password-match-feedback-reset">
+                                        Passwords do not match.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <strong>Important:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>This will immediately change the employee's password</li>
+                                <li>The employee will need to use the new password for their next login</li>
+                                <li>This action will be logged for security purposes</li>
+                                <li>Consider informing the employee about the password change</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <button class="btn btn-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#passwordResetForm">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </button>
+                            <button type="submit" class="btn btn-danger" id="resetSubmitBtn">
+                                <i class="fas fa-key me-2"></i>Reset Password
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
 <!-- Employee Information Display -->
 <div class="row justify-content-center mt-4">
     <div class="col-md-8">
@@ -354,5 +495,89 @@ include __DIR__ . '/../../templates/header.php';
         </div>
     </div>
 </div>
+
+<script>
+// Toggle password visibility for reset form
+function togglePasswordReset(fieldId) {
+    const field = document.getElementById(fieldId);
+    const icon = document.getElementById(fieldId + '_icon');
+    
+    if (field.type === 'password') {
+        field.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        field.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+
+// Password matching validation for reset form
+function checkPasswordMatchReset() {
+    const newPassword = document.getElementById('new_password').value;
+    const confirmPassword = document.getElementById('confirm_password').value;
+    const confirmField = document.getElementById('confirm_password');
+    
+    if (confirmPassword.length > 0) {
+        if (newPassword === confirmPassword) {
+            confirmField.classList.remove('is-invalid');
+            confirmField.classList.add('is-valid');
+        } else {
+            confirmField.classList.remove('is-valid');
+            confirmField.classList.add('is-invalid');
+        }
+    } else {
+        confirmField.classList.remove('is-valid', 'is-invalid');
+    }
+}
+
+// Event listeners for password reset form
+document.addEventListener('DOMContentLoaded', function() {
+    const newPasswordField = document.getElementById('new_password');
+    const confirmPasswordField = document.getElementById('confirm_password');
+    const resetForm = document.getElementById('resetPasswordForm');
+    
+    if (newPasswordField && confirmPasswordField) {
+        newPasswordField.addEventListener('input', checkPasswordMatchReset);
+        confirmPasswordField.addEventListener('input', checkPasswordMatchReset);
+    }
+    
+    if (resetForm) {
+        resetForm.addEventListener('submit', function(e) {
+            const newPassword = document.getElementById('new_password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            const adminPassword = document.getElementById('admin_password').value;
+            
+            if (!adminPassword) {
+                e.preventDefault();
+                alert('Admin password is required for authorization.');
+                return false;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                e.preventDefault();
+                alert('New passwords do not match. Please check and try again.');
+                return false;
+            }
+            
+            if (newPassword.length < 8) {
+                e.preventDefault();
+                alert('New password must be at least 8 characters long.');
+                return false;
+            }
+            
+            if (!confirm('Are you sure you want to reset this employee\'s password? This action cannot be undone.')) {
+                e.preventDefault();
+                return false;
+            }
+            
+            // Disable submit button to prevent double submission
+            document.getElementById('resetSubmitBtn').disabled = true;
+            document.getElementById('resetSubmitBtn').innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Resetting Password...';
+        });
+    }
+});
+</script>
 
 <?php include __DIR__ . '/../../templates/footer.php'; ?>
