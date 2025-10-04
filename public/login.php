@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
     
     if (empty($username) || empty($password)) {
-        $error = 'Please enter both username and password.';
+        $error = 'Please enter both username/email and password.';
     } else {
         $user = new User();
         $result = $user->login($username, $password);
@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             unset($_SESSION['redirect_after_login']);
             redirect($redirectUrl);
         } else {
-            $error = 'Invalid username or password.';
+            $error = 'Invalid username/email or password.';
         }
     }
 }
@@ -86,18 +86,19 @@ $bodyClass = 'login-page';
                     
                     <div class="mb-3">
                         <label for="username" class="form-label">
-                            <i class="fas fa-user me-1"></i>Username
+                            <i class="fas fa-user me-1"></i>Username or Email
                         </label>
                         <input type="text" 
                                class="form-control" 
                                id="username" 
                                name="username" 
                                value="<?php echo htmlspecialchars($username); ?>"
+                               placeholder="Enter your username or email"
                                required 
                                autofocus
                                autocomplete="username">
                         <div class="invalid-feedback">
-                            Please enter your username.
+                            Please enter your username or email address.
                         </div>
                     </div>
                     

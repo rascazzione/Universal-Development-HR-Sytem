@@ -15,27 +15,39 @@ class User {
     
     /**
      * Authenticate user login
-     * @param string $username
+     * @param string $usernameOrEmail Username or email address
      * @param string $password
      * @return array|false
      */
-    public function login($username, $password) {
+    public function login($usernameOrEmail, $password) {
         try {
             // Check for too many failed attempts
-            if ($this->isAccountLocked($username)) {
+            if ($this->isAccountLocked($usernameOrEmail)) {
                 return ['error' => 'Account temporarily locked due to too many failed attempts'];
             }
             
-            $sql = "SELECT u.*, e.first_name, e.last_name, e.employee_id 
-                    FROM users u 
-                    LEFT JOIN employees e ON u.user_id = e.user_id 
-                    WHERE u.username = ? AND u.is_active = 1";
+            // Check if input is an email or username
+            $isEmail = filter_var($usernameOrEmail, FILTER_VALIDATE_EMAIL);
             
-            $user = fetchOne($sql, [$username]);
+            if ($isEmail) {
+                // Login with email
+                $sql = "SELECT u.*, e.first_name, e.last_name, e.employee_id 
+                        FROM users u 
+                        LEFT JOIN employees e ON u.user_id = e.user_id 
+                        WHERE u.email = ? AND u.is_active = 1";
+            } else {
+                // Login with username
+                $sql = "SELECT u.*, e.first_name, e.last_name, e.employee_id 
+                        FROM users u 
+                        LEFT JOIN employees e ON u.user_id = e.user_id 
+                        WHERE u.username = ? AND u.is_active = 1";
+            }
+            
+            $user = fetchOne($sql, [$usernameOrEmail]);
             
             if ($user && verifyPassword($password, $user['password_hash'])) {
                 // Clear failed attempts
-                $this->clearFailedAttempts($username);
+                $this->clearFailedAttempts($usernameOrEmail);
                 
                 // Update last login
                 $this->updateLastLogin($user['user_id']);
@@ -44,12 +56,14 @@ class User {
                 $this->setUserSession($user);
                 
                 // Log successful login
-                logActivity($user['user_id'], 'login_success');
+                logActivity($user['user_id'], 'login_success', null, null, null, [
+                    'login_method' => $isEmail ? 'email' : 'username'
+                ]);
                 
                 return $user;
             } else {
                 // Record failed attempt
-                $this->recordFailedAttempt($username);
+                $this->recordFailedAttempt($usernameOrEmail);
                 
                 // Log failed login attempt
                 if ($user) {
