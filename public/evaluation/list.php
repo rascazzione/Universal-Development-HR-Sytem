@@ -82,11 +82,11 @@ include __DIR__ . '/../../templates/header.php';
                             <a href="/evaluation/list.php?status=submitted" class="btn btn-outline-info <?php echo $status === 'submitted' ? 'active' : ''; ?>">
                                 Submitted
                             </a>
-                            <a href="/evaluation/list.php?status=reviewed" class="btn btn-outline-primary <?php echo $status === 'reviewed' ? 'active' : ''; ?>">
-                                Reviewed
-                            </a>
                             <a href="/evaluation/list.php?status=approved" class="btn btn-outline-success <?php echo $status === 'approved' ? 'active' : ''; ?>">
                                 Approved
+                            </a>
+                            <a href="/evaluation/list.php?status=rejected" class="btn btn-outline-danger <?php echo $status === 'rejected' ? 'active' : ''; ?>">
+                                Rejected
                             </a>
                         </div>
                     </div>
@@ -101,10 +101,10 @@ include __DIR__ . '/../../templates/header.php';
                             No draft evaluations found.
                         <?php elseif ($status === 'submitted'): ?>
                             No submitted evaluations found.
-                        <?php elseif ($status === 'reviewed'): ?>
-                            No reviewed evaluations found.
                         <?php elseif ($status === 'approved'): ?>
                             No approved evaluations found.
+                        <?php elseif ($status === 'rejected'): ?>
+                            No rejected evaluations found.
                         <?php else: ?>
                             No evaluations found.
                         <?php endif; ?>
@@ -155,7 +155,6 @@ include __DIR__ . '/../../templates/header.php';
                                     $statusClass = [
                                         'draft' => 'warning',
                                         'submitted' => 'info',
-                                        'reviewed' => 'primary',
                                         'approved' => 'success',
                                         'rejected' => 'danger'
                                     ][$evaluation['status']] ?? 'secondary';

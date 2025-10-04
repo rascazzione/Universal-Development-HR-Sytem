@@ -231,7 +231,6 @@ include __DIR__ . '/../../templates/header.php';
                                     $statusClass = [
                                         'draft' => 'warning',
                                         'submitted' => 'info',
-                                        'reviewed' => 'primary',
                                         'approved' => 'success',
                                         'rejected' => 'danger'
                                     ][$evaluation['status']] ?? 'secondary';
@@ -261,7 +260,7 @@ include __DIR__ . '/../../templates/header.php';
                                             <i class="fas fa-eye"></i>
                                         </a>
                                         <?php if (canEditEvaluation($evaluation)): ?>
-                                        <a href="/evaluation/edit.php?id=<?php echo $evaluation['evaluation_id']; ?>" class="btn btn-outline-secondary" title="<?php echo (in_array($evaluation['status'], ['submitted', 'reviewed']) && $userRole === 'hr_admin') ? 'Review' : 'Edit'; ?>">
+                                        <a href="/evaluation/edit.php?id=<?php echo $evaluation['evaluation_id']; ?>" class="btn btn-outline-secondary" title="<?php echo ($evaluation['status'] === 'submitted' && $userRole === 'hr_admin') ? 'Review' : 'Edit'; ?>">
                                             <i class="fas fa-edit"></i>
                                         </a>
                                         <?php endif; ?>

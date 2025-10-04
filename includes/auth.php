@@ -184,7 +184,6 @@ function canEditEvaluation($evaluation) {
             }
             break;
             
-        case 'reviewed':
         case 'approved':
         case 'rejected':
             // Final states - only HR admin can make changes
