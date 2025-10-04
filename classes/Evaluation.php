@@ -8,6 +8,7 @@ require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/Employee.php';
 require_once __DIR__ . '/EvaluationPeriod.php';
 require_once __DIR__ . '/GrowthEvidenceJournal.php';
+require_once __DIR__ . '/JobTemplate.php';
 
 class Evaluation {
     private $pdo;
@@ -735,71 +736,210 @@ class Evaluation {
         // Get evidence summary
         $evaluation['evidence_summary_text'] = $this->generateEvidenceSummary($evaluationId);
         
-        // For backward compatibility, also include the job template structure
-        // This ensures the edit page works with both evidence-based and legacy evaluations
-        $evaluation['kpi_results'] = [];
-        $evaluation['competency_results'] = [];
-        $evaluation['responsibility_results'] = [];
-        $evaluation['value_results'] = [];
-        $evaluation['section_weights'] = [
+        // Get job template data for this employee
+        $jobTemplateData = $this->getJobTemplateDataForEvaluation($evaluation['employee_id']);
+        
+        // Initialize the results arrays with job template data
+        $evaluation['kpi_results'] = $jobTemplateData['kpis'] ?? [];
+        $evaluation['competency_results'] = $jobTemplateData['competencies'] ?? [];
+        $evaluation['responsibility_results'] = $jobTemplateData['responsibilities'] ?? [];
+        $evaluation['value_results'] = $jobTemplateData['values'] ?? [];
+        $evaluation['section_weights'] = $jobTemplateData['section_weights'] ?? [
             'kpis' => 25,
             'competencies' => 25,
             'responsibilities' => 25,
             'values' => 25
         ];
         
-        // Convert evidence results to the format expected by the edit page
+        // Create evidence summary entries for dimensions that have evidence
         if (!empty($evaluation['evidence_results'])) {
             foreach ($evaluation['evidence_results'] as $result) {
-                // Create compatibility entries that show evidence-based ratings
+                // Create evidence summary entries that show evidence-based ratings
                 switch ($result['dimension']) {
                     case 'kpis':
-                        $evaluation['kpi_results'][] = [
+                        // Add evidence summary at the beginning of KPIs
+                        array_unshift($evaluation['kpi_results'], [
                             'kpi_id' => 'evidence_' . $result['dimension'],
-                            'kpi_name' => 'Evidence-Based KPI Assessment',
+                            'kpi_name' => 'Evidence-Based KPI Summary',
                             'category' => 'Performance Evidence',
                             'target_value' => 5.0,
                             'measurement_unit' => 'Stars',
                             'achieved_value' => $result['avg_star_rating'],
                             'score' => $result['calculated_score'],
                             'comments' => "Based on {$result['evidence_count']} evidence entries (Positive: {$result['total_positive_entries']}, Areas for improvement: {$result['total_negative_entries']})"
-                        ];
+                        ]);
                         break;
                     case 'competencies':
-                        $evaluation['competency_results'][] = [
+                        // Add evidence summary at the beginning of competencies
+                        array_unshift($evaluation['competency_results'], [
                             'competency_id' => 'evidence_' . $result['dimension'],
-                            'competency_name' => 'Evidence-Based Competency Assessment',
+                            'competency_name' => 'Evidence-Based Competency Summary',
                             'category_name' => 'Performance Evidence',
                             'competency_type' => 'evidence_based',
                             'required_level' => 'advanced',
                             'achieved_level' => $this->getAchievedLevel($result['avg_star_rating']),
                             'score' => $result['calculated_score'],
                             'comments' => "Based on {$result['evidence_count']} evidence entries (Positive: {$result['total_positive_entries']}, Areas for improvement: {$result['total_negative_entries']})"
-                        ];
+                        ]);
                         break;
                     case 'responsibilities':
-                        $evaluation['responsibility_results'][] = [
+                        // Add evidence summary at the beginning of responsibilities
+                        array_unshift($evaluation['responsibility_results'], [
                             'responsibility_id' => 'evidence_' . $result['dimension'],
-                            'sort_order' => 1,
-                            'responsibility_text' => 'Evidence-Based Responsibility Assessment',
+                            'sort_order' => 0,
+                            'responsibility_text' => 'Evidence-Based Responsibility Summary',
                             'score' => $result['calculated_score'],
                             'comments' => "Based on {$result['evidence_count']} evidence entries (Positive: {$result['total_positive_entries']}, Areas for improvement: {$result['total_negative_entries']})"
-                        ];
+                        ]);
                         break;
                     case 'values':
-                        $evaluation['value_results'][] = [
+                        // Add evidence summary at the beginning of values
+                        array_unshift($evaluation['value_results'], [
                             'value_id' => 'evidence_' . $result['dimension'],
-                            'value_name' => 'Evidence-Based Values Assessment',
+                            'value_name' => 'Evidence-Based Values Summary',
                             'description' => 'Assessment based on evidence of living company values',
                             'score' => $result['calculated_score'],
                             'comments' => "Based on {$result['evidence_count']} evidence entries (Positive: {$result['total_positive_entries']}, Areas for improvement: {$result['total_negative_entries']})"
-                        ];
+                        ]);
                         break;
                 }
             }
         }
         
         return $evaluation;
+    }
+    
+    /**
+     * Get job template data for evaluation
+     * @param int $employeeId
+     * @return array
+     */
+    private function getJobTemplateDataForEvaluation(int $employeeId): array {
+        try {
+            // Get employee and their job template
+            $employeeClass = new Employee();
+            $employee = $employeeClass->getEmployeeById($employeeId);
+            
+            if (!$employee || empty($employee['job_template_id'])) {
+                // Return empty structure if no job template
+                return [
+                    'kpis' => [],
+                    'competencies' => [],
+                    'responsibilities' => [],
+                    'values' => [],
+                    'section_weights' => [
+                        'kpis' => 25,
+                        'competencies' => 25,
+                        'responsibilities' => 25,
+                        'values' => 25
+                    ]
+                ];
+            }
+            
+            // Get job template data
+            $jobTemplateClass = new JobTemplate();
+            $template = $jobTemplateClass->getCompleteJobTemplate($employee['job_template_id']);
+            
+            if (!$template) {
+                return [
+                    'kpis' => [],
+                    'competencies' => [],
+                    'responsibilities' => [],
+                    'values' => [],
+                    'section_weights' => [
+                        'kpis' => 25,
+                        'competencies' => 25,
+                        'responsibilities' => 25,
+                        'values' => 25
+                    ]
+                ];
+            }
+            
+            // Calculate section weights based on job template
+            $sectionWeights = $this->calculateSectionWeights($template);
+            
+            // Normalize job template data to match evaluation edit page expectations
+            $normalizedData = [
+                'kpis' => $this->normalizeKPIs($template['kpis'] ?? []),
+                'competencies' => $this->normalizeCompetencies($template['competencies'] ?? []),
+                'responsibilities' => $this->normalizeResponsibilities($template['responsibilities'] ?? []),
+                'values' => $this->normalizeValues($template['values'] ?? []),
+                'section_weights' => $sectionWeights
+            ];
+            
+            return $normalizedData;
+        } catch (Exception $e) {
+            error_log("Error getting job template data for evaluation: " . $e->getMessage());
+            return [
+                'kpis' => [],
+                'competencies' => [],
+                'responsibilities' => [],
+                'values' => [],
+                'section_weights' => [
+                    'kpis' => 25,
+                    'competencies' => 25,
+                    'responsibilities' => 25,
+                    'values' => 25
+                ]
+            ];
+        }
+    }
+    
+    /**
+     * Calculate section weights based on job template
+     * @param array $template
+     * @return array
+     */
+    private function calculateSectionWeights(array $template): array {
+        $weights = [
+            'kpis' => 0,
+            'competencies' => 0,
+            'responsibilities' => 0,
+            'values' => 0
+        ];
+        
+        // Calculate weights based on job template items
+        if (!empty($template['kpis'])) {
+            foreach ($template['kpis'] as $kpi) {
+                $weights['kpis'] += floatval($kpi['weight_percentage'] ?? 0);
+            }
+        }
+        
+        if (!empty($template['competencies'])) {
+            foreach ($template['competencies'] as $competency) {
+                $weights['competencies'] += floatval($competency['weight_percentage'] ?? 0);
+            }
+        }
+        
+        if (!empty($template['responsibilities'])) {
+            foreach ($template['responsibilities'] as $responsibility) {
+                $weights['responsibilities'] += floatval($responsibility['weight_percentage'] ?? 0);
+            }
+        }
+        
+        if (!empty($template['values'])) {
+            foreach ($template['values'] as $value) {
+                $weights['values'] += floatval($value['weight_percentage'] ?? 0);
+            }
+        }
+        
+        // If all weights are 0, use default equal weights
+        $totalWeight = array_sum($weights);
+        if ($totalWeight == 0) {
+            return [
+                'kpis' => 25,
+                'competencies' => 25,
+                'responsibilities' => 25,
+                'values' => 25
+            ];
+        }
+        
+        // Normalize to 100%
+        foreach ($weights as $key => $weight) {
+            $weights[$key] = round(($weight / $totalWeight) * 100, 1);
+        }
+        
+        return $weights;
     }
     
     /**
@@ -1567,6 +1707,88 @@ class Evaluation {
         } catch (Exception $e) {
             error_log("Performance logging error: " . $e->getMessage());
         }
+    }
+    
+    /**
+     * Normalize KPI data for evaluation edit page
+     * @param array $kpis
+     * @return array
+     */
+    private function normalizeKPIs(array $kpis): array {
+        $normalized = [];
+        foreach ($kpis as $kpi) {
+            $normalized[] = [
+                'kpi_id' => $kpi['kpi_id'] ?? 'kpi_' . ($kpi['id'] ?? uniqid()),
+                'kpi_name' => $kpi['kpi_name'] ?? $kpi['kpi_name'] ?? 'Unnamed KPI',
+                'category' => $kpi['category'] ?? 'General',
+                'target_value' => $kpi['target_value'] ?? 0,
+                'measurement_unit' => $kpi['measurement_unit'] ?? 'units',
+                'achieved_value' => null,
+                'score' => null,
+                'comments' => null
+            ];
+        }
+        return $normalized;
+    }
+    
+    /**
+     * Normalize competency data for evaluation edit page
+     * @param array $competencies
+     * @return array
+     */
+    private function normalizeCompetencies(array $competencies): array {
+        $normalized = [];
+        foreach ($competencies as $competency) {
+            $normalized[] = [
+                'competency_id' => $competency['competency_id'] ?? 'comp_' . ($competency['id'] ?? uniqid()),
+                'competency_name' => $competency['competency_name'] ?? $competency['competency_name'] ?? 'Unnamed Competency',
+                'category_name' => $competency['category_name'] ?? $competency['category_name'] ?? 'General',
+                'competency_type' => $competency['competency_type'] ?? 'behavioral',
+                'required_level' => $competency['required_level'] ?? 'intermediate',
+                'achieved_level' => null,
+                'score' => null,
+                'comments' => null
+            ];
+        }
+        return $normalized;
+    }
+    
+    /**
+     * Normalize responsibility data for evaluation edit page
+     * @param array $responsibilities
+     * @return array
+     */
+    private function normalizeResponsibilities(array $responsibilities): array {
+        $normalized = [];
+        foreach ($responsibilities as $responsibility) {
+            $normalized[] = [
+                'responsibility_id' => $responsibility['responsibility_id'] ?? 'resp_' . ($responsibility['id'] ?? uniqid()),
+                'sort_order' => $responsibility['sort_order'] ?? count($normalized) + 1,
+                'responsibility_text' => $responsibility['responsibility_text'] ?? $responsibility['responsibility_text'] ?? 'Unnamed Responsibility',
+                'score' => null,
+                'comments' => null
+            ];
+        }
+        return $normalized;
+    }
+    
+    /**
+     * Normalize value data for evaluation edit page
+     * @param array $values
+     * @return array
+     */
+    private function normalizeValues(array $values): array {
+        $normalized = [];
+        foreach ($values as $value) {
+            $normalized[] = [
+                'value_id' => $value['value_id'] ?? 'val_' . ($value['id'] ?? uniqid()),
+                'value_name' => $value['value_name'] ?? $value['value_name'] ?? 'Unnamed Value',
+                'description' => $value['description'] ?? '',
+                'score' => null,
+                'comments' => null
+            ];
+        }
+        return $normalized;
     }
 }
 ?>
