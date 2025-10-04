@@ -77,10 +77,13 @@ include __DIR__ . '/../../templates/header.php';
                                 All Evaluations
                             </a>
                             <a href="/evaluation/list.php?status=draft" class="btn btn-outline-warning <?php echo $status === 'draft' ? 'active' : ''; ?>">
-                                Pending
+                                Draft
                             </a>
-                            <a href="/evaluation/list.php?status=completed" class="btn btn-outline-info <?php echo $status === 'completed' ? 'active' : ''; ?>">
-                                Completed
+                            <a href="/evaluation/list.php?status=submitted" class="btn btn-outline-info <?php echo $status === 'submitted' ? 'active' : ''; ?>">
+                                Submitted
+                            </a>
+                            <a href="/evaluation/list.php?status=reviewed" class="btn btn-outline-primary <?php echo $status === 'reviewed' ? 'active' : ''; ?>">
+                                Reviewed
                             </a>
                             <a href="/evaluation/list.php?status=approved" class="btn btn-outline-success <?php echo $status === 'approved' ? 'active' : ''; ?>">
                                 Approved
@@ -95,7 +98,13 @@ include __DIR__ . '/../../templates/header.php';
                     <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
                     <p class="text-muted">
                         <?php if ($status === 'draft'): ?>
-                            No pending evaluations found.
+                            No draft evaluations found.
+                        <?php elseif ($status === 'submitted'): ?>
+                            No submitted evaluations found.
+                        <?php elseif ($status === 'reviewed'): ?>
+                            No reviewed evaluations found.
+                        <?php elseif ($status === 'approved'): ?>
+                            No approved evaluations found.
                         <?php else: ?>
                             No evaluations found.
                         <?php endif; ?>
@@ -145,7 +154,8 @@ include __DIR__ . '/../../templates/header.php';
                                     <?php
                                     $statusClass = [
                                         'draft' => 'warning',
-                                        'completed' => 'info',
+                                        'submitted' => 'info',
+                                        'reviewed' => 'primary',
                                         'approved' => 'success',
                                         'rejected' => 'danger'
                                     ][$evaluation['status']] ?? 'secondary';

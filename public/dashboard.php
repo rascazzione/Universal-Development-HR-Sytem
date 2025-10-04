@@ -34,7 +34,9 @@ if ($userRole === 'hr_admin') {
         'total_employees' => $employeeClass->getEmployeeStats()['total_employees'],
         'total_evaluations' => $evaluationClass->getEvaluationStats()['total_evaluations'],
         'pending_evaluations' => $evaluationClass->getEvaluationStats()['by_status']['draft'] ?? 0,
-        'completed_evaluations' => $evaluationClass->getEvaluationStats()['by_status']['approved'] ?? 0,
+        'submitted_evaluations' => $evaluationClass->getEvaluationStats()['by_status']['submitted'] ?? 0,
+        'reviewed_evaluations' => $evaluationClass->getEvaluationStats()['by_status']['reviewed'] ?? 0,
+        'approved_evaluations' => $evaluationClass->getEvaluationStats()['by_status']['approved'] ?? 0,
         'active_periods' => count($periodClass->getActivePeriods()),
         'recent_evaluations' => $evaluationClass->getEvaluations(1, 5)['evaluations'],
         'evaluation_stats' => $evaluationClass->getEvaluationStats(),
@@ -54,7 +56,9 @@ if ($userRole === 'hr_admin') {
         'team_size' => count($teamMembers),
         'team_evaluations' => count($teamEvaluations),
         'pending_evaluations' => count(array_filter($teamEvaluations, fn($e) => $e['status'] === 'draft')),
-        'completed_evaluations' => count(array_filter($teamEvaluations, fn($e) => $e['status'] === 'approved')),
+        'submitted_evaluations' => count(array_filter($teamEvaluations, fn($e) => $e['status'] === 'submitted')),
+        'reviewed_evaluations' => count(array_filter($teamEvaluations, fn($e) => $e['status'] === 'reviewed')),
+        'approved_evaluations' => count(array_filter($teamEvaluations, fn($e) => $e['status'] === 'approved')),
         'team_members' => $teamMembers,
         'recent_evaluations' => array_slice($teamEvaluations, 0, 5),
         'current_period' => $periodClass->getCurrentPeriod()
@@ -204,8 +208,8 @@ include __DIR__ . '/../templates/header.php';
             <div class="widget-icon info">
                 <i class="fas fa-check-circle"></i>
             </div>
-            <div class="widget-title">Completed</div>
-            <div class="widget-value"><?php echo number_format($dashboardData['completed_evaluations']); ?></div>
+            <div class="widget-title">Approved</div>
+            <div class="widget-value"><?php echo number_format($dashboardData['approved_evaluations']); ?></div>
             <div class="widget-change">
                 <span class="text-success">This period</span>
             </div>

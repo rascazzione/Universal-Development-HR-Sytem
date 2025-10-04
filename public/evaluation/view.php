@@ -147,7 +147,8 @@ include __DIR__ . '/../../templates/header.php';
                         <?php
                         $statusClass = [
                             'draft' => 'warning',
-                            'completed' => 'info',
+                            'submitted' => 'info',
+                            'reviewed' => 'primary',
                             'approved' => 'success',
                             'rejected' => 'danger'
                         ][$evaluation['status']] ?? 'secondary';
@@ -482,8 +483,8 @@ include __DIR__ . '/../../templates/header.php';
                         <?php if (canEditEvaluation($evaluation)): ?>
                         <a href="/evaluation/edit.php?id=<?php echo $evaluationId; ?>" class="btn btn-primary">
                             <i class="fas fa-edit me-2"></i>
-                            <?php if ($evaluation['status'] === 'submitted' && $userRole === 'hr_admin'): ?>
-                                Review Evaluation
+                            <?php if (in_array($evaluation['status'], ['submitted', 'reviewed']) && $userRole === 'hr_admin'): ?>
+                                <?php echo $evaluation['status'] === 'submitted' ? 'Review Evaluation' : 'Edit Evaluation'; ?>
                             <?php else: ?>
                                 Edit Evaluation
                             <?php endif; ?>
