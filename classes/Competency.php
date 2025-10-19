@@ -6,6 +6,12 @@
 
 class Competency {
     
+    private $softSkillLevelsPath;
+    
+    public function __construct() {
+        $this->softSkillLevelsPath = __DIR__ . '/../config/soft_skill_levels.json';
+    }
+    
     /**
      * Get all competency categories
      * @param bool $includeSubcategories
@@ -395,6 +401,109 @@ class Competency {
         }
         
         return $csv;
+    }
+    
+    /**
+     * Get soft skill level definitions from JSON file
+     * @return array
+     */
+    public function getSoftSkillLevelDefinitions() {
+        if (!file_exists($this->softSkillLevelsPath)) {
+            return [];
+        }
+        
+        $jsonContent = file_get_contents($this->softSkillLevelsPath);
+        $data = json_decode($jsonContent, true);
+        
+        return $data['soft_skills'] ?? [];
+    }
+    
+    /**
+     * Get soft skill level definition for a specific competency
+     * @param string $competencyKey
+     * @return array|false
+     */
+    public function getSoftSkillLevels($competencyKey) {
+        $definitions = $this->getSoftSkillLevelDefinitions();
+        return $definitions[$competencyKey] ?? false;
+    }
+    
+    /**
+     * Save soft skill level definitions to JSON file
+     * @param array $definitions
+     * @return bool
+     */
+    public function saveSoftSkillLevelDefinitions($definitions) {
+        $data = [
+            'soft_skills' => $definitions,
+            'level_mapping' => [
+                '1' => 'basic',
+                '2' => 'intermediate',
+                '3' => 'advanced',
+                '4' => 'expert'
+            ]
+        ];
+        
+        $jsonContent = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        
+        return file_put_contents($this->softSkillLevelsPath, $jsonContent) !== false;
+    }
+    
+    /**
+     * Save soft skill levels for a specific competency
+     * @param string $competencyKey
+     * @param array $levels
+     * @return bool
+     */
+    public function saveSoftSkillLevels($competencyKey, $levels) {
+        // Check if file is writable
+        if (!is_writable($this->softSkillLevelsPath)) {
+            throw new Exception("JSON file is not writable");
+        }
+        
+        $definitions = $this->getSoftSkillLevelDefinitions();
+        $definitions[$competencyKey] = $levels;
+        
+        return $this->saveSoftSkillLevelDefinitions($definitions);
+    }
+    
+    /**
+     * Convert competency name to key for JSON storage
+     * @param string $competencyName
+     * @return string
+     */
+    public function competencyNameToKey($competencyName) {
+        return strtolower(str_replace([' ', '-'], '_', $competencyName));
+    }
+    
+    /**
+     * Get level mapping from 1-4 to basic/expert
+     * @return array
+     */
+    public function getLevelMapping() {
+        return [
+            '1' => 'basic',
+            '2' => 'intermediate',
+            '3' => 'advanced',
+            '4' => 'expert'
+        ];
+    }
+    
+    /**
+     * Check if a competency is a soft skill based on its category
+     * @param int $competencyId
+     * @return bool
+     */
+    public function isSoftSkillCompetency($competencyId) {
+        $competency = $this->getCompetencyById($competencyId);
+        if (!$competency) {
+            return false;
+        }
+        
+        $sql = "SELECT category_type FROM competency_categories WHERE id = ? AND is_active = 1";
+        $categoryType = fetchOne($sql, [$competency['category_id']]);
+        
+        return $categoryType && $categoryType['category_type'] === 'soft_skill';
     }
 }
 ?>

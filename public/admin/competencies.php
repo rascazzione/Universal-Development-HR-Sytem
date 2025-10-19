@@ -356,6 +356,11 @@ include __DIR__ . '/../../templates/header.php';
                                         <button type="button" class="btn btn-outline-primary" onclick="editCompetency(<?php echo $competency['id']; ?>)">
                                             <i class="fas fa-edit"></i>
                                         </button>
+                                        <?php if ($competency['category_type'] === 'soft_skill'): ?>
+                                        <button type="button" class="btn btn-outline-warning" onclick="viewSoftSkillLevels(<?php echo $competency['id']; ?>)">
+                                            <i class="fas fa-layer-group"></i>
+                                        </button>
+                                        <?php endif; ?>
                                         <button type="button" class="btn btn-outline-info" onclick="viewCompetencyUsage(<?php echo $competency['id']; ?>)">
                                             <i class="fas fa-eye"></i>
                                         </button>
@@ -589,6 +594,132 @@ include __DIR__ . '/../../templates/header.php';
     </div>
 </div>
 
+<!-- Soft Skill Levels Modal -->
+<div class="modal fade" id="softSkillLevelsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Soft Skill Competency Levels</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="softSkillLevelsForm" method="POST">
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                    <input type="hidden" name="competency_key" id="soft_skill_competency_key">
+                    
+                    <div class="mb-4">
+                        <h6>Definition</h6>
+                        <textarea class="form-control" id="soft_skill_definition" name="definition" rows="2" placeholder="Enter the definition of this competency..."></textarea>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6>Description</h6>
+                        <textarea class="form-control" id="soft_skill_description" name="description" rows="4" placeholder="Enter a detailed description of this competency..."></textarea>
+                    </div>
+                    
+                    <div class="accordion" id="levelsAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#level1">
+                                    Level 1 - Basic
+                                </button>
+                            </h2>
+                            <div id="level1" class="accordion-collapse collapse show" data-bs-parent="#levelsAccordion">
+                                <div class="accordion-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Title</label>
+                                        <input type="text" class="form-control" name="level_1_title" id="level_1_title" placeholder="Enter level 1 title...">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Behaviors (4 required)</label>
+                                        <input type="text" class="form-control mb-2" name="level_1_behavior_1" id="level_1_behavior_1" placeholder="Behavior 1">
+                                        <input type="text" class="form-control mb-2" name="level_1_behavior_2" id="level_1_behavior_2" placeholder="Behavior 2">
+                                        <input type="text" class="form-control mb-2" name="level_1_behavior_3" id="level_1_behavior_3" placeholder="Behavior 3">
+                                        <input type="text" class="form-control mb-2" name="level_1_behavior_4" id="level_1_behavior_4" placeholder="Behavior 4">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#level2">
+                                    Level 2 - Intermediate
+                                </button>
+                            </h2>
+                            <div id="level2" class="accordion-collapse collapse" data-bs-parent="#levelsAccordion">
+                                <div class="accordion-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Title</label>
+                                        <input type="text" class="form-control" name="level_2_title" id="level_2_title" placeholder="Enter level 2 title...">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Behaviors (4 required)</label>
+                                        <input type="text" class="form-control mb-2" name="level_2_behavior_1" id="level_2_behavior_1" placeholder="Behavior 1">
+                                        <input type="text" class="form-control mb-2" name="level_2_behavior_2" id="level_2_behavior_2" placeholder="Behavior 2">
+                                        <input type="text" class="form-control mb-2" name="level_2_behavior_3" id="level_2_behavior_3" placeholder="Behavior 3">
+                                        <input type="text" class="form-control mb-2" name="level_2_behavior_4" id="level_2_behavior_4" placeholder="Behavior 4">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#level3">
+                                    Level 3 - Advanced
+                                </button>
+                            </h2>
+                            <div id="level3" class="accordion-collapse collapse" data-bs-parent="#levelsAccordion">
+                                <div class="accordion-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Title</label>
+                                        <input type="text" class="form-control" name="level_3_title" id="level_3_title" placeholder="Enter level 3 title...">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Behaviors (4 required)</label>
+                                        <input type="text" class="form-control mb-2" name="level_3_behavior_1" id="level_3_behavior_1" placeholder="Behavior 1">
+                                        <input type="text" class="form-control mb-2" name="level_3_behavior_2" id="level_3_behavior_2" placeholder="Behavior 2">
+                                        <input type="text" class="form-control mb-2" name="level_3_behavior_3" id="level_3_behavior_3" placeholder="Behavior 3">
+                                        <input type="text" class="form-control mb-2" name="level_3_behavior_4" id="level_3_behavior_4" placeholder="Behavior 4">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#level4">
+                                    Level 4 - Expert
+                                </button>
+                            </h2>
+                            <div id="level4" class="accordion-collapse collapse" data-bs-parent="#levelsAccordion">
+                                <div class="accordion-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Title</label>
+                                        <input type="text" class="form-control" name="level_4_title" id="level_4_title" placeholder="Enter level 4 title...">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Behaviors (4 required)</label>
+                                        <input type="text" class="form-control mb-2" name="level_4_behavior_1" id="level_4_behavior_1" placeholder="Behavior 1">
+                                        <input type="text" class="form-control mb-2" name="level_4_behavior_2" id="level_4_behavior_2" placeholder="Behavior 2">
+                                        <input type="text" class="form-control mb-2" name="level_4_behavior_3" id="level_4_behavior_3" placeholder="Behavior 3">
+                                        <input type="text" class="form-control mb-2" name="level_4_behavior_4" id="level_4_behavior_4" placeholder="Behavior 4">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveSoftSkillLevels()">Save Levels</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
 // Track collapse state persistence
 document.addEventListener('DOMContentLoaded', function() {
@@ -762,6 +893,100 @@ function viewCompetencyUsage(competencyId) {
             console.error('Error fetching competency usage:', error);
             alert('Error loading competency usage data');
         });
+}
+
+function viewSoftSkillLevels(competencyId) {
+    // Load soft skill level data
+    fetch(`/api/soft_skill_levels.php?competency_id=${competencyId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const levels = data.levels;
+                const competencyKey = data.competency_key;
+                
+                // Set competency key
+                document.getElementById('soft_skill_competency_key').value = competencyKey;
+                
+                // Set definition and description
+                document.getElementById('soft_skill_definition').value = levels.definition || '';
+                document.getElementById('soft_skill_description').value = levels.description || '';
+                
+                // Set level titles and behaviors
+                for (let i = 1; i <= 4; i++) {
+                    const level = levels.levels[i.toString()];
+                    if (level) {
+                        document.getElementById(`level_${i}_title`).value = level.title || '';
+                        for (let j = 1; j <= 4; j++) {
+                            const behavior = level.behaviors[j - 1] || '';
+                            document.getElementById(`level_${i}_behavior_${j}`).value = behavior;
+                        }
+                    }
+                }
+                
+                new bootstrap.Modal(document.getElementById('softSkillLevelsModal')).show();
+            } else {
+                alert('Error loading soft skill levels: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching soft skill levels:', error);
+            alert('Error loading soft skill levels');
+        });
+}
+
+function saveSoftSkillLevels() {
+    // Collect form data
+    const formData = new FormData(document.getElementById('softSkillLevelsForm'));
+    
+    // Build levels structure
+    const levels = {
+        name: document.getElementById('soft_skill_definition').value ?
+              document.getElementById('soft_skill_definition').value.split(' ').slice(0, 2).join(' ') : '',
+        definition: document.getElementById('soft_skill_definition').value,
+        description: document.getElementById('soft_skill_description').value,
+        levels: {}
+    };
+    
+    // Collect level data
+    for (let i = 1; i <= 4; i++) {
+        const behaviors = [];
+        for (let j = 1; j <= 4; j++) {
+            behaviors.push(document.getElementById(`level_${i}_behavior_${j}`).value);
+        }
+        
+        levels.levels[i.toString()] = {
+            title: document.getElementById(`level_${i}_title`).value,
+            behaviors: behaviors
+        };
+    }
+    
+    // Prepare data for API
+    const postData = new URLSearchParams();
+    postData.append('csrf_token', formData.get('csrf_token'));
+    postData.append('competency_key', formData.get('competency_key'));
+    postData.append('levels', JSON.stringify(levels));
+    
+    // Send to API
+    fetch('/api/soft_skill_levels.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: postData.toString()
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Soft skill levels saved successfully!');
+            bootstrap.Modal.getInstance(document.getElementById('softSkillLevelsModal')).hide();
+        } else {
+            alert('Error saving soft skill levels: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error saving soft skill levels:', error);
+        alert('Error saving soft skill levels');
+    });
 }
 </script>
 

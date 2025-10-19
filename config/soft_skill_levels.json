@@ -1,0 +1,182 @@
+{
+    "soft_skills": {
+        "people_management": {
+            "name": "People Management",
+            "definition": "Does the person set a firm standard of performance and require others to follow it as well?",
+            "description": "People management entails making other people act in accordance with our objectives, appropriately and correctly using personal power or the authority we have been granted. It includes \"telling others what they should do\". The style varies according to require it circumstances or people, from steady and manager until demanding or even threatening. Trying to reason, persuade or convince another to do something is Impact and Influence, not People Management.",
+            "levels": {
+                "1": {
+                    "title": "Gives orders and instructions",
+                    "behaviors": [
+                        "Gives people appropriate instructions, making sure the needs and demands are reasonably clear.",
+                        "Explicitly delegates routine tasks so they can dedicate time to more significant matters.",
+                        "Assigns tasks and responsibilities to their team.",
+                        "Organises the work and plans the team's tasks."
+                    ]
+                },
+                "2": {
+                    "title": "Sets limits",
+                    "behaviors": [
+                        "Firmly denies unreasonable requests from others or establishes limits for their behaviour.",
+                        "Can manipulate situations in order to limit the options of others or force them to provide the desired resources.",
+                        "Carries out follow-up, confronting inadequate performance.",
+                        "Places limits on the conduct of others."
+                    ]
+                },
+                "3": {
+                    "title": "Demands high performance",
+                    "behaviors": [
+                        "Unilaterally sets standards and demands high levels of performance, quality or resources.",
+                        "Insists that these levels are met without having their orders or demands questioned.",
+                        "Clearly communicates the consequences of failing to produce results.",
+                        "Carries out close and careful follow-up of the results."
+                    ]
+                },
+                "4": {
+                    "title": "Posts the levels of the results that have been achieved",
+                    "behaviors": [
+                        "Publicly compares the individual objectives that have been met with those that have been set (for example: sales results vs. individual objectives, marking the discrepancies in red).",
+                        "Systematically compares the results with the standards.",
+                        "Openly and directly addresses the result-related problems brought up by others.",
+                        "Uses strategies to promote productivity and is able to take extreme and necessary measures with those who so require it (for example: moving a team member to another area, dismissal)."
+                    ]
+                }
+            }
+        },
+        "presentation_skills": {
+            "name": "d",
+            "definition": "d",
+            "description": "",
+            "levels": {
+                "1": {
+                    "title": "",
+                    "behaviors": [
+                        "",
+                        "",
+                        "",
+                        ""
+                    ]
+                },
+                "2": {
+                    "title": "",
+                    "behaviors": [
+                        "",
+                        "",
+                        "",
+                        ""
+                    ]
+                },
+                "3": {
+                    "title": "",
+                    "behaviors": [
+                        "",
+                        "",
+                        "",
+                        ""
+                    ]
+                },
+                "4": {
+                    "title": "",
+                    "behaviors": [
+                        "",
+                        "",
+                        "",
+                        ""
+                    ]
+                }
+            }
+        },
+        "test_competency": {
+            "name": "Test Competency",
+            "definition": "Test definition",
+            "description": "Test description",
+            "levels": {
+                "1": {
+                    "title": "Basic Level",
+                    "behaviors": [
+                        "Behavior 1",
+                        "Behavior 2",
+                        "Behavior 3",
+                        "Behavior 4"
+                    ]
+                },
+                "2": {
+                    "title": "Intermediate Level",
+                    "behaviors": [
+                        "Behavior 1",
+                        "Behavior 2",
+                        "Behavior 3",
+                        "Behavior 4"
+                    ]
+                },
+                "3": {
+                    "title": "Advanced Level",
+                    "behaviors": [
+                        "Behavior 1",
+                        "Behavior 2",
+                        "Behavior 3",
+                        "Behavior 4"
+                    ]
+                },
+                "4": {
+                    "title": "Expert Level",
+                    "behaviors": [
+                        "Behavior 1",
+                        "Behavior 2",
+                        "Behavior 3",
+                        "Behavior 4"
+                    ]
+                }
+            }
+        },
+        "people_manangement": {
+            "name": "xzx<zc<zx <",
+            "definition": "xzx<zc<zx <",
+            "description": "",
+            "levels": {
+                "1": {
+                    "title": "",
+                    "behaviors": [
+                        "",
+                        "",
+                        "",
+                        ""
+                    ]
+                },
+                "2": {
+                    "title": "",
+                    "behaviors": [
+                        "",
+                        "",
+                        "",
+                        ""
+                    ]
+                },
+                "3": {
+                    "title": "",
+                    "behaviors": [
+                        "",
+                        "",
+                        "",
+                        ""
+                    ]
+                },
+                "4": {
+                    "title": "",
+                    "behaviors": [
+                        "",
+                        "",
+                        "",
+                        ""
+                    ]
+                }
+            }
+        }
+    },
+    "level_mapping": {
+        "1": "basic",
+        "2": "intermediate",
+        "3": "advanced",
+        "4": "expert"
+    }
+}
