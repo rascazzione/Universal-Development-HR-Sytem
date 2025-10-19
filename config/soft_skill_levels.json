@@ -1,6 +1,6 @@
 {
     "soft_skills": {
-                "presentation_skills": {
+        "presentation_skills": {
             "name": "d",
             "definition": "d",
             "description": "",
@@ -146,10 +146,53 @@
                 "2": {
                     "title": "",
                     "behaviors": [
+                        "Gives people appropriate instructions, making sure the needs and demands are reasonably clear.",
+                        "Explicitly delegates routine tasks so they can dedicate time to more significant matters.",
+                        "Assigns tasks and responsibilities to their team.",
+                        "Organises the work and plans the team's tasks."
+                    ]
+                },
+                "3": {
+                    "title": "",
+                    "behaviors": [
                         "",
                         "",
                         "",
                         ""
+                    ]
+                },
+                "4": {
+                    "title": "",
+                    "behaviors": [
+                        "",
+                        "",
+                        "",
+                        ""
+                    ]
+                }
+            }
+        },
+        "team_leadership": {
+            "name": "",
+            "definition": "",
+            "description": "",
+            "levels": {
+                "1": {
+                    "title": "",
+                    "behaviors": [
+                        "Publicly compares the individual objectives that have been met with those that have been set (for example: sales results vs. individual objectives, marking the discrepancies in red).",
+                        "Systematically compares the results with the standards.",
+                        "Openly and directly addresses the result-related problems brought up by others.",
+                        "Uses strategies to promote productivity and is able to take extreme and necessary measures with those who so require it (for example: moving a team member to another area, dismissal)."
+                    ]
+                },
+                "2": {
+                    "title": "",
+                    "behaviors": [
+                        "Publicly compares the individual objectives that have been met with those that have been set (for example: sales results vs. individual objectives, marking the discrepancies in red).",
+                        "Systematically compares the results with the standards.",
+                        "Openly and directly addresses the result-related problems brought up by others.",
+                        "Uses strategies to promote productivity and is able to take extreme and necessary measures with those who so require it (for example: moving a team member to another area, dismissal)."
                     ]
                 },
                 "3": {
