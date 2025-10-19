@@ -32,7 +32,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $categoryData = [
                     'category_name' => sanitizeInput($_POST['category_name']),
                     'description' => sanitizeInput($_POST['description']),
-                    'parent_id' => !empty($_POST['parent_id']) ? (int)$_POST['parent_id'] : null
+                    'parent_id' => null, // Remove parent category functionality
+                    'category_type' => sanitizeInput($_POST['category_type'])
                 ];
                 
                 $competencyClass->createCategory($categoryData);
@@ -43,13 +44,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             break;
             
+        case 'update_category':
+            try {
+                $categoryId = (int)$_POST['category_id'];
+                $categoryData = [
+                    'category_name' => sanitizeInput($_POST['category_name']),
+                    'description' => sanitizeInput($_POST['description']),
+                    'parent_id' => null, // Remove parent category functionality
+                    'category_type' => sanitizeInput($_POST['category_type'])
+                ];
+                
+                $competencyClass->updateCategory($categoryId, $categoryData);
+                setFlashMessage('Category updated successfully.', 'success');
+                
+            } catch (Exception $e) {
+                setFlashMessage('Error updating category: ' . $e->getMessage(), 'error');
+            }
+            break;
+            
         case 'create_competency':
             try {
                 $competencyData = [
                     'competency_name' => sanitizeInput($_POST['competency_name']),
                     'description' => sanitizeInput($_POST['description']),
-                    'category_id' => (int)$_POST['category_id'],
-                    'competency_type' => sanitizeInput($_POST['competency_type'])
+                    'category_id' => (int)$_POST['category_id']
                 ];
                 
                 $competencyClass->createCompetency($competencyData);
@@ -66,8 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $competencyData = [
                     'competency_name' => sanitizeInput($_POST['competency_name']),
                     'description' => sanitizeInput($_POST['description']),
-                    'category_id' => (int)$_POST['category_id'],
-                    'competency_type' => sanitizeInput($_POST['competency_type'])
+                    'category_id' => (int)$_POST['category_id']
                 ];
                 
                 $competencyClass->updateCompetency($competencyId, $competencyData);
@@ -102,12 +119,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+// DEBUG: Log incoming GET parameters
+error_log("[DEBUG] competencies.php - GET parameters: " . print_r($_GET, true));
+
 // Get data for display
 $selectedCategory = $_GET['category'] ?? null;
-$selectedType = $_GET['type'] ?? null;
-$categories = $competencyClass->getCategories();
+$selectedType = $_GET['type'] ?? null; // For competency filtering
+$selectedCategoryType = $_GET['category_type'] ?? null; // For category filtering
+
+// DEBUG: Log filter values
+error_log("[DEBUG] competencies.php - Selected filters - Category: " . ($selectedCategory ?? 'null') .
+          ", Type: " . ($selectedType ?? 'null') .
+          ", CategoryType: " . ($selectedCategoryType ?? 'null'));
+
+// Get categories filtered by type if specified
+$categories = $competencyClass->getCategories(true, $selectedCategoryType);
+// DEBUG: Log categories count
+error_log("[DEBUG] competencies.php - Categories returned: " . count($categories));
+
+// Get competencies filtered by both category and type
 $competencies = $competencyClass->getCompetencies($selectedCategory, $selectedType);
-$competencyTypes = $competencyClass->getCompetencyTypes();
+// DEBUG: Log competencies count
+error_log("[DEBUG] competencies.php - Competencies returned: " . count($competencies));
+
+$categoryTypes = $competencyClass->getCategoryTypes();
 
 $pageTitle = 'Competencies Management';
 $pageHeader = true;
@@ -132,56 +167,38 @@ include __DIR__ . '/../../templates/header.php';
     </div>
 </div>
 
-<!-- Filters -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-body">
-                <form method="GET" class="row g-3">
-                    <div class="col-md-4">
-                        <label for="category" class="form-label">Filter by Category</label>
-                        <select class="form-select" id="category" name="category" onchange="this.form.submit()">
-                            <option value="">All Categories</option>
-                            <?php foreach ($categories as $category): ?>
-                            <option value="<?php echo $category['id']; ?>" 
-                                    <?php echo $selectedCategory == $category['id'] ? 'selected' : ''; ?>>
-                                <?php echo htmlspecialchars($category['category_name']); ?>
-                                <?php if ($category['parent_category_name']): ?>
-                                    (<?php echo htmlspecialchars($category['parent_category_name']); ?>)
-                                <?php endif; ?>
-                            </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label for="type" class="form-label">Filter by Type</label>
-                        <select class="form-select" id="type" name="type" onchange="this.form.submit()">
-                            <option value="">All Types</option>
-                            <?php foreach ($competencyTypes as $type => $label): ?>
-                            <option value="<?php echo $type; ?>" 
-                                    <?php echo $selectedType === $type ? 'selected' : ''; ?>>
-                                <?php echo $label; ?>
-                            </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="col-md-4 d-flex align-items-end">
-                        <a href="/admin/competencies.php" class="btn btn-outline-secondary">Clear Filters</a>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
 
 <!-- Categories Overview -->
-<div class="row mb-4">
+<div class="row mb-5">
     <div class="col-12">
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title mb-0">Categories Overview</h5>
+                <h5 class="card-title mb-0">
+                    <a data-bs-toggle="collapse" href="#categoriesCollapse" role="button" aria-expanded="false" aria-controls="categoriesCollapse" class="text-decoration-none">
+                        <i class="fas fa-chevron-down me-2"></i>Categories Overview
+                    </a>
+                </h5>
             </div>
-            <div class="card-body">
+            <div class="collapse" id="categoriesCollapse">
+                <div class="card-body">
+                    <!-- Categories Filter -->
+                    <form method="GET" class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="category_type_filter" class="form-label">Filter Categories by Type</label>
+                            <select class="form-select" id="category_type_filter" name="category_type" onchange="this.form.submit()">
+                                <option value="">All Types</option>
+                                <?php foreach ($categoryTypes as $type => $label): ?>
+                                <option value="<?php echo $type; ?>"
+                                        <?php echo $selectedCategoryType === $type ? 'selected' : ''; ?>>
+                                    <?php echo $label; ?>
+                                </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-8 d-flex align-items-end">
+                            <a href="/admin/competencies.php" class="btn btn-outline-secondary">Clear All Filters</a>
+                        </div>
+                    </form>
                 <div class="row">
                     <?php foreach ($categories as $category): ?>
                     <div class="col-md-6 col-lg-4 mb-3">
@@ -194,6 +211,15 @@ include __DIR__ . '/../../templates/header.php';
                                         <small class="text-muted">Under: <?php echo htmlspecialchars($category['parent_category_name']); ?></small><br>
                                         <?php endif; ?>
                                         <small class="text-muted"><?php echo $category['competency_count']; ?> competencies</small>
+                                        <br>
+                                        <?php
+                                        $typeColors = [
+                                            'technical' => 'primary',
+                                            'soft_skill' => 'success'
+                                        ];
+                                        $color = $typeColors[$category['category_type']] ?? 'secondary';
+                                        ?>
+                                        <span class="badge bg-<?php echo $color; ?>"><?php echo $categoryTypes[$category['category_type']] ?? $category['category_type']; ?></span>
                                     </div>
                                     <div class="dropdown">
                                         <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
@@ -201,6 +227,7 @@ include __DIR__ . '/../../templates/header.php';
                                         </button>
                                         <ul class="dropdown-menu">
                                             <li><a class="dropdown-item" href="?category=<?php echo $category['id']; ?>">View Competencies</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="editCategory(<?php echo $category['id']; ?>)">Edit Category</a></li>
                                             <li><hr class="dropdown-divider"></li>
                                             <li><a class="dropdown-item text-danger" href="#" onclick="deleteCategory(<?php echo $category['id']; ?>)">Delete Category</a></li>
                                         </ul>
@@ -214,6 +241,51 @@ include __DIR__ . '/../../templates/header.php';
                     </div>
                     <?php endforeach; ?>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Competencies Filters -->
+<div class="row mb-4 mt-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">Competencies Filters</h6>
+            </div>
+            <div class="card-body">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="category" class="form-label">Filter Competencies by Category</label>
+                        <select class="form-select" id="category" name="category" onchange="this.form.submit()">
+                            <option value="">All Categories</option>
+                            <?php foreach ($categories as $category): ?>
+                            <option value="<?php echo $category['id']; ?>"
+                                    <?php echo $selectedCategory == $category['id'] ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars($category['category_name']); ?>
+                                <?php if ($category['parent_category_name']): ?>
+                                    (<?php echo htmlspecialchars($category['parent_category_name']); ?>)
+                                <?php endif; ?>
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="type" class="form-label">Filter Competencies by Type</label>
+                        <select class="form-select" id="type" name="type" onchange="this.form.submit()">
+                            <option value="">All Types</option>
+                            <?php foreach ($categoryTypes as $type => $label): ?>
+                            <option value="<?php echo $type; ?>"
+                                    <?php echo $selectedType === $type ? 'selected' : ''; ?>>
+                                <?php echo $label; ?>
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <a href="/admin/competencies.php" class="btn btn-outline-secondary">Clear Competency Filters</a>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -266,13 +338,11 @@ include __DIR__ . '/../../templates/header.php';
                                     <?php
                                     $typeColors = [
                                         'technical' => 'primary',
-                                        'soft_skill' => 'success',
-                                        'leadership' => 'warning',
-                                        'core' => 'danger'
+                                        'soft_skill' => 'success'
                                     ];
-                                    $color = $typeColors[$competency['competency_type']] ?? 'secondary';
+                                    $color = $typeColors[$competency['category_type']] ?? 'secondary';
                                     ?>
-                                    <span class="badge bg-<?php echo $color; ?>"><?php echo $competencyTypes[$competency['competency_type']] ?? $competency['competency_type']; ?></span>
+                                    <span class="badge bg-<?php echo $color; ?>"><?php echo $categoryTypes[$competency['category_type']] ?? $competency['category_type']; ?></span>
                                 </td>
                                 <td>
                                     <?php if ($competency['description']): ?>
@@ -324,15 +394,10 @@ include __DIR__ . '/../../templates/header.php';
                     </div>
                     
                     <div class="mb-3">
-                        <label for="parent_id" class="form-label">Parent Category (Optional)</label>
-                        <select class="form-select" id="parent_id" name="parent_id">
-                            <option value="">None (Top Level)</option>
-                            <?php foreach ($categories as $category): ?>
-                            <?php if (!$category['parent_id']): // Only show top-level categories ?>
-                            <option value="<?php echo $category['id']; ?>">
-                                <?php echo htmlspecialchars($category['category_name']); ?>
-                            </option>
-                            <?php endif; ?>
+                        <label for="category_type" class="form-label">Category Type</label>
+                        <select class="form-select" id="category_type" name="category_type" required>
+                            <?php foreach ($categoryTypes as $type => $label): ?>
+                            <option value="<?php echo $type; ?>"><?php echo $label; ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -364,38 +429,40 @@ include __DIR__ . '/../../templates/header.php';
                     <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                     <input type="hidden" name="action" value="create_competency">
                     
+                    <div class="mb-3">
+                        <label for="competency_name" class="form-label">Competency Name</label>
+                        <input type="text" class="form-control" id="competency_name" name="competency_name" required>
+                    </div>
+                    
                     <div class="row">
-                        <div class="col-md-8">
+                        <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="competency_name" class="form-label">Competency Name</label>
-                                <input type="text" class="form-control" id="competency_name" name="competency_name" required>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="competency_type" class="form-label">Type</label>
-                                <select class="form-select" id="competency_type" name="competency_type" required>
-                                    <?php foreach ($competencyTypes as $type => $label): ?>
+                                <label for="competency_category_type" class="form-label">Filter by Category Type</label>
+                                <select class="form-select" id="competency_category_type" name="competency_category_type" onchange="filterCategoriesByType()">
+                                    <option value="">All Types</option>
+                                    <?php foreach ($categoryTypes as $type => $label): ?>
                                     <option value="<?php echo $type; ?>"><?php echo $label; ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="category_id" class="form-label">Category</label>
-                        <select class="form-select" id="category_id" name="category_id" required>
-                            <option value="">Select a category...</option>
-                            <?php foreach ($categories as $category): ?>
-                            <option value="<?php echo $category['id']; ?>">
-                                <?php echo htmlspecialchars($category['category_name']); ?>
-                                <?php if ($category['parent_category_name']): ?>
-                                    (<?php echo htmlspecialchars($category['parent_category_name']); ?>)
-                                <?php endif; ?>
-                            </option>
-                            <?php endforeach; ?>
-                        </select>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="category_id" class="form-label">Category</label>
+                                <select class="form-select" id="category_id" name="category_id" required>
+                                    <option value="">Select a category...</option>
+                                    <?php foreach ($categories as $category): ?>
+                                    <option value="<?php echo $category['id']; ?>"
+                                            data-category-type="<?php echo $category['category_type']; ?>">
+                                        <?php echo htmlspecialchars($category['category_name']); ?>
+                                        <?php if ($category['parent_category_name']): ?>
+                                            (<?php echo htmlspecialchars($category['parent_category_name']); ?>)
+                                        <?php endif; ?>
+                                    </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="mb-3">
@@ -427,23 +494,9 @@ include __DIR__ . '/../../templates/header.php';
                     <input type="hidden" name="action" value="update_competency">
                     <input type="hidden" name="competency_id" id="edit_competency_id">
                     
-                    <div class="row">
-                        <div class="col-md-8">
-                            <div class="mb-3">
-                                <label for="edit_competency_name" class="form-label">Competency Name</label>
-                                <input type="text" class="form-control" id="edit_competency_name" name="competency_name" required>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="edit_competency_type" class="form-label">Type</label>
-                                <select class="form-select" id="edit_competency_type" name="competency_type" required>
-                                    <?php foreach ($competencyTypes as $type => $label): ?>
-                                    <option value="<?php echo $type; ?>"><?php echo $label; ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                        </div>
+                    <div class="mb-3">
+                        <label for="edit_competency_name" class="form-label">Competency Name</label>
+                        <input type="text" class="form-control" id="edit_competency_name" name="competency_name" required>
                     </div>
                     
                     <div class="mb-3">
@@ -475,6 +528,49 @@ include __DIR__ . '/../../templates/header.php';
     </div>
 </div>
 
+<!-- Edit Category Modal -->
+<div class="modal fade" id="editCategoryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Category</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST">
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                    <input type="hidden" name="action" value="update_category">
+                    <input type="hidden" name="category_id" id="edit_category_id">
+                    
+                    <div class="mb-3">
+                        <label for="edit_category_name" class="form-label">Category Name</label>
+                        <input type="text" class="form-control" id="edit_category_name" name="category_name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_category_type" class="form-label">Category Type</label>
+                        <select class="form-select" id="edit_category_type" name="category_type" required>
+                            <?php foreach ($categoryTypes as $type => $label): ?>
+                            <option value="<?php echo $type; ?>"><?php echo $label; ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    
+                    
+                    <div class="mb-3">
+                        <label for="edit_category_description" class="form-label">Description</label>
+                        <textarea class="form-control" id="edit_category_description" name="description" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Category</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- Competency Usage Modal -->
 <div class="modal fade" id="usageModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
@@ -494,6 +590,64 @@ include __DIR__ . '/../../templates/header.php';
 </div>
 
 <script>
+// Track collapse state persistence
+document.addEventListener('DOMContentLoaded', function() {
+    const categoriesCollapse = document.getElementById('categoriesCollapse');
+    const categoryTypeFilter = document.getElementById('category_type_filter');
+    const competencyCategoryFilter = document.getElementById('category');
+    const competencyTypeFilter = document.getElementById('type');
+    
+    // Log initial state
+    console.log('[DEBUG] Initial collapse state:', categoriesCollapse.classList.contains('show'));
+    
+    // Track collapse events
+    categoriesCollapse.addEventListener('show.bs.collapse', function () {
+        console.log('[DEBUG] Categories Overview is being shown');
+        localStorage.setItem('categoriesCollapseState', 'shown');
+    });
+    
+    categoriesCollapse.addEventListener('hide.bs.collapse', function () {
+        console.log('[DEBUG] Categories Overview is being hidden');
+        localStorage.setItem('categoriesCollapseState', 'hidden');
+    });
+    
+    // Restore collapse state on page load
+    const savedState = localStorage.getItem('categoriesCollapseState');
+    console.log('[DEBUG] Saved collapse state:', savedState);
+    
+    if (savedState === 'shown') {
+        // Show the collapse if it was previously shown
+        // Use a timeout to ensure Bootstrap is fully loaded
+        setTimeout(function() {
+            const collapse = new bootstrap.Collapse(categoriesCollapse, {
+                show: true
+            });
+        }, 100);
+    }
+    
+    // Track filter changes
+    if (categoryTypeFilter) {
+        categoryTypeFilter.addEventListener('change', function() {
+            console.log('[DEBUG] Category type filter changed to:', this.value);
+            console.log('[DEBUG] Form will submit with URL:', this.form.action + '?' + new URLSearchParams(new FormData(this.form)).toString());
+        });
+    }
+    
+    if (competencyCategoryFilter) {
+        competencyCategoryFilter.addEventListener('change', function() {
+            console.log('[DEBUG] Competency category filter changed to:', this.value);
+            console.log('[DEBUG] Form will submit with URL:', this.form.action + '?' + new URLSearchParams(new FormData(this.form)).toString());
+        });
+    }
+    
+    if (competencyTypeFilter) {
+        competencyTypeFilter.addEventListener('change', function() {
+            console.log('[DEBUG] Competency type filter changed to:', this.value);
+            console.log('[DEBUG] Form will submit with URL:', this.form.action + '?' + new URLSearchParams(new FormData(this.form)).toString());
+        });
+    }
+});
+
 function editCompetency(competencyId) {
     // Fetch competency data and populate edit modal
     fetch(`/api/competency.php?id=${competencyId}`)
@@ -503,7 +657,6 @@ function editCompetency(competencyId) {
                 const competency = data.competency;
                 document.getElementById('edit_competency_id').value = competency.id;
                 document.getElementById('edit_competency_name').value = competency.competency_name;
-                document.getElementById('edit_competency_type').value = competency.competency_type;
                 document.getElementById('edit_category_id').value = competency.category_id;
                 document.getElementById('edit_competency_description').value = competency.description;
                 
@@ -541,6 +694,57 @@ function deleteCategory(categoryId) {
         `;
         document.body.appendChild(form);
         form.submit();
+    }
+}
+
+function editCategory(categoryId) {
+    // Fetch category data and populate edit modal
+    fetch(`/api/category.php?id=${categoryId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const category = data.category;
+                document.getElementById('edit_category_id').value = category.id;
+                document.getElementById('edit_category_name').value = category.category_name;
+                document.getElementById('edit_category_type').value = category.category_type;
+                document.getElementById('edit_category_description').value = category.description;
+                
+                new bootstrap.Modal(document.getElementById('editCategoryModal')).show();
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching category data:', error);
+            alert('Error loading category data');
+        });
+}
+
+function filterCategoriesByType() {
+    const selectedType = document.getElementById('competency_category_type').value;
+    const categorySelect = document.getElementById('category_id');
+    const options = categorySelect.querySelectorAll('option[data-category-type]');
+    
+    // Show all categories if no type selected
+    if (!selectedType) {
+        options.forEach(option => {
+            option.style.display = '';
+        });
+        return;
+    }
+    
+    // Filter categories by selected type
+    options.forEach(option => {
+        const categoryType = option.getAttribute('data-category-type');
+        if (categoryType === selectedType) {
+            option.style.display = '';
+        } else {
+            option.style.display = 'none';
+        }
+    });
+    
+    // Reset selection if current selection is hidden
+    const selectedOption = categorySelect.options[categorySelect.selectedIndex];
+    if (selectedOption && selectedOption.style.display === 'none') {
+        categorySelect.value = '';
     }
 }
 

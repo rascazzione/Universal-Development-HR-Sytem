@@ -11,8 +11,12 @@ class Competency {
      * @param bool $includeSubcategories
      * @return array
      */
-    public function getCategories($includeSubcategories = true) {
-        $sql = "SELECT cc.*, 
+    public function getCategories($includeSubcategories = true, $categoryType = null) {
+        // DEBUG: Log method parameters
+        error_log("[DEBUG] Competency::getCategories - includeSubcategories: " . ($includeSubcategories ? 'true' : 'false') .
+                  ", categoryType: " . ($categoryType ?? 'null'));
+        
+        $sql = "SELECT cc.*,
                        parent.category_name as parent_category_name,
                        COUNT(c.id) as competency_count
                 FROM competency_categories cc
@@ -24,9 +28,18 @@ class Competency {
             $sql .= " AND cc.parent_id IS NULL";
         }
         
+        if ($categoryType) {
+            $sql .= " AND cc.category_type = ?";
+            $params[] = $categoryType;
+        }
+        
         $sql .= " GROUP BY cc.id ORDER BY cc.category_name";
         
-        return fetchAll($sql);
+        $result = fetchAll($sql, $params ?? []);
+        error_log("[DEBUG] Competency::getCategories - SQL: " . $sql);
+        error_log("[DEBUG] Competency::getCategories - Result count: " . count($result));
+        
+        return $result;
     }
     
     /**
@@ -49,13 +62,14 @@ class Competency {
      * @return int
      */
     public function createCategory($data) {
-        $sql = "INSERT INTO competency_categories (category_name, description, parent_id) 
-                VALUES (?, ?, ?)";
+        $sql = "INSERT INTO competency_categories (category_name, description, parent_id, category_type)
+                VALUES (?, ?, ?, ?)";
         
         return insertRecord($sql, [
             $data['category_name'],
             $data['description'],
-            $data['parent_id'] ?? null
+            $data['parent_id'] ?? null,
+            $data['category_type'] ?? 'technical'
         ]);
     }
     
@@ -66,14 +80,15 @@ class Competency {
      * @return int
      */
     public function updateCategory($id, $data) {
-        $sql = "UPDATE competency_categories 
-                SET category_name = ?, description = ?, parent_id = ?
+        $sql = "UPDATE competency_categories
+                SET category_name = ?, description = ?, parent_id = ?, category_type = ?
                 WHERE id = ?";
         
         return updateRecord($sql, [
             $data['category_name'],
             $data['description'],
             $data['parent_id'] ?? null,
+            $data['category_type'] ?? 'technical',
             $id
         ]);
     }
@@ -94,9 +109,14 @@ class Competency {
      * @param string $type
      * @return array
      */
-    public function getCompetencies($categoryId = null, $type = null) {
-        $sql = "SELECT c.*, 
+    public function getCompetencies($categoryId = null, $categoryType = null) {
+        // DEBUG: Log method parameters
+        error_log("[DEBUG] Competency::getCompetencies - categoryId: " . ($categoryId ?? 'null') .
+                  ", categoryType: " . ($categoryType ?? 'null'));
+        
+        $sql = "SELECT c.*,
                        cc.category_name,
+                       cc.category_type,
                        parent.category_name as parent_category_name
                 FROM competencies c
                 LEFT JOIN competency_categories cc ON c.category_id = cc.id
@@ -110,14 +130,20 @@ class Competency {
             $params[] = $categoryId;
         }
         
-        if ($type) {
-            $sql .= " AND c.competency_type = ?";
-            $params[] = $type;
+        if ($categoryType) {
+            $sql .= " AND cc.category_type = ?";
+            $params[] = $categoryType;
         }
         
         $sql .= " ORDER BY cc.category_name, c.competency_name";
         
-        return fetchAll($sql, $params);
+        error_log("[DEBUG] Competency::getCompetencies - SQL: " . $sql);
+        error_log("[DEBUG] Competency::getCompetencies - Params: " . print_r($params, true));
+        
+        $result = fetchAll($sql, $params);
+        error_log("[DEBUG] Competency::getCompetencies - Result count: " . count($result));
+        
+        return $result;
     }
     
     /**
@@ -126,8 +152,9 @@ class Competency {
      * @return array|false
      */
     public function getCompetencyById($id) {
-        $sql = "SELECT c.*, 
+        $sql = "SELECT c.*,
                        cc.category_name,
+                       cc.category_type,
                        parent.category_name as parent_category_name
                 FROM competencies c
                 LEFT JOIN competency_categories cc ON c.category_id = cc.id
@@ -143,14 +170,13 @@ class Competency {
      * @return int
      */
     public function createCompetency($data) {
-        $sql = "INSERT INTO competencies (competency_name, description, category_id, competency_type) 
-                VALUES (?, ?, ?, ?)";
+        $sql = "INSERT INTO competencies (competency_name, description, category_id)
+                VALUES (?, ?, ?)";
         
         return insertRecord($sql, [
             $data['competency_name'],
             $data['description'],
-            $data['category_id'],
-            $data['competency_type']
+            $data['category_id']
         ]);
     }
     
@@ -161,15 +187,14 @@ class Competency {
      * @return int
      */
     public function updateCompetency($id, $data) {
-        $sql = "UPDATE competencies 
-                SET competency_name = ?, description = ?, category_id = ?, competency_type = ?
+        $sql = "UPDATE competencies
+                SET competency_name = ?, description = ?, category_id = ?
                 WHERE id = ?";
         
         return updateRecord($sql, [
             $data['competency_name'],
             $data['description'],
             $data['category_id'],
-            $data['competency_type'],
             $id
         ]);
     }
@@ -191,9 +216,18 @@ class Competency {
     public function getCompetencyTypes() {
         return [
             'technical' => 'Technical Skills',
-            'soft_skill' => 'Soft Skills',
-            'leadership' => 'Leadership',
-            'core' => 'Core Competencies'
+            'soft_skill' => 'Soft Skills'
+        ];
+    }
+    
+    /**
+     * Get category types
+     * @return array
+     */
+    public function getCategoryTypes() {
+        return [
+            'technical' => 'Technical Skills',
+            'soft_skill' => 'Soft Skills'
         ];
     }
     
@@ -319,8 +353,7 @@ class Competency {
                     $competencyData = [
                         'competency_name' => $data[0] ?? '',
                         'description' => $data[1] ?? '',
-                        'category_id' => $data[2] ?? null,
-                        'competency_type' => $data[3] ?? 'technical'
+                        'category_id' => $data[2] ?? null
                     ];
                     
                     if (empty($competencyData['competency_name'])) {
@@ -349,14 +382,14 @@ class Competency {
     public function exportCompetenciesToCSV($categoryId = null) {
         $competencies = $this->getCompetencies($categoryId);
         
-        $csv = "Competency Name,Description,Category,Type,Created At\n";
+        $csv = "Competency Name,Description,Category,Category Type,Created At\n";
         
         foreach ($competencies as $competency) {
             $csv .= sprintf('"%s","%s","%s","%s","%s"' . "\n",
                 str_replace('"', '""', $competency['competency_name']),
                 str_replace('"', '""', $competency['description']),
                 str_replace('"', '""', $competency['category_name']),
-                str_replace('"', '""', $competency['competency_type']),
+                str_replace('"', '""', $competency['category_type']),
                 str_replace('"', '""', $competency['created_at'])
             );
         }
