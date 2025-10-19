@@ -268,400 +268,325 @@ include __DIR__ . '/../../templates/header.php';
                     <div class="progress-bar" role="progressbar" style="width: 0%" id="evaluation-progress"></div>
                 </div>
                 
+                <!-- Section Controls -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="expandAll">
+                            <i class="fas fa-expand-alt me-1"></i>Expand All
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="collapseAll">
+                            <i class="fas fa-compress-alt me-1"></i>Collapse All
+                        </button>
+                    </div>
+                    <div class="text-muted small">
+                        <i class="fas fa-info-circle me-1"></i>Click section headers to expand/collapse
+                    </div>
+                </div>
+                
                 <!-- Overall Evaluation Form -->
                 <form method="POST" class="needs-validation" novalidate>
                     <input type="hidden" name="action" value="save_evaluation">
                 
+                <!-- Accordion Container -->
+                <div class="accordion" id="evaluationAccordion">
+                
                 <!-- KPIs Section -->
                 <?php if (!empty($evaluation['kpi_results'])): ?>
-                <div class="evaluation-section mb-4">
-                    <h6 class="section-title border-bottom pb-2 mb-3">
-                        Key Performance Indicators (KPIs)
-                        <span class="badge bg-primary ms-2"><?php echo $evaluation['section_weights']['kpis']; ?>%</span>
-                        <?php if ($hasEvidenceData): ?>
-                        <span class="badge bg-success ms-1">
-                            <i class="fas fa-chart-line me-1"></i>Evidence-Informed
-                        </span>
-                        <?php endif; ?>
-                    </h6>
-                    
-                    <?php foreach ($evaluation['kpi_results'] as $kpi): ?>
-                    <div class="kpi-item mb-3 p-3 border rounded">
-                        <div class="row">
-                            <div class="col-md-8">
-                                <h6 class="mb-1"><?php echo htmlspecialchars($kpi['kpi_name']); ?></h6>
-                                <p class="text-muted mb-2">
-                                    <strong>Category:</strong> <?php echo htmlspecialchars($kpi['category']); ?> |
-                                    <strong>Target:</strong> <?php echo number_format($kpi['target_value'], 2); ?> <?php echo htmlspecialchars($kpi['measurement_unit']); ?>
-                                </p>
-                                
-                                <?php if ($hasEvidenceData && strpos($kpi['kpi_id'], 'evidence_') === 0): ?>
-                                <!-- Evidence-Based KPI Display -->
-                                <div class="evidence-insight mb-3 p-2 bg-light rounded">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <i class="fas fa-lightbulb text-warning me-2"></i>
-                                        <strong class="text-primary">Evidence Insight</strong>
-                                    </div>
-                                    <p class="mb-1 small"><?php echo htmlspecialchars($kpi['comments']); ?></p>
-                                    <div class="evidence-suggestion">
-                                        <span class="badge bg-info">Suggested Score: <?php echo $kpi['score']; ?>/5</span>
-                                        <span class="badge bg-secondary ms-1">Based on <?php echo $kpi['achieved_value']; ?> avg rating</span>
-                                    </div>
-                                </div>
-                                <?php else: ?>
-                                <!-- Traditional KPI Input -->
-                                <div class="mb-3">
-                                    <label class="form-label">Achieved Value</label>
-                                    <div class="input-group">
-                                        <input type="number" step="0.01" class="form-control"
-                                               name="kpi_achieved_<?php echo $kpi['kpi_id']; ?>"
-                                               value="<?php echo $kpi['achieved_value'] ?? ''; ?>"
-                                               placeholder="Enter achieved value">
-                                        <span class="input-group-text"><?php echo htmlspecialchars($kpi['measurement_unit']); ?></span>
-                                    </div>
-                                </div>
-                                <?php endif; ?>
-                                
-                                <div class="mb-3">
-                                    <label class="form-label">Comments</label>
-                                    <textarea class="form-control" rows="2"
-                                              name="kpi_comments_<?php echo $kpi['kpi_id']; ?>"
-                                              placeholder="Provide feedback on KPI performance..."><?php echo htmlspecialchars($kpi['comments'] ?? ''); ?></textarea>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <?php if ($hasEvidenceData && strpos($kpi['kpi_id'], 'evidence_') === 0): ?>
-                                <!-- Evidence-Based Score Display -->
-                                <div class="mb-3">
-                                    <label class="form-label">Evidence-Based Score</label>
-                                    <div class="evidence-score-display p-3 bg-success bg-opacity-10 rounded text-center">
-                                        <div class="h4 text-success mb-1"><?php echo $kpi['score']; ?></div>
-                                        <div class="small text-muted">Auto-calculated from evidence</div>
-                                        <div class="evidence-confidence mt-2">
-                                            <?php
-                                            $confidence = 'Low';
-                                            $confidenceClass = 'bg-warning';
-                                            if ($kpi['achieved_value'] >= 4) {
-                                                $confidence = 'High';
-                                                $confidenceClass = 'bg-success';
-                                            } elseif ($kpi['achieved_value'] >= 3) {
-                                                $confidence = 'Medium';
-                                                $confidenceClass = 'bg-info';
-                                            }
-                                            ?>
-                                            <span class="badge <?php echo $confidenceClass; ?>"><?php echo $confidence; ?> Confidence</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <?php else: ?>
-                                <!-- Traditional Score Input -->
-                                <div class="mb-3">
-                                    <label class="form-label">Score (1-5)</label>
-                                    <select class="form-select" name="kpi_score_<?php echo $kpi['kpi_id']; ?>">
-                                        <option value="">Select score...</option>
-                                        <?php for ($i = 1; $i <= 5; $i += 0.5): ?>
-                                        <option value="<?php echo $i; ?>" <?php echo ($kpi['score'] == $i) ? 'selected' : ''; ?>>
-                                            <?php echo $i; ?> - <?php echo getScoreLabel($i); ?>
-                                        </option>
-                                        <?php endfor; ?>
-                                    </select>
-                                </div>
-                                <?php endif; ?>
+                <div class="accordion-item mb-3">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#kpisSection">
+                            <i class="fas fa-chart-bar me-2"></i>
+                            Key Performance Indicators (KPIs)
+                            <span class="badge bg-primary ms-2"><?php echo $evaluation['section_weights']['kpis']; ?>%</span>
+                            <?php if ($hasEvidenceData): ?>
+                            <span class="badge bg-success ms-2">
+                                <i class="fas fa-chart-line me-1"></i>Evidence-Informed
+                            </span>
+                            <?php endif; ?>
+                            <span class="badge bg-secondary ms-2"><?php echo count($evaluation['kpi_results']); ?> items</span>
+                        </button>
+                    </h2>
+                    <div id="kpisSection" class="accordion-collapse collapse">
+                        <div class="accordion-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover compact-table">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width: 25%;">KPI Name</th>
+                                            <th style="width: 15%;">Category</th>
+                                            <th style="width: 12%;">Target</th>
+                                            <th style="width: 12%;">Achieved</th>
+                                            <th style="width: 10%;">Score</th>
+                                            <th style="width: 26%;">Comments</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($evaluation['kpi_results'] as $kpi): ?>
+                                        <tr>
+                                            <td>
+                                                <strong><?php echo htmlspecialchars($kpi['kpi_name']); ?></strong>
+                                                <?php if ($hasEvidenceData && strpos($kpi['kpi_id'], 'evidence_') === 0): ?>
+                                                <span class="badge bg-info badge-sm ms-1" title="Evidence-based">
+                                                    <i class="fas fa-lightbulb"></i>
+                                                </span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td><small><?php echo htmlspecialchars($kpi['category']); ?></small></td>
+                                            <td><small><?php echo number_format($kpi['target_value'], 2); ?> <?php echo htmlspecialchars($kpi['measurement_unit']); ?></small></td>
+                                            <td>
+                                                <?php if ($hasEvidenceData && strpos($kpi['kpi_id'], 'evidence_') === 0): ?>
+                                                <span class="badge bg-success"><?php echo $kpi['achieved_value']; ?></span>
+                                                <?php else: ?>
+                                                <input type="number" step="0.01" class="form-control form-control-sm" 
+                                                       name="kpi_achieved_<?php echo $kpi['kpi_id']; ?>"
+                                                       value="<?php echo $kpi['achieved_value'] ?? ''; ?>"
+                                                       placeholder="Value">
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <?php if ($hasEvidenceData && strpos($kpi['kpi_id'], 'evidence_') === 0): ?>
+                                                <span class="badge bg-success fs-6"><?php echo $kpi['score']; ?></span>
+                                                <?php else: ?>
+                                                <select class="form-select form-select-sm" name="kpi_score_<?php echo $kpi['kpi_id']; ?>">
+                                                    <option value="">-</option>
+                                                    <?php for ($i = 1; $i <= 5; $i += 0.5): ?>
+                                                    <option value="<?php echo $i; ?>" <?php echo ($kpi['score'] == $i) ? 'selected' : ''; ?>><?php echo $i; ?></option>
+                                                    <?php endfor; ?>
+                                                </select>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <textarea class="form-control form-control-sm" rows="1"
+                                                          name="kpi_comments_<?php echo $kpi['kpi_id']; ?>"
+                                                          placeholder="Comments..."><?php echo htmlspecialchars($kpi['comments'] ?? ''); ?></textarea>
+                                            </td>
+                                        </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
-                    <?php endforeach; ?>
                 </div>
                 <?php endif; ?>
                 
                 <!-- Competencies Section -->
                 <?php if (!empty($evaluation['competency_results'])): ?>
-                <div class="evaluation-section mb-4">
-                    <h6 class="section-title border-bottom pb-2 mb-3">
-                        Skills, Knowledge, and Competencies
-                        <span class="badge bg-primary ms-2"><?php echo $evaluation['section_weights']['competencies']; ?>%</span>
-                        <?php if ($hasEvidenceData): ?>
-                        <span class="badge bg-success ms-1">
-                            <i class="fas fa-chart-line me-1"></i>Evidence-Informed
-                        </span>
-                        <?php endif; ?>
-                    </h6>
-                    
-                    <?php foreach ($evaluation['competency_results'] as $competency): ?>
-                    <div class="competency-item mb-3 p-3 border rounded">
-                        <div class="row">
-                            <div class="col-md-8">
-                                <h6 class="mb-1"><?php echo htmlspecialchars($competency['competency_name']); ?></h6>
-                                <p class="text-muted mb-2">
-                                    <strong>Category:</strong> <?php echo htmlspecialchars($competency['category_name'] ?? 'N/A'); ?> |
-                                    <strong>Type:</strong> <?php echo ucfirst(str_replace('_', ' ', $competency['competency_type'])); ?> |
-                                    <strong>Required Level:</strong> <?php echo ucfirst($competency['required_level']); ?>
-                                </p>
-                                
-                                <?php if ($hasEvidenceData && strpos($competency['competency_id'], 'evidence_') === 0): ?>
-                                <!-- Evidence-Based Competency Display -->
-                                <div class="evidence-insight mb-3 p-2 bg-light rounded">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <i class="fas fa-lightbulb text-warning me-2"></i>
-                                        <strong class="text-primary">Evidence Insight</strong>
-                                    </div>
-                                    <p class="mb-1 small"><?php echo htmlspecialchars($competency['comments']); ?></p>
-                                    <div class="evidence-suggestion">
-                                        <span class="badge bg-info">Suggested Level: <?php echo ucfirst($competency['achieved_level']); ?></span>
-                                        <span class="badge bg-secondary ms-1">Score: <?php echo $competency['score']; ?>/5</span>
-                                    </div>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label class="form-label">Evidence-Based Achieved Level</label>
-                                    <div class="form-control-plaintext">
-                                        <span class="badge bg-success fs-6"><?php echo ucfirst($competency['achieved_level']); ?></span>
-                                        <small class="text-muted ms-2">Based on evidence analysis</small>
-                                    </div>
-                                </div>
-                                <?php else: ?>
-                                <!-- Traditional Competency Input -->
-                                <div class="mb-3">
-                                    <label class="form-label">Achieved Level</label>
-                                    <select class="form-select" name="competency_level_<?php echo $competency['competency_id']; ?>">
-                                        <option value="">Select achieved level...</option>
-                                        <option value="basic" <?php echo ($competency['achieved_level'] === 'basic') ? 'selected' : ''; ?>>Basic</option>
-                                        <option value="intermediate" <?php echo ($competency['achieved_level'] === 'intermediate') ? 'selected' : ''; ?>>Intermediate</option>
-                                        <option value="advanced" <?php echo ($competency['achieved_level'] === 'advanced') ? 'selected' : ''; ?>>Advanced</option>
-                                        <option value="expert" <?php echo ($competency['achieved_level'] === 'expert') ? 'selected' : ''; ?>>Expert</option>
-                                    </select>
-                                </div>
-                                <?php endif; ?>
-                                
-                                <div class="mb-3">
-                                    <label class="form-label">Comments</label>
-                                    <textarea class="form-control" rows="2"
-                                              name="competency_comments_<?php echo $competency['competency_id']; ?>"
-                                              placeholder="Provide feedback on competency demonstration..."><?php echo htmlspecialchars($competency['comments'] ?? ''); ?></textarea>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <?php if ($hasEvidenceData && strpos($competency['competency_id'], 'evidence_') === 0): ?>
-                                <!-- Evidence-Based Score Display -->
-                                <div class="mb-3">
-                                    <label class="form-label">Evidence-Based Score</label>
-                                    <div class="evidence-score-display p-3 bg-success bg-opacity-10 rounded text-center">
-                                        <div class="h4 text-success mb-1"><?php echo $competency['score']; ?></div>
-                                        <div class="small text-muted">Auto-calculated from evidence</div>
-                                        <div class="evidence-confidence mt-2">
-                                            <?php
-                                            $confidence = 'Low';
-                                            $confidenceClass = 'bg-warning';
-                                            if ($competency['score'] >= 4) {
-                                                $confidence = 'High';
-                                                $confidenceClass = 'bg-success';
-                                            } elseif ($competency['score'] >= 3) {
-                                                $confidence = 'Medium';
-                                                $confidenceClass = 'bg-info';
-                                            }
-                                            ?>
-                                            <span class="badge <?php echo $confidenceClass; ?>"><?php echo $confidence; ?> Confidence</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <?php else: ?>
-                                <!-- Traditional Score Input -->
-                                <div class="mb-3">
-                                    <label class="form-label">Score (1-5)</label>
-                                    <select class="form-select" name="competency_score_<?php echo $competency['competency_id']; ?>">
-                                        <option value="">Select score...</option>
-                                        <?php for ($i = 1; $i <= 5; $i += 0.5): ?>
-                                        <option value="<?php echo $i; ?>" <?php echo ($competency['score'] == $i) ? 'selected' : ''; ?>>
-                                            <?php echo $i; ?> - <?php echo getScoreLabel($i); ?>
-                                        </option>
-                                        <?php endfor; ?>
-                                    </select>
-                                </div>
-                                <?php endif; ?>
+                <div class="accordion-item mb-3">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#competenciesSection">
+                            <i class="fas fa-brain me-2"></i>
+                            Skills, Knowledge, and Competencies
+                            <span class="badge bg-primary ms-2"><?php echo $evaluation['section_weights']['competencies']; ?>%</span>
+                            <?php if ($hasEvidenceData): ?>
+                            <span class="badge bg-success ms-2">
+                                <i class="fas fa-chart-line me-1"></i>Evidence-Informed
+                            </span>
+                            <?php endif; ?>
+                            <span class="badge bg-secondary ms-2"><?php echo count($evaluation['competency_results']); ?> items</span>
+                        </button>
+                    </h2>
+                    <div id="competenciesSection" class="accordion-collapse collapse">
+                        <div class="accordion-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover compact-table">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width: 25%;">Competency</th>
+                                            <th style="width: 15%;">Category</th>
+                                            <th style="width: 12%;">Required Level</th>
+                                            <th style="width: 12%;">Achieved Level</th>
+                                            <th style="width: 10%;">Score</th>
+                                            <th style="width: 26%;">Comments</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($evaluation['competency_results'] as $competency): ?>
+                                        <tr>
+                                            <td>
+                                                <strong><?php echo htmlspecialchars($competency['competency_name']); ?></strong>
+                                                <?php if ($hasEvidenceData && strpos($competency['competency_id'], 'evidence_') === 0): ?>
+                                                <span class="badge bg-info badge-sm ms-1" title="Evidence-based">
+                                                    <i class="fas fa-lightbulb"></i>
+                                                </span>
+                                                <?php endif; ?>
+                                                <br><small class="text-muted"><?php echo ucfirst(str_replace('_', ' ', $competency['competency_type'])); ?></small>
+                                            </td>
+                                            <td><small><?php echo htmlspecialchars($competency['category_name'] ?? 'N/A'); ?></small></td>
+                                            <td><span class="badge bg-secondary"><?php echo ucfirst($competency['required_level']); ?></span></td>
+                                            <td>
+                                                <?php if ($hasEvidenceData && strpos($competency['competency_id'], 'evidence_') === 0): ?>
+                                                <span class="badge bg-success"><?php echo ucfirst($competency['achieved_level']); ?></span>
+                                                <?php else: ?>
+                                                <select class="form-select form-select-sm" name="competency_level_<?php echo $competency['competency_id']; ?>">
+                                                    <option value="">-</option>
+                                                    <option value="basic" <?php echo ($competency['achieved_level'] === 'basic') ? 'selected' : ''; ?>>Basic</option>
+                                                    <option value="intermediate" <?php echo ($competency['achieved_level'] === 'intermediate') ? 'selected' : ''; ?>>Intermediate</option>
+                                                    <option value="advanced" <?php echo ($competency['achieved_level'] === 'advanced') ? 'selected' : ''; ?>>Advanced</option>
+                                                    <option value="expert" <?php echo ($competency['achieved_level'] === 'expert') ? 'selected' : ''; ?>>Expert</option>
+                                                </select>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <?php if ($hasEvidenceData && strpos($competency['competency_id'], 'evidence_') === 0): ?>
+                                                <span class="badge bg-success fs-6"><?php echo $competency['score']; ?></span>
+                                                <?php else: ?>
+                                                <select class="form-select form-select-sm" name="competency_score_<?php echo $competency['competency_id']; ?>">
+                                                    <option value="">-</option>
+                                                    <?php for ($i = 1; $i <= 5; $i += 0.5): ?>
+                                                    <option value="<?php echo $i; ?>" <?php echo ($competency['score'] == $i) ? 'selected' : ''; ?>><?php echo $i; ?></option>
+                                                    <?php endfor; ?>
+                                                </select>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <textarea class="form-control form-control-sm" rows="1"
+                                                          name="competency_comments_<?php echo $competency['competency_id']; ?>"
+                                                          placeholder="Comments..."><?php echo htmlspecialchars($competency['comments'] ?? ''); ?></textarea>
+                                            </td>
+                                        </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
-                    <?php endforeach; ?>
                 </div>
                 <?php endif; ?>
                 
                 <!-- Responsibilities Section -->
                 <?php if (!empty($evaluation['responsibility_results'])): ?>
-                <div class="evaluation-section mb-4">
-                    <h6 class="section-title border-bottom pb-2 mb-3">
-                        Key Responsibilities
-                        <span class="badge bg-primary ms-2"><?php echo $evaluation['section_weights']['responsibilities']; ?>%</span>
-                        <?php if ($hasEvidenceData): ?>
-                        <span class="badge bg-success ms-1">
-                            <i class="fas fa-chart-line me-1"></i>Evidence-Informed
-                        </span>
-                        <?php endif; ?>
-                    </h6>
-                    
-                    <?php foreach ($evaluation['responsibility_results'] as $responsibility): ?>
-                    <div class="responsibility-item mb-3 p-3 border rounded">
-                        <div class="row">
-                            <div class="col-md-8">
-                                <h6 class="mb-2">
-                                    <?php if ($hasEvidenceData && strpos($responsibility['responsibility_id'], 'evidence_') === 0): ?>
-                                        Evidence-Based Responsibility Assessment
-                                    <?php else: ?>
-                                        Responsibility #<?php echo $responsibility['sort_order']; ?>
-                                    <?php endif; ?>
-                                </h6>
-                                <p class="mb-3"><?php echo htmlspecialchars($responsibility['responsibility_text']); ?></p>
-                                
-                                <?php if ($hasEvidenceData && strpos($responsibility['responsibility_id'], 'evidence_') === 0): ?>
-                                <!-- Evidence-Based Responsibility Display -->
-                                <div class="evidence-insight mb-3 p-2 bg-light rounded">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <i class="fas fa-lightbulb text-warning me-2"></i>
-                                        <strong class="text-primary">Evidence Insight</strong>
-                                    </div>
-                                    <p class="mb-1 small"><?php echo htmlspecialchars($responsibility['comments']); ?></p>
-                                    <div class="evidence-suggestion">
-                                        <span class="badge bg-info">Suggested Score: <?php echo $responsibility['score']; ?>/5</span>
-                                    </div>
-                                </div>
-                                <?php endif; ?>
-                                
-                                <div class="mb-3">
-                                    <label class="form-label">Comments</label>
-                                    <textarea class="form-control" rows="2"
-                                              name="responsibility_comments_<?php echo $responsibility['responsibility_id']; ?>"
-                                              placeholder="Provide feedback on responsibility fulfillment..."><?php echo htmlspecialchars($responsibility['comments'] ?? ''); ?></textarea>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <?php if ($hasEvidenceData && strpos($responsibility['responsibility_id'], 'evidence_') === 0): ?>
-                                <!-- Evidence-Based Score Display -->
-                                <div class="mb-3">
-                                    <label class="form-label">Evidence-Based Score</label>
-                                    <div class="evidence-score-display p-3 bg-success bg-opacity-10 rounded text-center">
-                                        <div class="h4 text-success mb-1"><?php echo $responsibility['score']; ?></div>
-                                        <div class="small text-muted">Auto-calculated from evidence</div>
-                                        <div class="evidence-confidence mt-2">
-                                            <?php
-                                            $confidence = 'Low';
-                                            $confidenceClass = 'bg-warning';
-                                            if ($responsibility['score'] >= 4) {
-                                                $confidence = 'High';
-                                                $confidenceClass = 'bg-success';
-                                            } elseif ($responsibility['score'] >= 3) {
-                                                $confidence = 'Medium';
-                                                $confidenceClass = 'bg-info';
-                                            }
-                                            ?>
-                                            <span class="badge <?php echo $confidenceClass; ?>"><?php echo $confidence; ?> Confidence</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <?php else: ?>
-                                <!-- Traditional Score Input -->
-                                <div class="mb-3">
-                                    <label class="form-label">Score (1-5)</label>
-                                    <select class="form-select" name="responsibility_score_<?php echo $responsibility['responsibility_id']; ?>">
-                                        <option value="">Select score...</option>
-                                        <?php for ($i = 1; $i <= 5; $i += 0.5): ?>
-                                        <option value="<?php echo $i; ?>" <?php echo ($responsibility['score'] == $i) ? 'selected' : ''; ?>>
-                                            <?php echo $i; ?> - <?php echo getScoreLabel($i); ?>
-                                        </option>
-                                        <?php endfor; ?>
-                                    </select>
-                                </div>
-                                <?php endif; ?>
+                <div class="accordion-item mb-3">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#responsibilitiesSection">
+                            <i class="fas fa-tasks me-2"></i>
+                            Key Responsibilities
+                            <span class="badge bg-primary ms-2"><?php echo $evaluation['section_weights']['responsibilities']; ?>%</span>
+                            <?php if ($hasEvidenceData): ?>
+                            <span class="badge bg-success ms-2">
+                                <i class="fas fa-chart-line me-1"></i>Evidence-Informed
+                            </span>
+                            <?php endif; ?>
+                            <span class="badge bg-secondary ms-2"><?php echo count($evaluation['responsibility_results']); ?> items</span>
+                        </button>
+                    </h2>
+                    <div id="responsibilitiesSection" class="accordion-collapse collapse">
+                        <div class="accordion-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover compact-table">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width: 60%;">Responsibility</th>
+                                            <th style="width: 15%;">Score</th>
+                                            <th style="width: 25%;">Comments</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($evaluation['responsibility_results'] as $responsibility): ?>
+                                        <tr>
+                                            <td>
+                                                <?php if ($hasEvidenceData && strpos($responsibility['responsibility_id'], 'evidence_') === 0): ?>
+                                                <span class="badge bg-info badge-sm me-1" title="Evidence-based">
+                                                    <i class="fas fa-lightbulb"></i>
+                                                </span>
+                                                <?php endif; ?>
+                                                <?php echo htmlspecialchars($responsibility['responsibility_text']); ?>
+                                            </td>
+                                            <td>
+                                                <?php if ($hasEvidenceData && strpos($responsibility['responsibility_id'], 'evidence_') === 0): ?>
+                                                <span class="badge bg-success fs-6"><?php echo $responsibility['score']; ?></span>
+                                                <?php else: ?>
+                                                <select class="form-select form-select-sm" name="responsibility_score_<?php echo $responsibility['responsibility_id']; ?>">
+                                                    <option value="">-</option>
+                                                    <?php for ($i = 1; $i <= 5; $i += 0.5): ?>
+                                                    <option value="<?php echo $i; ?>" <?php echo ($responsibility['score'] == $i) ? 'selected' : ''; ?>><?php echo $i; ?></option>
+                                                    <?php endfor; ?>
+                                                </select>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <textarea class="form-control form-control-sm" rows="1"
+                                                          name="responsibility_comments_<?php echo $responsibility['responsibility_id']; ?>"
+                                                          placeholder="Comments..."><?php echo htmlspecialchars($responsibility['comments'] ?? ''); ?></textarea>
+                                            </td>
+                                        </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
-                    <?php endforeach; ?>
                 </div>
                 <?php endif; ?>
                 
                 <!-- Values Section -->
                 <?php if (!empty($evaluation['value_results'])): ?>
-                <div class="evaluation-section mb-4">
-                    <h6 class="section-title border-bottom pb-2 mb-3">
-                        Living Our Values
-                        <span class="badge bg-primary ms-2"><?php echo $evaluation['section_weights']['values']; ?>%</span>
-                        <?php if ($hasEvidenceData): ?>
-                        <span class="badge bg-success ms-1">
-                            <i class="fas fa-chart-line me-1"></i>Evidence-Informed
-                        </span>
-                        <?php endif; ?>
-                    </h6>
-                    
-                    <?php foreach ($evaluation['value_results'] as $value): ?>
-                    <div class="value-item mb-3 p-3 border rounded">
-                        <div class="row">
-                            <div class="col-md-8">
-                                <h6 class="mb-1"><?php echo htmlspecialchars($value['value_name']); ?></h6>
-                                <p class="text-muted mb-3"><?php echo htmlspecialchars($value['description']); ?></p>
-                                
-                                <?php if ($hasEvidenceData && strpos($value['value_id'], 'evidence_') === 0): ?>
-                                <!-- Evidence-Based Values Display -->
-                                <div class="evidence-insight mb-3 p-2 bg-light rounded">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <i class="fas fa-lightbulb text-warning me-2"></i>
-                                        <strong class="text-primary">Evidence Insight</strong>
-                                    </div>
-                                    <p class="mb-1 small"><?php echo htmlspecialchars($value['comments']); ?></p>
-                                    <div class="evidence-suggestion">
-                                        <span class="badge bg-info">Suggested Score: <?php echo $value['score']; ?>/5</span>
-                                    </div>
-                                </div>
-                                <?php endif; ?>
-                                
-                                <div class="mb-3">
-                                    <label class="form-label">Comments</label>
-                                    <textarea class="form-control" rows="2"
-                                              name="value_comments_<?php echo $value['value_id']; ?>"
-                                              placeholder="Provide feedback on how this value is demonstrated..."><?php echo htmlspecialchars($value['comments'] ?? ''); ?></textarea>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <?php if ($hasEvidenceData && strpos($value['value_id'], 'evidence_') === 0): ?>
-                                <!-- Evidence-Based Score Display -->
-                                <div class="mb-3">
-                                    <label class="form-label">Evidence-Based Score</label>
-                                    <div class="evidence-score-display p-3 bg-success bg-opacity-10 rounded text-center">
-                                        <div class="h4 text-success mb-1"><?php echo $value['score']; ?></div>
-                                        <div class="small text-muted">Auto-calculated from evidence</div>
-                                        <div class="evidence-confidence mt-2">
-                                            <?php
-                                            $confidence = 'Low';
-                                            $confidenceClass = 'bg-warning';
-                                            if ($value['score'] >= 4) {
-                                                $confidence = 'High';
-                                                $confidenceClass = 'bg-success';
-                                            } elseif ($value['score'] >= 3) {
-                                                $confidence = 'Medium';
-                                                $confidenceClass = 'bg-info';
-                                            }
-                                            ?>
-                                            <span class="badge <?php echo $confidenceClass; ?>"><?php echo $confidence; ?> Confidence</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <?php else: ?>
-                                <!-- Traditional Score Input -->
-                                <div class="mb-3">
-                                    <label class="form-label">Score (1-5)</label>
-                                    <select class="form-select" name="value_score_<?php echo $value['value_id']; ?>">
-                                        <option value="">Select score...</option>
-                                        <?php for ($i = 1; $i <= 5; $i += 0.5): ?>
-                                        <option value="<?php echo $i; ?>" <?php echo ($value['score'] == $i) ? 'selected' : ''; ?>>
-                                            <?php echo $i; ?> - <?php echo getScoreLabel($i); ?>
-                                        </option>
-                                        <?php endfor; ?>
-                                    </select>
-                                </div>
-                                <?php endif; ?>
+                <div class="accordion-item mb-3">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#valuesSection">
+                            <i class="fas fa-heart me-2"></i>
+                            Living Our Values
+                            <span class="badge bg-primary ms-2"><?php echo $evaluation['section_weights']['values']; ?>%</span>
+                            <?php if ($hasEvidenceData): ?>
+                            <span class="badge bg-success ms-2">
+                                <i class="fas fa-chart-line me-1"></i>Evidence-Informed
+                            </span>
+                            <?php endif; ?>
+                            <span class="badge bg-secondary ms-2"><?php echo count($evaluation['value_results']); ?> items</span>
+                        </button>
+                    </h2>
+                    <div id="valuesSection" class="accordion-collapse collapse">
+                        <div class="accordion-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover compact-table">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width: 25%;">Value</th>
+                                            <th style="width: 35%;">Description</th>
+                                            <th style="width: 15%;">Score</th>
+                                            <th style="width: 25%;">Comments</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($evaluation['value_results'] as $value): ?>
+                                        <tr>
+                                            <td>
+                                                <strong><?php echo htmlspecialchars($value['value_name']); ?></strong>
+                                                <?php if ($hasEvidenceData && strpos($value['value_id'], 'evidence_') === 0): ?>
+                                                <span class="badge bg-info badge-sm ms-1" title="Evidence-based">
+                                                    <i class="fas fa-lightbulb"></i>
+                                                </span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td><small><?php echo htmlspecialchars($value['description']); ?></small></td>
+                                            <td>
+                                                <?php if ($hasEvidenceData && strpos($value['value_id'], 'evidence_') === 0): ?>
+                                                <span class="badge bg-success fs-6"><?php echo $value['score']; ?></span>
+                                                <?php else: ?>
+                                                <select class="form-select form-select-sm" name="value_score_<?php echo $value['value_id']; ?>">
+                                                    <option value="">-</option>
+                                                    <?php for ($i = 1; $i <= 5; $i += 0.5): ?>
+                                                    <option value="<?php echo $i; ?>" <?php echo ($value['score'] == $i) ? 'selected' : ''; ?>><?php echo $i; ?></option>
+                                                    <?php endfor; ?>
+                                                </select>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <textarea class="form-control form-control-sm" rows="1"
+                                                          name="value_comments_<?php echo $value['value_id']; ?>"
+                                                          placeholder="Comments..."><?php echo htmlspecialchars($value['comments'] ?? ''); ?></textarea>
+                                            </td>
+                                        </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
-                    <?php endforeach; ?>
                 </div>
                 <?php endif; ?>
+                
+                </div><!-- End Accordion Container -->
                 
                 <?php
                 // Check if this evaluation has evidence-based data
@@ -894,6 +819,72 @@ include __DIR__ . '/../../templates/header.php';
 </div>
 
 <style>
+/* Accordion Styles */
+.accordion-item {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    overflow: hidden;
+}
+
+.accordion-button {
+    font-weight: 600;
+    background-color: #f8f9fa;
+    padding: 1rem 1.25rem;
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: #e7f1ff;
+    color: #0c63e4;
+}
+
+.accordion-button:focus {
+    box-shadow: none;
+    border-color: #dee2e6;
+}
+
+.accordion-body {
+    padding: 1.5rem;
+}
+
+/* Compact Table Styles */
+.compact-table {
+    margin-bottom: 0;
+    font-size: 0.9rem;
+}
+
+.compact-table thead th {
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 0.75rem 0.5rem;
+    border-bottom: 2px solid #dee2e6;
+    background-color: #f8f9fa;
+}
+
+.compact-table tbody td {
+    padding: 0.75rem 0.5rem;
+    vertical-align: middle;
+}
+
+.compact-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.compact-table .form-control-sm,
+.compact-table .form-select-sm {
+    font-size: 0.85rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.compact-table textarea.form-control-sm {
+    resize: vertical;
+    min-height: 2.5rem;
+}
+
+.compact-table .badge-sm {
+    font-size: 0.7rem;
+    padding: 0.2em 0.4em;
+}
+
 .evaluation-section {
     background: #f8f9fa;
     border-radius: 8px;
@@ -1097,6 +1088,33 @@ include __DIR__ . '/../../templates/header.php';
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Expand/Collapse All functionality
+    const expandAllBtn = document.getElementById('expandAll');
+    const collapseAllBtn = document.getElementById('collapseAll');
+    
+    if (expandAllBtn) {
+        expandAllBtn.addEventListener('click', function() {
+            const collapses = document.querySelectorAll('.accordion-collapse');
+            collapses.forEach(collapse => {
+                const bsCollapse = new bootstrap.Collapse(collapse, {
+                    show: true
+                });
+            });
+        });
+    }
+    
+    if (collapseAllBtn) {
+        collapseAllBtn.addEventListener('click', function() {
+            const collapses = document.querySelectorAll('.accordion-collapse.show');
+            collapses.forEach(collapse => {
+                const bsCollapse = bootstrap.Collapse.getInstance(collapse);
+                if (bsCollapse) {
+                    bsCollapse.hide();
+                }
+            });
+        });
+    }
+    
     function updateProgress() {
         // Calculate completion percentage based on filled score fields
         const totalItems = document.querySelectorAll('select[name*="_score_"]').length;
