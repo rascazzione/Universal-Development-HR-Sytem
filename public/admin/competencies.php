@@ -617,94 +617,78 @@ include __DIR__ . '/../../templates/header.php';
                         <textarea class="form-control" id="soft_skill_description" name="description" rows="4" placeholder="Enter a detailed description of this competency..."></textarea>
                     </div>
                     
-                    <div class="accordion" id="levelsAccordion">
-                        <div class="accordion-item">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#level1">
-                                    Level 1 - Basic
-                                </button>
-                            </h2>
-                            <div id="level1" class="accordion-collapse collapse show" data-bs-parent="#levelsAccordion">
-                                <div class="accordion-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0">Level 1 - Basic</h6>
+                                </div>
+                                <div class="card-body">
                                     <div class="mb-3">
                                         <label class="form-label">Title</label>
                                         <input type="text" class="form-control" name="level_1_title" id="level_1_title" placeholder="Enter level 1 title...">
                                     </div>
                                     <div class="mb-3">
-                                        <label class="form-label">Behaviors (4 required)</label>
-                                        <input type="text" class="form-control mb-2" name="level_1_behavior_1" id="level_1_behavior_1" placeholder="Behavior 1">
-                                        <input type="text" class="form-control mb-2" name="level_1_behavior_2" id="level_1_behavior_2" placeholder="Behavior 2">
-                                        <input type="text" class="form-control mb-2" name="level_1_behavior_3" id="level_1_behavior_3" placeholder="Behavior 3">
-                                        <input type="text" class="form-control mb-2" name="level_1_behavior_4" id="level_1_behavior_4" placeholder="Behavior 4">
+                                        <label class="form-label">Behaviors (Markdown compatible)</label>
+                                        <small class="text-muted d-block mb-2">Use bullet points or numbered lists. Each line represents one behavior.</small>
+                                        <textarea class="form-control" name="level_1_behaviors" id="level_1_behaviors" rows="6" placeholder="- Behavior 1&#10;- Behavior 2&#10;- Behavior 3&#10;- Behavior 4"></textarea>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="accordion-item">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#level2">
-                                    Level 2 - Intermediate
-                                </button>
-                            </h2>
-                            <div id="level2" class="accordion-collapse collapse" data-bs-parent="#levelsAccordion">
-                                <div class="accordion-body">
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0">Level 2 - Intermediate</h6>
+                                </div>
+                                <div class="card-body">
                                     <div class="mb-3">
                                         <label class="form-label">Title</label>
                                         <input type="text" class="form-control" name="level_2_title" id="level_2_title" placeholder="Enter level 2 title...">
                                     </div>
                                     <div class="mb-3">
-                                        <label class="form-label">Behaviors (4 required)</label>
-                                        <input type="text" class="form-control mb-2" name="level_2_behavior_1" id="level_2_behavior_1" placeholder="Behavior 1">
-                                        <input type="text" class="form-control mb-2" name="level_2_behavior_2" id="level_2_behavior_2" placeholder="Behavior 2">
-                                        <input type="text" class="form-control mb-2" name="level_2_behavior_3" id="level_2_behavior_3" placeholder="Behavior 3">
-                                        <input type="text" class="form-control mb-2" name="level_2_behavior_4" id="level_2_behavior_4" placeholder="Behavior 4">
+                                        <label class="form-label">Behaviors (Markdown compatible)</label>
+                                        <small class="text-muted d-block mb-2">Use bullet points or numbered lists. Each line represents one behavior.</small>
+                                        <textarea class="form-control" name="level_2_behaviors" id="level_2_behaviors" rows="6" placeholder="- Behavior 1&#10;- Behavior 2&#10;- Behavior 3&#10;- Behavior 4"></textarea>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="accordion-item">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#level3">
-                                    Level 3 - Advanced
-                                </button>
-                            </h2>
-                            <div id="level3" class="accordion-collapse collapse" data-bs-parent="#levelsAccordion">
-                                <div class="accordion-body">
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0">Level 3 - Advanced</h6>
+                                </div>
+                                <div class="card-body">
                                     <div class="mb-3">
                                         <label class="form-label">Title</label>
                                         <input type="text" class="form-control" name="level_3_title" id="level_3_title" placeholder="Enter level 3 title...">
                                     </div>
                                     <div class="mb-3">
-                                        <label class="form-label">Behaviors (4 required)</label>
-                                        <input type="text" class="form-control mb-2" name="level_3_behavior_1" id="level_3_behavior_1" placeholder="Behavior 1">
-                                        <input type="text" class="form-control mb-2" name="level_3_behavior_2" id="level_3_behavior_2" placeholder="Behavior 2">
-                                        <input type="text" class="form-control mb-2" name="level_3_behavior_3" id="level_3_behavior_3" placeholder="Behavior 3">
-                                        <input type="text" class="form-control mb-2" name="level_3_behavior_4" id="level_3_behavior_4" placeholder="Behavior 4">
+                                        <label class="form-label">Behaviors (Markdown compatible)</label>
+                                        <small class="text-muted d-block mb-2">Use bullet points or numbered lists. Each line represents one behavior.</small>
+                                        <textarea class="form-control" name="level_3_behaviors" id="level_3_behaviors" rows="6" placeholder="- Behavior 1&#10;- Behavior 2&#10;- Behavior 3&#10;- Behavior 4"></textarea>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="accordion-item">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#level4">
-                                    Level 4 - Expert
-                                </button>
-                            </h2>
-                            <div id="level4" class="accordion-collapse collapse" data-bs-parent="#levelsAccordion">
-                                <div class="accordion-body">
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-header bg-danger text-white">
+                                    <h6 class="mb-0">Level 4 - Expert</h6>
+                                </div>
+                                <div class="card-body">
                                     <div class="mb-3">
                                         <label class="form-label">Title</label>
                                         <input type="text" class="form-control" name="level_4_title" id="level_4_title" placeholder="Enter level 4 title...">
                                     </div>
                                     <div class="mb-3">
-                                        <label class="form-label">Behaviors (4 required)</label>
-                                        <input type="text" class="form-control mb-2" name="level_4_behavior_1" id="level_4_behavior_1" placeholder="Behavior 1">
-                                        <input type="text" class="form-control mb-2" name="level_4_behavior_2" id="level_4_behavior_2" placeholder="Behavior 2">
-                                        <input type="text" class="form-control mb-2" name="level_4_behavior_3" id="level_4_behavior_3" placeholder="Behavior 3">
-                                        <input type="text" class="form-control mb-2" name="level_4_behavior_4" id="level_4_behavior_4" placeholder="Behavior 4">
+                                        <label class="form-label">Behaviors (Markdown compatible)</label>
+                                        <small class="text-muted d-block mb-2">Use bullet points or numbered lists. Each line represents one behavior.</small>
+                                        <textarea class="form-control" name="level_4_behaviors" id="level_4_behaviors" rows="6" placeholder="- Behavior 1&#10;- Behavior 2&#10;- Behavior 3&#10;- Behavior 4"></textarea>
                                     </div>
                                 </div>
                             </div>
@@ -911,15 +895,15 @@ function viewSoftSkillLevels(competencyId) {
                 document.getElementById('soft_skill_definition').value = levels.definition || '';
                 document.getElementById('soft_skill_description').value = levels.description || '';
                 
-                // Set level titles and behaviors
+                // Set level titles and behaviors (convert array to markdown)
                 for (let i = 1; i <= 4; i++) {
                     const level = levels.levels[i.toString()];
                     if (level) {
                         document.getElementById(`level_${i}_title`).value = level.title || '';
-                        for (let j = 1; j <= 4; j++) {
-                            const behavior = level.behaviors[j - 1] || '';
-                            document.getElementById(`level_${i}_behavior_${j}`).value = behavior;
-                        }
+                        
+                        // Convert behaviors array to markdown list
+                        const behaviorsText = level.behaviors ? level.behaviors.map(b => `- ${b}`).join('\n') : '';
+                        document.getElementById(`level_${i}_behaviors`).value = behaviorsText;
                     }
                 }
                 
@@ -949,10 +933,9 @@ function saveSoftSkillLevels() {
     
     // Collect level data
     for (let i = 1; i <= 4; i++) {
-        const behaviors = [];
-        for (let j = 1; j <= 4; j++) {
-            behaviors.push(document.getElementById(`level_${i}_behavior_${j}`).value);
-        }
+        // Parse markdown text to extract behaviors
+        const behaviorsText = document.getElementById(`level_${i}_behaviors`).value;
+        const behaviors = parseMarkdownBehaviors(behaviorsText);
         
         levels.levels[i.toString()] = {
             title: document.getElementById(`level_${i}_title`).value,
@@ -987,6 +970,37 @@ function saveSoftSkillLevels() {
         console.error('Error saving soft skill levels:', error);
         alert('Error saving soft skill levels');
     });
+}
+
+function parseMarkdownBehaviors(text) {
+    // Split by lines and filter out empty lines
+    const lines = text.split('\n').filter(line => line.trim());
+    
+    const behaviors = [];
+    
+    for (const line of lines) {
+        // Remove markdown list markers (-, *, 1., 2., etc.)
+        let cleanLine = line.trim();
+        
+        // Remove bullet points
+        cleanLine = cleanLine.replace(/^[-*+]\s*/, '');
+        
+        // Remove numbered lists
+        cleanLine = cleanLine.replace(/^\d+\.\s*/, '');
+        
+        // Add the behavior if it's not empty
+        if (cleanLine) {
+            behaviors.push(cleanLine);
+        }
+    }
+    
+    // Ensure we have at least 4 behaviors, fill with empty strings if needed
+    while (behaviors.length < 4) {
+        behaviors.push('');
+    }
+    
+    // Return only first 4 behaviors
+    return behaviors.slice(0, 4);
 }
 </script>
 
