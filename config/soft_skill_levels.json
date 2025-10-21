@@ -214,6 +214,49 @@
                     ]
                 }
             }
+        },
+        "verbal_communication": {
+            "name": "s",
+            "definition": "s",
+            "description": "",
+            "levels": {
+                "1": {
+                    "title": "",
+                    "behaviors": [
+                        "s",
+                        "asdada",
+                        "asdasd",
+                        "fnjgjg"
+                    ]
+                },
+                "2": {
+                    "title": "",
+                    "behaviors": [
+                        "",
+                        "",
+                        "",
+                        ""
+                    ]
+                },
+                "3": {
+                    "title": "",
+                    "behaviors": [
+                        "",
+                        "",
+                        "",
+                        ""
+                    ]
+                },
+                "4": {
+                    "title": "",
+                    "behaviors": [
+                        "",
+                        "",
+                        "",
+                        ""
+                    ]
+                }
+            }
         }
     },
     "level_mapping": {

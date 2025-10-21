@@ -45,8 +45,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             break;
             
         case 'update_category':
+            // DEBUG: Log incoming POST data
+            error_log("[DEBUG] update_category case - POST data: " . print_r($_POST, true));
+            
             try {
                 $categoryId = (int)$_POST['category_id'];
+                error_log("[DEBUG] update_category - Category ID: " . $categoryId);
+                
                 $categoryData = [
                     'category_name' => sanitizeInput($_POST['category_name']),
                     'description' => sanitizeInput($_POST['description']),
@@ -54,10 +59,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'category_type' => sanitizeInput($_POST['category_type'])
                 ];
                 
-                $competencyClass->updateCategory($categoryId, $categoryData);
+                error_log("[DEBUG] update_category - Sanitized data: " . print_r($categoryData, true));
+                
+                $result = $competencyClass->updateCategory($categoryId, $categoryData);
+                error_log("[DEBUG] update_category - Update result: " . $result);
+                
                 setFlashMessage('Category updated successfully.', 'success');
                 
             } catch (Exception $e) {
+                error_log("[ERROR] update_category - Exception: " . $e->getMessage());
                 setFlashMessage('Error updating category: ' . $e->getMessage(), 'error');
             }
             break;
@@ -541,11 +551,11 @@ include __DIR__ . '/../../templates/header.php';
                 <h5 class="modal-title">Edit Category</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form method="POST">
+            <form id="editCategoryForm" method="POST">
                 <div class="modal-body">
                     <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
                     <input type="hidden" name="action" value="update_category">
-                    <input type="hidden" name="category_id" id="edit_category_id">
+                    <input type="hidden" name="category_id" id="category_id_edit">
                     
                     <div class="mb-3">
                         <label for="edit_category_name" class="form-label">Category Name</label>
@@ -765,7 +775,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function editCompetency(competencyId) {
     // Fetch competency data and populate edit modal
-    fetch(`/api/competency.php?id=${competencyId}`)
+    fetch(`/api/competency.php?id=${competencyId}`, {
+        credentials: 'include'
+    })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
@@ -813,16 +825,29 @@ function deleteCategory(categoryId) {
 }
 
 function editCategory(categoryId) {
+    console.log('[DEBUG] editCategory called with ID:', categoryId);
+    
     // Fetch category data and populate edit modal
-    fetch(`/api/category.php?id=${categoryId}`)
+    fetch(`/api/category.php?id=${categoryId}`, {
+        credentials: 'include'
+    })
         .then(response => response.json())
         .then(data => {
+            console.log('[DEBUG] Category data received:', data);
             if (data.success) {
                 const category = data.category;
-                document.getElementById('edit_category_id').value = category.id;
+                console.log('[DEBUG] Populating form with category:', category);
+                
+                document.getElementById('category_id_edit').value = category.id;
                 document.getElementById('edit_category_name').value = category.category_name;
                 document.getElementById('edit_category_type').value = category.category_type;
                 document.getElementById('edit_category_description').value = category.description;
+                
+                console.log('[DEBUG] Form populated. Values:');
+                console.log('  - ID:', document.getElementById('category_id_edit').value);
+                console.log('  - Name:', document.getElementById('edit_category_name').value);
+                console.log('  - Type:', document.getElementById('edit_category_type').value);
+                console.log('  - Description:', document.getElementById('edit_category_description').value);
                 
                 new bootstrap.Modal(document.getElementById('editCategoryModal')).show();
             }
@@ -865,7 +890,9 @@ function filterCategoriesByType() {
 
 function viewCompetencyUsage(competencyId) {
     // Load competency usage data
-    fetch(`/api/competency_usage.php?id=${competencyId}`)
+    fetch(`/api/competency_usage.php?id=${competencyId}`, {
+        credentials: 'include'
+    })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
@@ -881,7 +908,9 @@ function viewCompetencyUsage(competencyId) {
 
 function viewSoftSkillLevels(competencyId) {
     // Load soft skill level data
-    fetch(`/api/soft_skill_levels.php?competency_id=${competencyId}`)
+    fetch(`/api/soft_skill_levels.php?competency_id=${competencyId}`, {
+        credentials: 'include'
+    })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
@@ -952,6 +981,7 @@ function saveSoftSkillLevels() {
     // Send to API
     fetch('/api/soft_skill_levels.php', {
         method: 'POST',
+        credentials: 'include',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },

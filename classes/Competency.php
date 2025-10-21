@@ -86,17 +86,33 @@ class Competency {
      * @return int
      */
     public function updateCategory($id, $data) {
+        // DEBUG: Log incoming data
+        error_log("[DEBUG] updateCategory - ID: " . $id);
+        error_log("[DEBUG] updateCategory - Data: " . print_r($data, true));
+        
         $sql = "UPDATE competency_categories
                 SET category_name = ?, description = ?, parent_id = ?, category_type = ?
                 WHERE id = ?";
         
-        return updateRecord($sql, [
+        $params = [
             $data['category_name'],
             $data['description'],
             $data['parent_id'] ?? null,
             $data['category_type'] ?? 'technical',
             $id
-        ]);
+        ];
+        
+        error_log("[DEBUG] updateCategory - SQL: " . $sql);
+        error_log("[DEBUG] updateCategory - Params: " . print_r($params, true));
+        
+        try {
+            $result = updateRecord($sql, $params);
+            error_log("[DEBUG] updateCategory - Result (affected rows): " . $result);
+            return $result;
+        } catch (Exception $e) {
+            error_log("[ERROR] updateCategory - Exception: " . $e->getMessage());
+            throw $e;
+        }
     }
     
     /**

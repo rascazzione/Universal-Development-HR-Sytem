@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS competency_categories (
     category_name VARCHAR(255) NOT NULL,
     description TEXT,
     parent_id INT NULL, -- For subcategories
+    category_type ENUM('technical', 'soft_skill') DEFAULT 'technical',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_active BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (parent_id) REFERENCES competency_categories(id)
@@ -187,12 +188,12 @@ INSERT INTO company_values (value_name, description, sort_order, created_by) VAL
 ('Customer Focus', 'Putting our customers at the center of everything we do', 5, 1);
 
 -- Insert some default competency categories
-INSERT INTO competency_categories (category_name, description) VALUES
-('Technical Skills', 'Job-specific technical competencies'),
-('Communication', 'Verbal and written communication abilities'),
-('Leadership', 'Leadership and management capabilities'),
-('Problem Solving', 'Analytical and problem-solving skills'),
-('Teamwork', 'Collaboration and team-working skills');
+INSERT INTO competency_categories (category_name, description, category_type) VALUES
+('Technical Skills', 'Job-specific technical competencies', 'technical'),
+('Communication', 'Verbal and written communication abilities', 'soft_skill'),
+('Leadership', 'Leadership and management capabilities', 'soft_skill'),
+('Problem Solving', 'Analytical and problem-solving skills', 'technical'),
+('Teamwork', 'Collaboration and team-working skills', 'soft_skill');
 
 -- Insert some default competencies
 INSERT INTO competencies (competency_name, description, category_id, competency_type) VALUES
