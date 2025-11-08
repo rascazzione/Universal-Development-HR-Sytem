@@ -55,8 +55,11 @@ This guide documents the successful implementation of a golden ratio-based UI/UX
 │                     │                                   │
 ├─────────────────────┴───────────────────────────────────┤
 │                     │                                   │
-│ Technical Skills    │        Soft Skills               │
+│ 🧩 Technical Skills │        🧠 Soft Skills            │
 │ 38.2% Width         │        38.2% Width               │
+│ • Level descriptions│        • Detailed behaviors      │
+│ • Symbol patterns   │        • Level expectations      │
+│ • Required levels   │        • Meaning & context       │
 │                     │                                   │
 ├─────────────────────┴───────────────────────────────────┤
 │                     │                                   │
@@ -100,6 +103,8 @@ This guide documents the successful implementation of a golden ratio-based UI/UX
 
 ### 1. User Experience
 - **Clear Expectations**: Users immediately see "what's expected of them"
+- **Detailed Behaviors**: Technical and soft skills show specific behaviors and levels that define success
+- **Development Guidance**: Clear expectations inform feedback and development planning
 - **Weekly Work Tool**: Optimized for daily/weekly planning
 - **Equal Prominence**: All 5 elements (KPIs, responsibilities, technical skills, soft skills, values) have equal visual weight
 - **Quick Actions**: Easy access to common tasks

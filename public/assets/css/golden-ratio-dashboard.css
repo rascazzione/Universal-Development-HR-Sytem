@@ -52,13 +52,15 @@
 /* Golden Ratio Grid System */
 .golden-grid {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: var(--golden-space-md);
-    margin: 0 -var(--golden-space-sm);
+    margin: 0;
 }
 
 .golden-grid > * {
-    padding: 0 var(--golden-space-sm);
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0;
 }
 
 /* Golden Ratio Main/Sidebar Layout */
@@ -94,18 +96,27 @@
 }
 
 .golden-card-large {
-    flex: 0 0 100%;
-    aspect-ratio: var(--golden-card-ratio);
+    flex: 0 0 100% !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    aspect-ratio: auto !important;
+    min-height: 200px !important;
 }
 
 .golden-card-medium {
-    flex: 0 0 calc(61.8% - var(--golden-space-md));
-    aspect-ratio: var(--golden-square-ratio);
+    flex: 0 0 100% !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    aspect-ratio: auto !important;
+    min-height: 200px !important;
 }
 
 .golden-card-small {
-    flex: 0 0 calc(38.2% - var(--golden-space-md));
-    aspect-ratio: var(--golden-square-ratio);
+    flex: 0 0 100% !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    aspect-ratio: auto !important;
+    min-height: 200px !important;
 }
 
 /* Golden Ratio Card Content */
@@ -440,10 +451,18 @@
         max-width: 100%;
     }
     
+    .golden-grid {
+        flex-direction: column;
+        gap: var(--golden-space-sm);
+    }
+    
     .golden-card-large,
     .golden-card-medium,
     .golden-card-small {
-        flex: 0 0 100%;
+        flex: 0 0 100% !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-height: 180px !important;
     }
 }
 
@@ -453,6 +472,7 @@
     }
     
     .golden-grid {
+        flex-direction: column;
         gap: var(--golden-space-sm);
     }
     
@@ -471,6 +491,15 @@
     .golden-stats-grid {
         grid-template-columns: 1fr;
         gap: var(--golden-space-sm);
+    }
+    
+    .golden-card-large,
+    .golden-card-medium,
+    .golden-card-small {
+        flex: 0 0 100% !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-height: 160px !important;
     }
 }
 
@@ -493,6 +522,20 @@
     
     .golden-card-body {
         padding: var(--golden-space-sm);
+    }
+    
+    .golden-grid {
+        flex-direction: column;
+        gap: var(--golden-space-xs);
+    }
+    
+    .golden-card-large,
+    .golden-card-medium,
+    .golden-card-small {
+        flex: 0 0 100% !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-height: 140px !important;
     }
 }
 
