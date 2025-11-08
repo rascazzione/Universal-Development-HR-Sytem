@@ -1,0 +1,109 @@
+.technical-level-options {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.technical-level-card {
+    position: relative;
+    border: 1px solid #dee2e6;
+    border-radius: 0.75rem;
+    padding: 0.9rem 1rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    background-color: #fff;
+    cursor: pointer;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.technical-level-card input[type="radio"] {
+    accent-color: #0d6efd;
+    margin-top: 0.15rem;
+}
+
+.technical-level-card .technical-level-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.technical-level-symbol {
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+}
+
+.technical-level-name {
+    font-weight: 600;
+    color: #1f2d3d;
+}
+
+.technical-level-description {
+    font-size: 0.85rem;
+    line-height: 1.35;
+}
+
+.technical-level-card:hover {
+    border-color: rgba(13, 110, 253, 0.45);
+    box-shadow: 0 0.5rem 1rem rgba(13, 110, 253, 0.08);
+    transform: translateY(-1px);
+}
+
+.technical-level-card input[type="radio"]:checked + .technical-level-content,
+.technical-level-card input[type="radio"]:checked ~ .technical-level-content {
+    color: #0c63e4;
+}
+
+.technical-preview {
+    border: 1px solid rgba(13, 110, 253, 0.15);
+    border-radius: 0.75rem;
+    background: linear-gradient(135deg, rgba(13, 110, 253, 0.05), rgba(255, 255, 255, 0.9));
+}
+
+.technical-preview .technical-symbol-display {
+    font-size: 1.2rem;
+}
+
+.technical-preview .card-body {
+    min-height: 170px;
+}
+
+.technical-preview-level span {
+    font-weight: 600;
+    color: #0d6efd;
+}
+
+#technicalSkillModal .modal-body {
+    max-height: calc(100vh - 11rem);
+    overflow-y: auto;
+    padding-bottom: 0;
+}
+
+#technicalSkillModal .form-select,
+#technicalSkillModal .form-control {
+    font-size: 0.95rem;
+}
+
+#technicalSkillModal .form-text {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+@media (max-width: 576px) {
+    .technical-level-options {
+        grid-template-columns: 1fr;
+    }
+
+    .technical-preview .card-body {
+        min-height: auto;
+    }
+
+    #technical-skill-form .row.g-3 > [class*="col-"] {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    #technicalSkillModal .modal-body {
+        max-height: calc(100vh - 7rem);
+    }
+}

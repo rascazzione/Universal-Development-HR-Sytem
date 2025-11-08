@@ -1,0 +1,171 @@
+.soft-skill-overview {
+    background: linear-gradient(120deg, rgba(13, 110, 253, 0.05), rgba(255, 255, 255, 0.95));
+    border: 1px solid rgba(13, 110, 253, 0.15);
+    border-radius: 0.75rem;
+}
+
+.soft-skill-overview h6 {
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+}
+
+.soft-skill-levels {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.soft-level-card {
+    display: flex;
+    position: relative;
+    border: 1px solid #dee2e6;
+    border-radius: 0.85rem;
+    padding: 1rem;
+    gap: 0.85rem;
+    background-color: #fff;
+    cursor: pointer;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.soft-level-card input[type="radio"] {
+    accent-color: #6f42c1;
+    margin-top: 0.25rem;
+}
+
+.soft-level-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 220px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.soft-level-header {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.soft-level-title {
+    font-weight: 600;
+    color: #3b3b3b;
+    display: block;
+}
+
+.soft-level-meaning {
+    font-size: 0.85rem;
+    color: #6f42c1;
+}
+
+.soft-level-card:hover {
+    border-color: rgba(111, 66, 193, 0.35);
+    box-shadow: 0 0.5rem 1rem rgba(111, 66, 193, 0.08);
+    transform: translateY(-1px);
+}
+
+.soft-level-card input[type="radio"]:checked + .soft-level-content,
+.soft-level-card input[type="radio"]:checked ~ .soft-level-content {
+    color: #452178;
+}
+
+.soft-level-card input[type="radio"]:checked ~ .soft-level-content .soft-level-meaning {
+    color: #452178;
+    font-weight: 600;
+}
+
+.soft-level-content ul {
+    margin-bottom: 0;
+    padding-left: 1.2rem;
+}
+
+.soft-level-content li {
+    font-size: 0.85rem;
+    margin-bottom: 0.35rem;
+}
+
+.soft-level-content li:last-child {
+    margin-bottom: 0;
+}
+
+.soft-skill-summary {
+    background-color: rgba(248, 249, 250, 0.9);
+}
+
+.soft-skill-summary h6 {
+    font-weight: 600;
+}
+
+.soft-skill-summary ul {
+    padding-left: 1.25rem;
+}
+
+.soft-skill-summary li {
+    font-size: 0.85rem;
+}
+
+.soft-skill-modal .modal-dialog {
+    max-width: 960px;
+}
+
+.soft-skill-modal .modal-content {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 2rem);
+}
+
+.soft-skill-modal .modal-dialog.modal-fullscreen-sm-down .modal-content {
+    max-height: 100vh;
+}
+
+.soft-skill-modal .modal-body {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding-right: 0.75rem;
+    max-height: calc(100vh - 11rem);
+}
+
+.soft-skill-modal .modal-footer {
+    position: sticky;
+    bottom: 0;
+    background: #fff;
+    border-top: 1px solid rgba(0, 0, 0, 0.125);
+    z-index: 5;
+}
+
+@media (max-width: 576px) {
+    .soft-skill-levels {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .soft-level-card {
+        flex-direction: column;
+    }
+
+    .soft-level-header {
+        align-items: flex-start;
+    }
+
+    .soft-level-content {
+        max-height: none;
+        padding-right: 0;
+    }
+
+    .soft-skill-overview {
+        margin-bottom: 1rem;
+    }
+
+    .soft-skill-modal .modal-content {
+        max-height: 100vh;
+    }
+
+    .soft-skill-modal .modal-body {
+        padding-right: 0;
+        max-height: calc(100vh - 7rem);
+    }
+
+    .soft-skill-modal .modal-footer {
+        position: static;
+    }
+}

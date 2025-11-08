@@ -62,29 +62,31 @@ try {
     $jobTemplateId = $employee['job_template_id'] ?? null;
     $templateData = [];
     
-    if ($jobTemplateId) {
-        $template = $jobTemplateClass->getJobTemplateById($jobTemplateId);
-        if ($template) {
-            $templateData['template'] = $template;
-            
-            // Get dimension-specific data
-            if ($dimension === 'all' || $dimension === 'responsibilities') {
-                $templateData['responsibilities'] = $jobTemplateClass->getTemplateResponsibilities($jobTemplateId);
+            if ($jobTemplateId) {
+                $template = $jobTemplateClass->getJobTemplateById($jobTemplateId);
+                if ($template) {
+                    $templateData['template'] = $template;
+                    
+                    if ($dimension === 'all' || $dimension === 'responsibilities') {
+                        $templateData['responsibilities'] = $jobTemplateClass->getTemplateResponsibilities($jobTemplateId);
+                    }
+                    
+                    if ($dimension === 'all' || $dimension === 'kpis') {
+                        $templateData['kpis'] = $jobTemplateClass->getTemplateKPIs($jobTemplateId);
+                    }
+                    
+                    if ($dimension === 'all' || $dimension === 'competencies') {
+                        $skills = $jobTemplateClass->getTemplateSkills($jobTemplateId);
+                        $templateData['technical_skills'] = $skills['technical'];
+                        $templateData['soft_skills'] = $skills['soft_skill'];
+                        $templateData['competencies'] = $skills['all'];
+                    }
+                    
+                    if ($dimension === 'all' || $dimension === 'values') {
+                        $templateData['values'] = $jobTemplateClass->getTemplateValues($jobTemplateId);
+                    }
+                }
             }
-            
-            if ($dimension === 'all' || $dimension === 'kpis') {
-                $templateData['kpis'] = $jobTemplateClass->getTemplateKPIs($jobTemplateId);
-            }
-            
-            if ($dimension === 'all' || $dimension === 'competencies') {
-                $templateData['competencies'] = $jobTemplateClass->getTemplateCompetencies($jobTemplateId);
-            }
-            
-            if ($dimension === 'all' || $dimension === 'values') {
-                $templateData['values'] = $jobTemplateClass->getTemplateValues($jobTemplateId);
-            }
-        }
-    }
 
     // Success
     echo json_encode([

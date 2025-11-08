@@ -672,8 +672,17 @@ class EmployeeImportExport {
                     ev.evaluation_id,
                     emp.employee_number,
                     c.competency_name,
-                    ecr.required_level,
-                    ecr.achieved_level,
+                    ecr.module_type,
+                    ecr.required_technical_level_id,
+                    rtl.level_name AS required_technical_level_name,
+                    rtl.display_level AS required_technical_display,
+                    ecr.achieved_technical_level_id,
+                    atl.level_name AS achieved_technical_level_name,
+                    atl.display_level AS achieved_technical_display,
+                    ecr.required_soft_skill_level,
+                    rsld.level_title AS required_soft_skill_title,
+                    ecr.achieved_soft_skill_level,
+                    asld.level_title AS achieved_soft_skill_title,
                     ecr.score,
                     ecr.comments,
                     ecr.weight_percentage
@@ -681,6 +690,11 @@ class EmployeeImportExport {
                 JOIN evaluations ev ON ecr.evaluation_id = ev.evaluation_id
                 JOIN employees emp ON ev.employee_id = emp.employee_id
                 JOIN competencies c ON ecr.competency_id = c.id
+                LEFT JOIN technical_skill_levels rtl ON ecr.required_technical_level_id = rtl.id
+                LEFT JOIN technical_skill_levels atl ON ecr.achieved_technical_level_id = atl.id
+                LEFT JOIN soft_skill_definitions ssd ON c.competency_key = ssd.competency_key
+                LEFT JOIN soft_skill_level_details rsld ON ssd.id = rsld.soft_skill_id AND ecr.required_soft_skill_level = rsld.level_number
+                LEFT JOIN soft_skill_level_details asld ON ssd.id = asld.soft_skill_id AND ecr.achieved_soft_skill_level = asld.level_number
                 $whereClause
                 ORDER BY ev.evaluation_id, c.competency_name";
         
@@ -692,18 +706,43 @@ class EmployeeImportExport {
         
         $csvData = [];
         $csvData[] = [
-            'result_id', 'evaluation_id', 'employee_number', 'competency_name', 'required_level',
-            'achieved_level', 'score', 'comments', 'weight_percentage'
+            'result_id',
+            'evaluation_id',
+            'employee_number',
+            'competency_name',
+            'module_type',
+            'required_level',
+            'required_label',
+            'achieved_level',
+            'achieved_label',
+            'score',
+            'comments',
+            'weight_percentage'
         ];
         
         foreach ($results as $result) {
+            if (($result['module_type'] ?? '') === 'soft_skill') {
+                $requiredLevel = $result['required_soft_skill_level'] ?? '';
+                $requiredLabel = $result['required_soft_skill_title'] ?? '';
+                $achievedLevel = $result['achieved_soft_skill_level'] ?? '';
+                $achievedLabel = $result['achieved_soft_skill_title'] ?? '';
+            } else {
+                $requiredLevel = $result['required_technical_display'] ?? '';
+                $requiredLabel = $result['required_technical_level_name'] ?? '';
+                $achievedLevel = $result['achieved_technical_display'] ?? '';
+                $achievedLabel = $result['achieved_technical_level_name'] ?? '';
+            }
+            
             $csvData[] = [
                 $result['id'],
                 $result['evaluation_id'],
                 $result['employee_number'],
                 $result['competency_name'],
-                $result['required_level'] ?? '',
-                $result['achieved_level'] ?? '',
+                $result['module_type'] ?? '',
+                $requiredLevel,
+                $requiredLabel,
+                $achievedLevel,
+                $achievedLabel,
                 $result['score'] ?? '',
                 $result['comments'] ?? '',
                 $result['weight_percentage'] ?? ''

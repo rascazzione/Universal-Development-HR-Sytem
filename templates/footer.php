@@ -29,6 +29,11 @@
     
     <!-- Custom JavaScript -->
     <script src="/assets/js/app.js"></script>
+    <?php if (!empty($pageScripts) && is_array($pageScripts)): ?>
+        <?php foreach ($pageScripts as $script): ?>
+            <script src="<?php echo htmlspecialchars($script); ?>"></script>
+        <?php endforeach; ?>
+    <?php endif; ?>
     
     <!-- Auto-save functionality for forms -->
     <script>

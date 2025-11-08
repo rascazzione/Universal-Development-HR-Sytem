@@ -58,6 +58,268 @@ body {
     font-weight: 600;
 }
 
+/* Job Template Dashboard */
+.job-template-hero {
+    border-radius: 1rem;
+    border: 1px solid #e3e8ff;
+    background: linear-gradient(180deg, #fff, #f7f9ff);
+    box-shadow: 0 0.5rem 1.5rem rgba(15, 23, 42, 0.06);
+}
+
+.role-blueprint-label {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #6b7280;
+    font-weight: 600;
+}
+
+.job-template-stats {
+    gap: 1rem;
+}
+
+.stat-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-radius: 0.85rem;
+    padding: 0.85rem 1.1rem;
+    border: 1px solid #e3e6f0;
+    background: #fff;
+    min-width: 170px;
+    box-shadow: 0 0.5rem 1rem rgba(15, 23, 42, 0.05);
+}
+
+.stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+}
+
+.stat-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.stat-label {
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    color: #6b7280;
+    font-weight: 600;
+    margin-bottom: 0.15rem;
+}
+
+.stat-value {
+    font-size: 1.45rem;
+    font-weight: 600;
+    color: #1f2937;
+    line-height: 1.2;
+}
+
+.stat-sub {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.stat-pill[data-accent="primary"] .stat-icon {
+    background: rgba(13, 110, 253, 0.12);
+    color: #0d6efd;
+}
+
+.stat-pill[data-accent="success"] .stat-icon {
+    background: rgba(25, 135, 84, 0.15);
+    color: #198754;
+}
+
+.stat-pill[data-accent="info"] .stat-icon {
+    background: rgba(13, 202, 240, 0.18);
+    color: #0dcaf0;
+}
+
+.stat-pill[data-accent="danger"] .stat-icon {
+    background: rgba(220, 53, 69, 0.16);
+    color: #dc3545;
+}
+
+.stat-pill[data-accent="dark"] .stat-icon {
+    background: rgba(17, 24, 39, 0.12);
+    color: #111827;
+}
+
+.job-template-grid .template-section-card {
+    border-radius: 1rem;
+    border: 1px solid #e3e7f2;
+    background: #fff;
+    box-shadow: 0 0.5rem 1.5rem rgba(30, 41, 59, 0.07);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.template-section-header {
+    padding: 1.25rem 1.25rem 0;
+    border-bottom: 1px solid #f1f3f8;
+    margin-bottom: 0.85rem;
+}
+
+.template-section-heading {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.template-section-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+}
+
+.section-eyebrow {
+    text-transform: uppercase;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #6b7280;
+}
+
+.section-count-pill {
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    border: 1px solid #e1e4ef;
+    background: #fff;
+    color: #1f2937;
+}
+
+.template-section-body {
+    padding: 0.75rem 1.25rem 1.25rem;
+    flex: 1;
+}
+
+.template-item {
+    position: relative;
+    padding-left: 1.5rem;
+}
+
+.template-item + .template-item {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px dashed #edf0f7;
+}
+
+.template-item::before {
+    content: '';
+    position: absolute;
+    top: 0.85rem;
+    left: 0.35rem;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #c5cad9;
+}
+
+.template-item .item-title {
+    font-weight: 600;
+    margin-bottom: 0.2rem;
+    color: #1f2937;
+}
+
+.template-item .item-description {
+    font-size: 0.85rem;
+    color: #6b7280;
+}
+
+.template-item .item-meta {
+    font-size: 0.78rem;
+    color: #6b7280;
+}
+
+.template-section-card[data-accent="primary"] .template-section-icon {
+    background: rgba(13, 110, 253, 0.12);
+    color: #0d6efd;
+}
+
+.template-section-card[data-accent="primary"] .section-count-pill {
+    border-color: rgba(13, 110, 253, 0.3);
+    background: rgba(13, 110, 253, 0.08);
+    color: #0d3c8a;
+}
+
+.template-section-card[data-accent="primary"] .template-item::before {
+    background: #0d6efd;
+}
+
+.template-section-card[data-accent="success"] .template-section-icon {
+    background: rgba(25, 135, 84, 0.15);
+    color: #198754;
+}
+
+.template-section-card[data-accent="success"] .section-count-pill {
+    border-color: rgba(25, 135, 84, 0.3);
+    background: rgba(25, 135, 84, 0.08);
+    color: #0f5132;
+}
+
+.template-section-card[data-accent="success"] .template-item::before {
+    background: #198754;
+}
+
+.template-section-card[data-accent="info"] .template-section-icon {
+    background: rgba(13, 202, 240, 0.2);
+    color: #0aa2c0;
+}
+
+.template-section-card[data-accent="info"] .section-count-pill {
+    border-color: rgba(13, 202, 240, 0.35);
+    background: rgba(13, 202, 240, 0.1);
+    color: #046c91;
+}
+
+.template-section-card[data-accent="info"] .template-item::before {
+    background: #0aa2c0;
+}
+
+.template-section-card[data-accent="warning"] .template-section-icon {
+    background: rgba(255, 193, 7, 0.2);
+    color: #a07900;
+}
+
+.template-section-card[data-accent="warning"] .section-count-pill {
+    border-color: rgba(255, 193, 7, 0.35);
+    background: rgba(255, 193, 7, 0.12);
+    color: #a07900;
+}
+
+.template-section-card[data-accent="warning"] .template-item::before {
+    background: #ffc107;
+}
+
+.template-section-card[data-accent="danger"] .template-section-icon {
+    background: rgba(220, 53, 69, 0.18);
+    color: #b02a37;
+}
+
+.template-section-card[data-accent="danger"] .section-count-pill {
+    border-color: rgba(220, 53, 69, 0.35);
+    background: rgba(220, 53, 69, 0.12);
+    color: #b02a37;
+}
+
+.template-section-card[data-accent="danger"] .template-item::before {
+    background: #dc3545;
+}
+
 /* Buttons */
 .btn {
     font-weight: 500;

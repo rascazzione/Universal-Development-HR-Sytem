@@ -1286,62 +1286,72 @@ class TestDataPopulator {
      * Populate competency results
      */
     private function populateCompetencyResults($evaluationClass, $evaluationId, $competencyResults) {
-        $levels = ['basic', 'intermediate', 'advanced', 'expert'];
-        
         foreach ($competencyResults as $competency) {
-            $requiredLevel = $competency['required_level'];
-            $achievedLevel = $this->generateAchievedLevel($requiredLevel);
-            $score = $this->calculateCompetencyScore($requiredLevel, $achievedLevel);
-            
-            $data = [
-                'achieved_level' => $achievedLevel,
-                'score' => $score,
-                'comments' => $this->generateCompetencyComment($score, $competency['competency_name'])
-            ];
+            $moduleType = $competency['module_type'] ?? 'technical';
+            $comments = '';
+            if ($moduleType === 'soft_skill') {
+                $requiredLevel = (int)($competency['soft_skill_level'] ?? 2);
+                if ($requiredLevel <= 0) {
+                    $requiredLevel = 2;
+                }
+                $achievedLevel = $this->generateAchievedScale($requiredLevel, 4);
+                $score = $this->calculateCompetencyScore($requiredLevel, $achievedLevel, 'soft_skill');
+                $comments = $this->generateCompetencyComment($score, $competency['competency_name']);
+                
+                $data = [
+                    'achieved_soft_skill_level' => $achievedLevel,
+                    'score' => $score,
+                    'comments' => $comments
+                ];
+            } else {
+                $requiredLevel = (int)($competency['technical_display_level'] ?? 3);
+                if ($requiredLevel <= 0 && !empty($competency['required_level'])) {
+                    $requiredLevel = (int)filter_var($competency['required_level'], FILTER_SANITIZE_NUMBER_INT);
+                }
+                if ($requiredLevel <= 0) {
+                    $requiredLevel = 3;
+                }
+                $achievedLevel = $this->generateAchievedScale($requiredLevel, 5);
+                $score = $this->calculateCompetencyScore($requiredLevel, $achievedLevel, 'technical');
+                $comments = $this->generateCompetencyComment($score, $competency['competency_name']);
+                
+                $data = [
+                    'achieved_level' => 'Level ' . $achievedLevel,
+                    'score' => $score,
+                    'comments' => $comments
+                ];
+            }
             
             $evaluationClass->updateCompetencyResult($evaluationId, $competency['competency_id'], $data);
         }
     }
     
     /**
-     * Generate achieved competency level
+     * Generate achieved level on a linear scale
      */
-    private function generateAchievedLevel($requiredLevel) {
-        $levels = ['basic', 'intermediate', 'advanced', 'expert'];
-        $requiredIndex = array_search($requiredLevel, $levels);
-        
-        // 70% chance to meet or exceed, 30% chance to be below
+    private function generateAchievedScale(int $requiredLevel, int $maxLevel) {
+        $requiredLevel = max(1, min($requiredLevel, $maxLevel));
         if (rand(1, 100) <= 70) {
-            // Meet or exceed
-            $achievedIndex = rand($requiredIndex, count($levels) - 1);
-        } else {
-            // Below required
-            $achievedIndex = rand(0, max(0, $requiredIndex - 1));
+            return rand($requiredLevel, $maxLevel);
         }
-        
-        return $levels[$achievedIndex];
+        return rand(1, max(1, $requiredLevel - 1));
     }
     
     /**
      * Calculate competency score
      */
-    private function calculateCompetencyScore($requiredLevel, $achievedLevel) {
-        $levels = ['basic' => 1, 'intermediate' => 2, 'advanced' => 3, 'expert' => 4];
+    private function calculateCompetencyScore($requiredLevel, $achievedLevel, $moduleType = 'technical') {
+        $requiredLevel = max(1, (int)$requiredLevel);
+        $achievedLevel = max(1, (int)$achievedLevel);
         
-        $requiredScore = $levels[$requiredLevel];
-        $achievedScore = $levels[$achievedLevel];
+        $ratio = $requiredLevel > 0 ? $achievedLevel / $requiredLevel : 1;
         
-        if ($achievedScore >= $requiredScore) {
-            $ratio = $achievedScore / $requiredScore;
-            if ($ratio >= 1.5) return 5.0;
-            if ($ratio >= 1.25) return 4.5;
-            return 4.0;
-        } else {
-            $ratio = $achievedScore / $requiredScore;
-            if ($ratio >= 0.75) return 3.0;
-            if ($ratio >= 0.5) return 2.5;
-            return 2.0;
-        }
+        if ($ratio >= 1.5) return 5.0;
+        if ($ratio >= 1.25) return 4.5;
+        if ($ratio >= 1.0) return 4.0;
+        if ($ratio >= 0.75) return 3.0;
+        if ($ratio >= 0.5) return 2.5;
+        return 2.0;
     }
     
     /**

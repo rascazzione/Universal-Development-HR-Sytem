@@ -776,7 +776,11 @@ class Evaluation {
                             'competency_name' => 'Evidence-Based Competency Summary',
                             'category_name' => 'Performance Evidence',
                             'competency_type' => 'evidence_based',
-                            'required_level' => 'advanced',
+                            'module_type' => 'technical',
+                            'required_level' => 'Level 3',
+                            'technical_display_level' => 3,
+                            'technical_level_name' => 'Evidence Expectation',
+                            'technical_symbol_pattern' => '🧩🧩🧩⚪️⚪️',
                             'achieved_level' => $this->getAchievedLevel($result['avg_star_rating']),
                             'score' => $result['calculated_score'],
                             'comments' => "Based on {$result['evidence_count']} evidence entries (Positive: {$result['total_positive_entries']}, Areas for improvement: {$result['total_negative_entries']})"
@@ -1343,8 +1347,12 @@ class Evaluation {
                             'competency_name' => 'Evidence-Based Competency Rating',
                             'category_name' => 'Performance',
                             'competency_type' => 'core',
-                            'required_level' => 'advanced',
-                            'achieved_level' => 'expert',
+                            'module_type' => 'technical',
+                            'required_level' => 'Level 3',
+                            'technical_display_level' => 3,
+                            'technical_level_name' => 'Evidence Expectation',
+                            'technical_symbol_pattern' => '🧩🧩🧩⚪️⚪️',
+                            'achieved_level' => 'Level 4',
                             'score' => $result['calculated_score'],
                             'comments' => "Evidence-based rating from {$result['evidence_count']} entries"
                         ];
@@ -1739,16 +1747,36 @@ class Evaluation {
     private function normalizeCompetencies(array $competencies): array {
         $normalized = [];
         foreach ($competencies as $competency) {
-            $normalized[] = [
+            $moduleType = $competency['module_type'] ?? ($competency['competency_type'] ?? 'technical');
+            $entry = [
                 'competency_id' => $competency['competency_id'] ?? 'comp_' . ($competency['id'] ?? uniqid()),
                 'competency_name' => $competency['competency_name'] ?? $competency['competency_name'] ?? 'Unnamed Competency',
                 'category_name' => $competency['category_name'] ?? $competency['category_name'] ?? 'General',
-                'competency_type' => $competency['competency_type'] ?? 'behavioral',
-                'required_level' => $competency['required_level'] ?? 'intermediate',
+                'competency_type' => $competency['competency_type'] ?? ($moduleType === 'soft_skill' ? 'soft_skill' : 'technical'),
+                'module_type' => $moduleType,
+                'competency_key' => $competency['competency_key'] ?? null,
+                'required_level' => $competency['required_level'] ?? 'Level 1',
+                'weight_percentage' => $competency['weight_percentage'] ?? 100,
                 'achieved_level' => null,
+                'achieved_soft_skill_level' => null,
                 'score' => null,
                 'comments' => null
             ];
+            
+            if ($moduleType === 'soft_skill') {
+                $entry['soft_skill_level'] = $competency['soft_skill_level'] ?? null;
+                $entry['soft_skill_level_title'] = $competency['soft_skill_level_title'] ?? null;
+                $entry['soft_skill_symbol_pattern'] = $competency['soft_skill_symbol_pattern'] ?? null;
+                $entry['soft_skill_meaning'] = $competency['soft_skill_meaning'] ?? null;
+                $entry['soft_skill_behaviors'] = $competency['soft_skill_behaviors'] ?? [];
+            } else {
+                $entry['technical_level_id'] = $competency['technical_level_id'] ?? null;
+                $entry['technical_level_name'] = $competency['technical_level_name'] ?? null;
+                $entry['technical_display_level'] = $competency['technical_display_level'] ?? null;
+                $entry['technical_symbol_pattern'] = $competency['technical_symbol_pattern'] ?? null;
+            }
+            
+            $normalized[] = $entry;
         }
         return $normalized;
     }

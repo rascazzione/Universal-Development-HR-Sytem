@@ -167,38 +167,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             break;
             
-        case 'add_competency':
-            try {
-                $templateId = (int)$_POST['template_id'];
-                $competencyId = (int)$_POST['competency_id'];
-                $requiredLevel = sanitizeInput($_POST['required_level']);
-                $weight = (float)($_POST['weight'] ?? 100);
-                
-                $jobTemplateClass->addCompetencyToTemplate($templateId, $competencyId, $requiredLevel, $weight);
-                if ($isAjax) {
-                    header('Content-Type: application/json');
-                    echo json_encode([
-                        'success' => true,
-                        'message' => 'Competency added to template successfully.',
-                        'new_item_id' => $competencyId,
-                        'section' => 'competencies'
-                    ]);
-                    exit;
-                } else {
-                    setFlashMessage('Competency added to template successfully.', 'success');
-                }
-                
-            } catch (Exception $e) {
-                if ($isAjax) {
-                    header('Content-Type: application/json');
-                    echo json_encode(['success' => false, 'message' => 'Error adding competency: ' . $e->getMessage()]);
-                    exit;
-                } else {
-                    setFlashMessage('Error adding competency: ' . $e->getMessage(), 'error');
-                }
-            }
-            break;
-            
         case 'add_responsibility':
             try {
                 $templateId = (int)$_POST['template_id'];
@@ -282,29 +250,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     exit;
                 } else {
                     setFlashMessage('Error removing KPI: ' . $e->getMessage(), 'error');
-                }
-            }
-            break;
-            
-        case 'remove_competency':
-            try {
-                $templateId = (int)$_POST['template_id'];
-                $competencyId = (int)$_POST['competency_id'];
-                $jobTemplateClass->removeCompetencyFromTemplate($templateId, $competencyId);
-                if ($isAjax) {
-                    header('Content-Type: application/json');
-                    echo json_encode(['success' => true, 'message' => 'Competency removed from template successfully.']);
-                    exit;
-                } else {
-                    setFlashMessage('Competency removed from template successfully.', 'success');
-                }
-            } catch (Exception $e) {
-                if ($isAjax) {
-                    header('Content-Type: application/json');
-                    echo json_encode(['success' => false, 'message' => 'Error removing competency: ' . $e->getMessage()]);
-                    exit;
-                } else {
-                    setFlashMessage('Error removing competency: ' . $e->getMessage(), 'error');
                 }
             }
             break;
@@ -396,7 +341,8 @@ $templates = $jobTemplateClass->getJobTemplates();
 
 $editTemplate = null;
 $templateKPIs = [];
-$templateCompetencies = [];
+$templateTechnicalSkills = [];
+$templateSoftSkills = [];
 $templateResponsibilities = [];
 $templateValues = [];
 
@@ -404,7 +350,8 @@ if ($editTemplateId) {
     $editTemplate = $jobTemplateClass->getCompleteJobTemplate($editTemplateId);
     if ($editTemplate) {
         $templateKPIs = $editTemplate['kpis'];
-        $templateCompetencies = $editTemplate['competencies'];
+        $templateTechnicalSkills = $editTemplate['technical_skills'] ?? [];
+        $templateSoftSkills = $editTemplate['soft_skills'] ?? [];
         $templateResponsibilities = $editTemplate['responsibilities'];
         $templateValues = $editTemplate['values'];
     }
@@ -412,13 +359,22 @@ if ($editTemplateId) {
 
 // Get available options for dropdowns
 $availableKPIs = $kpiClass->getKPIs();
-$availableCompetencies = $competencyClass->getCompetencies();
 $availableValues = $valuesClass->getValues();
-$competencyLevels = $competencyClass->getCompetencyLevels();
 
 $pageTitle = 'Job Templates Management';
 $pageHeader = true;
 $pageDescription = 'Manage job position templates and their evaluation criteria';
+$pageStylesheets = [
+    '/css/unified-skills.css',
+    '/css/technical-skills.css',
+    '/css/soft-skills.css'
+];
+$pageScripts = [
+    '/js/technical-skills.js',
+    '/js/soft-skills.js',
+    '/js/unified-skills.js'
+];
+$skillsCsrfToken = generateCSRFToken();
 
 include __DIR__ . '/../../templates/header.php';
 ?>
@@ -615,50 +571,66 @@ include __DIR__ . '/../../templates/header.php';
         </div>
     </div>
     
-    <!-- Competencies Section -->
+    <!-- Technical Skills Section -->
     <div class="col-12 mb-4">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0">Skills, Knowledge, and Competencies</h5>
-                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addCompetencyModal">
-                    <i class="fas fa-plus me-1"></i>Add Competency
-                </button>
+        <div class="card technical-skills-card" data-template-id="<?php echo (int)$editTemplateId; ?>">
+            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <h5 class="card-title mb-0">🧩 Technical Skills</h5>
+                    <small class="text-muted">Map job-specific technical competencies and required proficiency.</small>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-light text-dark fw-normal" id="technical-skills-count">0 skills</span>
+                    <button type="button" class="btn btn-sm btn-primary" id="add-technical-skill-btn" data-bs-toggle="modal" data-bs-target="#technicalSkillModal" <?php echo $editTemplateId ? '' : 'disabled'; ?>>
+                        <i class="fas fa-plus me-1"></i>Add Technical Skill
+                    </button>
+                </div>
             </div>
             <div class="card-body">
-                <?php if (empty($templateCompetencies)): ?>
-                <p class="text-muted">No competencies assigned to this template yet.</p>
+                <?php if (!$editTemplateId): ?>
+                    <p class="text-muted mb-0">Create and save the job template details to add technical skills.</p>
                 <?php else: ?>
-                <div class="table-responsive">
-                    <table class="table table-sm" id="competency-table">
-                        <thead>
-                            <tr>
-                                <th>Competency</th>
-                                <th>Category</th>
-                                <th>Required Level</th>
-                                <th>Type</th>
-                                <th>Weight</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($templateCompetencies as $competency): ?>
-                            <tr data-competency-id="<?php echo $competency['competency_id']; ?>">
-                                <td><?php echo htmlspecialchars($competency['competency_name']); ?></td>
-                                <td><?php echo htmlspecialchars($competency['category_name']); ?></td>
-                                <td>
-                                    <span class="badge bg-info"><?php echo ucfirst($competency['required_level']); ?></span>
-                                </td>
-                                <td><?php echo ucfirst(str_replace('_', ' ', $competency['competency_type'])); ?></td>
-                                <td><?php echo number_format($competency['weight_percentage'], 1); ?>%</td>
-                                <td>
-                                    <button type="button" class="btn btn-sm btn-outline-danger btn-remove" onclick="removeCompetency(<?php echo $competency['competency_id']; ?>); return false;">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+                <div id="technical-skills-root"
+                     data-template-id="<?php echo (int)$editTemplateId; ?>"
+                     data-fetch-url="/api/technical-skills.php"
+                     data-csrf="<?php echo htmlspecialchars($skillsCsrfToken); ?>">
+                    <div class="skills-loading-state text-center py-4">
+                        <div class="spinner-border text-primary mb-2" role="status"></div>
+                        <p class="text-muted mb-0">Loading technical skills...</p>
+                    </div>
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
+    <!-- Soft Skills Section -->
+    <div class="col-12 mb-4">
+        <div class="card soft-skills-card" data-template-id="<?php echo (int)$editTemplateId; ?>">
+            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <h5 class="card-title mb-0">🧠 Soft Skills</h5>
+                    <small class="text-muted">Select behavioral competencies and observable level expectations.</small>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-light text-dark fw-normal" id="soft-skills-count">0 skills</span>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="add-soft-skill-btn" data-bs-toggle="modal" data-bs-target="#softSkillModal" <?php echo $editTemplateId ? '' : 'disabled'; ?>>
+                        <i class="fas fa-plus me-1"></i>Add Soft Skill
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <?php if (!$editTemplateId): ?>
+                    <p class="text-muted mb-0">Save the template to begin assigning soft skill competencies.</p>
+                <?php else: ?>
+                <div id="soft-skills-root"
+                     data-template-id="<?php echo (int)$editTemplateId; ?>"
+                     data-fetch-url="/api/soft-skills.php"
+                     data-csrf="<?php echo htmlspecialchars($skillsCsrfToken); ?>">
+                    <div class="skills-loading-state text-center py-4">
+                        <div class="spinner-border text-primary mb-2" role="status"></div>
+                        <p class="text-muted mb-0">Loading soft skills...</p>
+                    </div>
                 </div>
                 <?php endif; ?>
             </div>
@@ -837,55 +809,6 @@ include __DIR__ . '/../../templates/header.php';
     </div>
 </div>
 
-<!-- Add Competency Modal -->
-<div class="modal fade" id="addCompetencyModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Add Competency to Template</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form method="POST">
-                <div class="modal-body">
-                    <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
-                    <input type="hidden" name="action" value="add_competency">
-                    <input type="hidden" name="template_id" value="<?php echo $editTemplateId; ?>">
-                    
-                    <div class="mb-3">
-                        <label for="competency_id" class="form-label">Select Competency</label>
-                        <select class="form-select" id="competency_id" name="competency_id" required>
-                            <option value="">Choose a competency...</option>
-                            <?php foreach ($availableCompetencies as $competency): ?>
-                            <option value="<?php echo $competency['id']; ?>">
-                                <?php echo htmlspecialchars($competency['competency_name'] . ' (' . $competency['category_name'] . ')'); ?>
-                            </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="required_level" class="form-label">Required Level</label>
-                        <select class="form-select" id="required_level" name="required_level" required>
-                            <?php foreach ($competencyLevels as $level => $label): ?>
-                            <option value="<?php echo $level; ?>"><?php echo $label; ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="competency_weight" class="form-label">Weight (%)</label>
-                        <input type="number" step="0.1" class="form-control" id="competency_weight" name="weight" value="100" min="0" max="100">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add Competency</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
 <!-- Add Responsibility Modal -->
 <div class="modal fade" id="addResponsibilityModal" tabindex="-1">
     <div class="modal-dialog">
@@ -960,9 +883,11 @@ include __DIR__ . '/../../templates/header.php';
                     <button type="submit" class="btn btn-primary">Add Value</button>
                 </div>
             </form>
-        </div>
-    </div>
 </div>
+</div>
+</div>
+<?php include __DIR__ . '/../../templates/technical-skills-modals.php'; ?>
+<?php include __DIR__ . '/../../templates/soft-skills-modals.php'; ?>
 <?php endif; ?>
 
 <!-- Alerts container -->
@@ -1027,12 +952,14 @@ function submitFormWithScrollPreservation(form, callback) {
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
     }
     
-    ajaxRequest(window.location.href, data, 'POST', function(error, response) {
+    const endpoint = form.getAttribute('action') || window.location.href;
+    ajaxRequest(endpoint, data, 'POST', function(error, response) {
         // Remove loading state
         if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.innerHTML = submitBtn.getAttribute('data-original-text') || 'Submit';
         }
+        form.classList.remove('loading');
         
         if (error) {
             showAlert('danger', 'Error: ' + error);
@@ -1232,6 +1159,9 @@ function setupModalForms() {
     modals.forEach(modal => {
         const forms = modal.querySelectorAll('form');
         forms.forEach(form => {
+            if (form.hasAttribute('data-no-ajax')) {
+                return;
+            }
             // Store original button text
             const submitBtn = form.querySelector('button[type="submit"]');
             if (submitBtn) {
@@ -1250,7 +1180,6 @@ function setupModalForms() {
 function removeItem(type, id) {
     const messages = {
         'kpi': 'Are you sure you want to remove this KPI?',
-        'competency': 'Are you sure you want to remove this competency?',
         'responsibility': 'Are you sure you want to remove this responsibility?',
         'value': 'Are you sure you want to remove this company value?'
     };
@@ -1301,14 +1230,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const removeButtons = document.querySelectorAll('.btn-remove');
     removeButtons.forEach(button => {
         const onclick = button.getAttribute('onclick');
-        if (onclick) {
-            // Update onclick handlers to use new removeItem function
-            const match = onclick.match(/remove(\w+)\((\d+)\)/);
-            if (match) {
-                const type = match[1].toLowerCase();
-                const id = match[2];
-                button.setAttribute('onclick', `removeItem('${type}', ${id})`);
-            }
+        if (!onclick) return;
+        const match = onclick.match(/remove(\w+)\((\d+)\)/);
+        if (!match) return;
+        const type = match[1].toLowerCase();
+        const id = match[2];
+        if (['kpi', 'responsibility', 'value'].includes(type)) {
+            button.setAttribute('onclick', `removeItem('${type}', ${id})`);
         }
     });
 });
@@ -1366,25 +1294,9 @@ function deleteTemplate(templateId) {
     }
 }
 
-// Enhanced removeKPI function with AJAX
-function removeKPI(kpiId) {
-    removeItem('kpi', kpiId);
-}
-
-// Enhanced removeCompetency function with AJAX
-function removeCompetency(competencyId) {
-    removeItem('competency', competencyId);
-}
-
-// Enhanced removeResponsibility function with AJAX
-function removeResponsibility(responsibilityId) {
-    removeItem('responsibility', responsibilityId);
-}
-
-// Enhanced removeValue function with AJAX
-function removeValue(valueId) {
-    removeItem('value', valueId);
-}
+function removeKPI(kpiId) { removeItem('kpi', kpiId); }
+function removeResponsibility(responsibilityId) { removeItem('responsibility', responsibilityId); }
+function removeValue(valueId) { removeItem('value', valueId); }
 
 // Remove the conflicting scroll position management that was causing strange behavior
 // The saveScrollPosition() and restoreScrollPosition() functions in the AJAX handlers are sufficient

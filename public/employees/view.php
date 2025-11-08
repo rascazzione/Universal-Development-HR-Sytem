@@ -125,7 +125,7 @@ include __DIR__ . '/../../templates/header.php';
                             <td class="fw-medium">Phone:</td>
                             <td><?php echo htmlspecialchars($employee['phone'] ?? 'N/A'); ?></td>
                         </tr>
-                        <tr>
+                        <tr id="job-template">
                             <td class="fw-medium">Job Template:</td>
                             <td>
                                 <?php if ($jobTemplate): ?>

@@ -7,6 +7,8 @@
 class Competency {
     
     private $softSkillLevelsPath;
+    private $technicalLevelsCache = null;
+    private $softSkillCatalogCache = null;
     
     public function __construct() {
         $this->softSkillLevelsPath = __DIR__ . '/../config/soft_skill_levels.json';
@@ -192,13 +194,34 @@ class Competency {
      * @return int
      */
     public function createCompetency($data) {
-        $sql = "INSERT INTO competencies (competency_name, description, category_id)
-                VALUES (?, ?, ?)";
+        $category = isset($data['category_id']) ? $this->getCategoryById($data['category_id']) : null;
+        $moduleType = $data['module_type'] ?? ($category['module_type'] ?? $category['category_type'] ?? 'technical');
+        $competencyType = $data['competency_type'] ?? ($moduleType === 'soft_skill' ? 'soft_skill' : 'technical');
+        
+        $baseKey = $data['competency_key'] ?? null;
+        if ($moduleType === 'soft_skill' && empty($baseKey)) {
+            $baseKey = $this->competencyNameToKey($data['competency_name']);
+        }
+        $competencyKey = $moduleType === 'soft_skill' && $baseKey
+            ? $this->resolveCompetencyKey($baseKey)
+            : null;
+        
+        $symbol = $data['symbol'] ?? ($moduleType === 'soft_skill' ? '🧠' : '🧩');
+        $maxLevel = $data['max_level'] ?? ($moduleType === 'soft_skill' ? 4 : 5);
+        $levelType = $data['level_type'] ?? ($moduleType === 'soft_skill' ? 'soft_skill_scale' : 'technical_scale');
+        
+        $sql = "INSERT INTO competencies (competency_name, description, category_id, competency_type, competency_key, symbol, max_level, level_type)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         
         return insertRecord($sql, [
             $data['competency_name'],
             $data['description'],
-            $data['category_id']
+            $data['category_id'],
+            $competencyType,
+            $competencyKey,
+            $symbol,
+            $maxLevel,
+            $levelType
         ]);
     }
     
@@ -209,14 +232,45 @@ class Competency {
      * @return int
      */
     public function updateCompetency($id, $data) {
+        $existing = $this->getCompetencyById($id);
+        if (!$existing) {
+            throw new Exception("Competency not found for update.");
+        }
+        
+        $category = isset($data['category_id']) ? $this->getCategoryById($data['category_id']) : null;
+        $moduleType = $data['module_type']
+            ?? ($category['module_type'] ?? $category['category_type'] ?? $existing['level_type'] === 'soft_skill_scale' ? 'soft_skill' : 'technical');
+        $competencyType = $data['competency_type'] ?? $existing['competency_type'] ?? ($moduleType === 'soft_skill' ? 'soft_skill' : 'technical');
+        
+        $baseKey = array_key_exists('competency_key', $data)
+            ? $data['competency_key']
+            : ($existing['competency_key'] ?? null);
+        if ($moduleType === 'soft_skill') {
+            if (empty($baseKey)) {
+                $baseKey = $this->competencyNameToKey($data['competency_name']);
+            }
+            $competencyKey = $this->resolveCompetencyKey($baseKey, $id);
+        } else {
+            $competencyKey = null;
+        }
+        
+        $symbol = $data['symbol'] ?? ($existing['symbol'] ?? ($moduleType === 'soft_skill' ? '🧠' : '🧩'));
+        $maxLevel = $data['max_level'] ?? ($existing['max_level'] ?? ($moduleType === 'soft_skill' ? 4 : 5));
+        $levelType = $data['level_type'] ?? ($existing['level_type'] ?? ($moduleType === 'soft_skill' ? 'soft_skill_scale' : 'technical_scale'));
+        
         $sql = "UPDATE competencies
-                SET competency_name = ?, description = ?, category_id = ?
+                SET competency_name = ?, description = ?, category_id = ?, competency_type = ?, competency_key = ?, symbol = ?, max_level = ?, level_type = ?
                 WHERE id = ?";
         
         return updateRecord($sql, [
             $data['competency_name'],
             $data['description'],
             $data['category_id'],
+            $competencyType,
+            $competencyKey,
+            $symbol,
+            $maxLevel,
+            $levelType,
             $id
         ]);
     }
@@ -258,12 +312,12 @@ class Competency {
      * @return array
      */
     public function getCompetencyLevels() {
-        return [
-            'basic' => 'Basic',
-            'intermediate' => 'Intermediate',
-            'advanced' => 'Advanced',
-            'expert' => 'Expert'
-        ];
+        $levels = $this->getTechnicalSkillLevels();
+        $mapping = [];
+        foreach ($levels as $level) {
+            $mapping[$level['id']] = $level['level_name'];
+        }
+        return $mapping;
     }
     
     /**
@@ -288,9 +342,23 @@ class Competency {
      * @return array
      */
     public function getCompetencyUsage($competencyId) {
-        $sql = "SELECT jpt.position_title, jpt.department, jtc.required_level, jtc.weight_percentage
+        $sql = "SELECT 
+                    jpt.position_title,
+                    jpt.department,
+                    jtc.module_type,
+                    jtc.weight_percentage,
+                    tsl.level_name AS technical_level_name,
+                    tsl.display_level AS technical_display_level,
+                    tsl.symbol_pattern AS technical_symbol_pattern,
+                    jtc.soft_skill_level,
+                    ssld.level_title AS soft_skill_level_title,
+                    ssld.symbol_pattern AS soft_skill_symbol_pattern,
+                    ssld.meaning AS soft_skill_meaning
                 FROM job_template_competencies jtc
                 JOIN job_position_templates jpt ON jtc.job_template_id = jpt.id
+                LEFT JOIN technical_skill_levels tsl ON jtc.technical_level_id = tsl.id
+                LEFT JOIN soft_skill_definitions ssd ON jtc.competency_key = ssd.competency_key
+                LEFT JOIN soft_skill_level_details ssld ON ssd.id = ssld.soft_skill_id AND jtc.soft_skill_level = ssld.level_number
                 WHERE jtc.competency_id = ? AND jpt.is_active = 1
                 ORDER BY jpt.position_title";
         
@@ -299,31 +367,59 @@ class Competency {
     
     /**
      * Calculate competency score based on required and achieved levels
-     * @param string $requiredLevel
-     * @param string $achievedLevel
+     * Supports technical (5-point visual scale) and soft skills (4-level scale)
+     * @param mixed $requiredLevel
+     * @param mixed $achievedLevel
+     * @param string $moduleType
      * @return float
      */
-    public function calculateCompetencyScore($requiredLevel, $achievedLevel) {
-        $levels = ['basic' => 1, 'intermediate' => 2, 'advanced' => 3, 'expert' => 4];
-        
-        $requiredScore = $levels[$requiredLevel] ?? 2;
-        $achievedScore = $levels[$achievedLevel] ?? 2;
-        
-        if ($achievedScore >= $requiredScore) {
-            // Exceeds or meets requirements
-            $ratio = $achievedScore / $requiredScore;
-            if ($ratio >= 1.5) return 5.0; // Significantly exceeds
-            if ($ratio >= 1.25) return 4.5; // Exceeds
-            if ($ratio >= 1.0) return 4.0; // Meets
-        } else {
-            // Below requirements
-            $ratio = $achievedScore / $requiredScore;
-            if ($ratio >= 0.75) return 3.0; // Partially meets
-            if ($ratio >= 0.5) return 2.0; // Below expectations
-            return 1.0; // Significantly below
+    public function calculateCompetencyScore($requiredLevel, $achievedLevel, string $moduleType = 'technical') {
+        // Allow arrays with richer data
+        if (is_array($requiredLevel) && isset($requiredLevel['level'])) {
+            $requiredLevel = $requiredLevel['level'];
+        }
+        if (is_array($achievedLevel) && isset($achievedLevel['level'])) {
+            $achievedLevel = $achievedLevel['level'];
         }
         
-        return 3.0; // Default
+        if ($moduleType === 'soft_skill') {
+            $requiredScore = max(1, (int)$requiredLevel);
+            $achievedScore = max(1, (int)$achievedLevel);
+            $maxScore = 4;
+        } else {
+            // Technical scale defaults
+            if (is_string($requiredLevel) && !is_numeric($requiredLevel)) {
+                $map = ['basic' => 1, 'intermediate' => 2, 'advanced' => 3, 'expert' => 5];
+                $requiredLevel = $map[strtolower($requiredLevel)] ?? 3;
+            }
+            if (is_string($achievedLevel) && !is_numeric($achievedLevel)) {
+                $map = ['basic' => 1, 'intermediate' => 2, 'advanced' => 3, 'expert' => 5];
+                $achievedLevel = $map[strtolower($achievedLevel)] ?? 3;
+            }
+            $requiredScore = max(1, (int)$requiredLevel);
+            $achievedScore = max(1, (int)$achievedLevel);
+            $maxScore = 5;
+        }
+        
+        $ratio = $requiredScore > 0 ? $achievedScore / $requiredScore : 1;
+        
+        if ($ratio >= 1.5) {
+            return 5.0;
+        }
+        if ($ratio >= 1.25) {
+            return 4.5;
+        }
+        if ($ratio >= 1.0) {
+            return 4.0;
+        }
+        if ($ratio >= 0.75) {
+            return 3.0;
+        }
+        if ($ratio >= 0.5) {
+            return 2.0;
+        }
+        
+        return 1.0;
     }
     
     /**
@@ -335,15 +431,29 @@ class Competency {
      */
     public function getCompetencyStatistics($competencyId, $periodStart = null, $periodEnd = null) {
         $sql = "SELECT 
+                    ecr.module_type,
                     COUNT(*) as total_evaluations,
                     AVG(ecr.score) as average_score,
                     MIN(ecr.score) as min_score,
                     MAX(ecr.score) as max_score,
-                    ecr.required_level,
-                    ecr.achieved_level,
-                    COUNT(*) as level_count
+                    ecr.required_technical_level_id,
+                    ecr.achieved_technical_level_id,
+                    rtl.display_level AS required_technical_display,
+                    atl.display_level AS achieved_technical_display,
+                    rtl.level_name AS required_technical_level_name,
+                    atl.level_name AS achieved_technical_level_name,
+                    ecr.required_soft_skill_level,
+                    ecr.achieved_soft_skill_level,
+                    rsld.level_title AS required_soft_skill_title,
+                    asld.level_title AS achieved_soft_skill_title
                 FROM evaluation_competency_results ecr
-                JOIN evaluations e ON ecr.evaluation_id = e.id
+                JOIN evaluations e ON ecr.evaluation_id = e.evaluation_id
+                LEFT JOIN technical_skill_levels rtl ON ecr.required_technical_level_id = rtl.id
+                LEFT JOIN technical_skill_levels atl ON ecr.achieved_technical_level_id = atl.id
+                LEFT JOIN competencies c ON ecr.competency_id = c.id
+                LEFT JOIN soft_skill_definitions ssd ON c.competency_key = ssd.competency_key
+                LEFT JOIN soft_skill_level_details rsld ON ssd.id = rsld.soft_skill_id AND ecr.required_soft_skill_level = rsld.level_number
+                LEFT JOIN soft_skill_level_details asld ON ssd.id = asld.soft_skill_id AND ecr.achieved_soft_skill_level = asld.level_number
                 WHERE ecr.competency_id = ?";
         
         $params = [$competencyId];
@@ -354,7 +464,18 @@ class Competency {
             $params[] = $periodEnd;
         }
         
-        $sql .= " GROUP BY ecr.required_level, ecr.achieved_level";
+        $sql .= " GROUP BY 
+                    ecr.module_type,
+                    ecr.required_technical_level_id,
+                    ecr.achieved_technical_level_id,
+                    ecr.required_soft_skill_level,
+                    ecr.achieved_soft_skill_level,
+                    rtl.display_level,
+                    atl.display_level,
+                    rtl.level_name,
+                    atl.level_name,
+                    rsld.level_title,
+                    asld.level_title";
         
         return fetchAll($sql, $params);
     }
@@ -462,7 +583,11 @@ class Competency {
         
         $jsonContent = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         
-        return file_put_contents($this->softSkillLevelsPath, $jsonContent) !== false;
+        $saved = file_put_contents($this->softSkillLevelsPath, $jsonContent) !== false;
+        if ($saved) {
+            $this->softSkillCatalogCache = null;
+        }
+        return $saved;
     }
     
     /**
@@ -516,10 +641,192 @@ class Competency {
             return false;
         }
         
-        $sql = "SELECT category_type FROM competency_categories WHERE id = ? AND is_active = 1";
+        $sql = "SELECT category_type, module_type FROM competency_categories WHERE id = ? AND is_active = 1";
         $categoryType = fetchOne($sql, [$competency['category_id']]);
         
-        return $categoryType && $categoryType['category_type'] === 'soft_skill';
+        if (!$categoryType) {
+            return false;
+        }
+        
+        if (($categoryType['module_type'] ?? null) === 'soft_skill') {
+            return true;
+        }
+        
+        if (($categoryType['category_type'] ?? null) === 'soft_skill') {
+            return true;
+        }
+        
+        return ($competency['level_type'] ?? '') === 'soft_skill_scale' || ($competency['competency_type'] ?? '') === 'soft_skill';
+    }
+    
+    /**
+     * Retrieve technical skill levels (cached)
+     * @return array
+     */
+    public function getTechnicalSkillLevels(): array {
+        if ($this->technicalLevelsCache !== null) {
+            return $this->technicalLevelsCache;
+        }
+        
+        $sql = "SELECT * FROM technical_skill_levels ORDER BY display_level";
+        $levels = fetchAll($sql);
+        
+        $this->technicalLevelsCache = $levels;
+        return $levels;
+    }
+    
+    /**
+     * Get technical levels mapped by ID for quick lookup
+     * @return array
+     */
+    public function getTechnicalSkillLevelsById(): array {
+        $levels = $this->getTechnicalSkillLevels();
+        $indexed = [];
+        foreach ($levels as $level) {
+            $indexed[$level['id']] = $level;
+        }
+        return $indexed;
+    }
+    
+    /**
+     * Ensure soft skill definitions table mirrors JSON definitions
+     * @return array Synchronized catalog
+     */
+    public function getSoftSkillCatalog(): array {
+        if ($this->softSkillCatalogCache !== null) {
+            return $this->softSkillCatalogCache;
+        }
+        
+        $definitions = $this->getSoftSkillLevelDefinitions();
+        $this->syncSoftSkillDefinitions($definitions);
+        $this->softSkillCatalogCache = $definitions;
+        return $definitions;
+    }
+    
+    /**
+     * Synchronize JSON definitions into relational tables
+     * @param array $definitions
+     * @return void
+     */
+    private function syncSoftSkillDefinitions(array $definitions): void {
+        foreach ($definitions as $competencyKey => $definition) {
+            if (empty($competencyKey)) {
+                continue;
+            }
+            
+            $definitionId = insertRecord(
+                "INSERT INTO soft_skill_definitions (competency_key, name, definition, description, json_source_path)
+                 VALUES (?, ?, ?, ?, ?)
+                 ON DUPLICATE KEY UPDATE name = VALUES(name), definition = VALUES(definition), description = VALUES(description), json_source_path = VALUES(json_source_path), updated_at = CURRENT_TIMESTAMP",
+                [
+                    $competencyKey,
+                    $definition['name'] ?? ucwords(str_replace('_', ' ', $competencyKey)),
+                    $definition['definition'] ?? '',
+                    $definition['description'] ?? '',
+                    realpath($this->softSkillLevelsPath) ?: $this->softSkillLevelsPath
+                ]
+            );
+            
+            // ON DUPLICATE KEY UPDATE returns the existing id as 0, fetch to ensure we have correct id
+            $record = fetchOne("SELECT id FROM soft_skill_definitions WHERE competency_key = ?", [$competencyKey]);
+            $definitionId = $record['id'] ?? $definitionId;
+            
+            if (empty($definitionId)) {
+                continue;
+            }
+            
+            $levels = $definition['levels'] ?? [];
+            foreach ($levels as $levelNumber => $levelData) {
+                insertRecord(
+                    "INSERT INTO soft_skill_level_details (soft_skill_id, level_number, level_title, behaviors, symbol_pattern, meaning)
+                     VALUES (?, ?, ?, ?, ?, ?)
+                     ON DUPLICATE KEY UPDATE level_title = VALUES(level_title), behaviors = VALUES(behaviors), symbol_pattern = VALUES(symbol_pattern), meaning = VALUES(meaning)",
+                    [
+                        $definitionId,
+                        (int)$levelNumber,
+                        $levelData['title'] ?? '',
+                        json_encode($levelData['behaviors'] ?? [], JSON_UNESCAPED_UNICODE),
+                        $this->buildSoftSkillSymbolPattern((int)$levelNumber),
+                        $this->softSkillMeaning((int)$levelNumber)
+                    ]
+                );
+            }
+        }
+    }
+    
+    /**
+     * Ensure technical display uses consistent icon pattern
+     * @param int $displayLevel
+     * @return string
+     */
+    public function buildTechnicalSymbolPattern(int $displayLevel): string {
+        $filled = str_repeat('🧩', max(0, min($displayLevel, 5)));
+        $empty = str_repeat('⚪️', max(0, 5 - $displayLevel));
+        return $filled . $empty;
+    }
+    
+    /**
+     * Build soft skill symbol pattern based on 1-4 scale
+     * @param int $level
+     * @return string
+     */
+    public function buildSoftSkillSymbolPattern(int $level): string {
+        $filled = str_repeat('🧠', max(0, min($level, 4)));
+        $empty = str_repeat('⚪️', max(0, 4 - $level));
+        return $filled . $empty;
+    }
+    
+    /**
+     * Map soft skill level to meaning label
+     * @param int $level
+     * @return string
+     */
+    private function softSkillMeaning(int $level): string {
+        switch ($level) {
+            case 1: return 'Basic';
+            case 2: return 'Intermediate';
+            case 3: return 'Advanced';
+            case 4: return 'Expert';
+            default: return 'Basic';
+        }
+    }
+    
+    /**
+     * Check if a competency key already exists
+     * @param string|null $key
+     * @param int|null $excludeId
+     * @return bool
+     */
+    private function competencyKeyExists(?string $key, ?int $excludeId = null): bool {
+        if (!$key) {
+            return false;
+        }
+        
+        $sql = "SELECT id FROM competencies WHERE competency_key = ?";
+        $params = [$key];
+        if ($excludeId) {
+            $sql .= " AND id != ?";
+            $params[] = $excludeId;
+        }
+        
+        $result = fetchOne($sql, $params);
+        return !empty($result);
+    }
+    
+    /**
+     * Resolve competency key to avoid duplicates
+     * @param string $baseKey
+     * @param int|null $excludeId
+     * @return string
+     */
+    private function resolveCompetencyKey(string $baseKey, ?int $excludeId = null): string {
+        $key = $baseKey;
+        $suffix = 1;
+        while ($this->competencyKeyExists($key, $excludeId)) {
+            $key = $baseKey . '_' . $suffix;
+            $suffix++;
+        }
+        return $key;
     }
 }
 ?>

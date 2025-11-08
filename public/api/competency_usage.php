@@ -46,6 +46,7 @@ try {
                     <tr>
                         <th>Position Title</th>
                         <th>Department</th>
+                        <th>Module</th>
                         <th class="text-end">Required Level</th>
                         <th class="text-end">Weight (%)</th>
                     </tr>
@@ -55,10 +56,23 @@ try {
                     <tr>
                         <td><?php echo htmlspecialchars($row['position_title'] ?? ''); ?></td>
                         <td><?php echo htmlspecialchars($row['department'] ?? ''); ?></td>
+                        <td><?php echo htmlspecialchars(ucfirst($row['module_type'] ?? 'technical')); ?></td>
                         <td class="text-end">
                             <?php
-                                $rl = $row['required_level'] ?? null;
-                                echo $rl === null ? '' : htmlspecialchars((string)$rl);
+                                $moduleType = $row['module_type'] ?? 'technical';
+                                if ($moduleType === 'soft_skill') {
+                                    $levelNumber = $row['soft_skill_level'] ?? null;
+                                    $levelTitle = $row['soft_skill_level_title'] ?? '';
+                                    $symbol = $row['soft_skill_symbol_pattern'] ?? '';
+                                    $display = trim($symbol . ' ' . $levelTitle);
+                                    echo htmlspecialchars($display ?: 'Level ' . (string)$levelNumber);
+                                } else {
+                                    $displayLevel = $row['technical_display_level'] ?? null;
+                                    $levelName = $row['technical_level_name'] ?? '';
+                                    $symbol = $row['technical_symbol_pattern'] ?? '';
+                                    $display = trim($symbol . ' ' . $levelName);
+                                    echo htmlspecialchars($display ?: 'Level ' . (string)$displayLevel);
+                                }
                             ?>
                         </td>
                         <td class="text-end">

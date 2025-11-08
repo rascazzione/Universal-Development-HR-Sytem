@@ -7,9 +7,9 @@ USE performance_evaluation;
 -- NOTE: Some MySQL installations may enforce strict FK checks during DDL; disable temporarily for safe migrations
 SET @@foreign_key_checks=0;
 
----------------------------------------------------------------------
+-- ---------------------------------------------------------------------
 -- 1) Employee Self-Assessment & Achievement Journal
----------------------------------------------------------------------
+-- ---------------------------------------------------------------------
 
 -- Employee self-assessments by dimension (stored per employee, per period)
 CREATE TABLE IF NOT EXISTS employee_self_assessments (
@@ -56,9 +56,9 @@ CREATE TABLE IF NOT EXISTS achievement_journal (
     INDEX idx_journal_visibility (visibility)
 );
 
----------------------------------------------------------------------
+-- ---------------------------------------------------------------------
 -- 2) KUDOS Recognition System
----------------------------------------------------------------------
+-- ---------------------------------------------------------------------
 
 -- Categories for KUDOS recognitions
 CREATE TABLE IF NOT EXISTS kudos_categories (
@@ -147,9 +147,9 @@ CREATE TABLE IF NOT EXISTS employee_kudos_points (
     INDEX idx_kudos_points_monthly (monthly_points)
 );
 
----------------------------------------------------------------------
+-- ---------------------------------------------------------------------
 -- 3) Manager Evaluation & Upward Feedback
----------------------------------------------------------------------
+-- ---------------------------------------------------------------------
 
 -- Manager evaluation aggregated records
 CREATE TABLE IF NOT EXISTS manager_evaluations (
@@ -245,21 +245,21 @@ CREATE TABLE IF NOT EXISTS manager_feedback_summary (
     INDEX idx_manager_feedback_responses (total_responses)
 );
 
----------------------------------------------------------------------
+-- ---------------------------------------------------------------------
 -- 4) Enhanced OKR System (enhance performance_goals + new OKR tables)
----------------------------------------------------------------------
+-- ---------------------------------------------------------------------
 
 -- Add OKR columns to existing performance_goals table (safe ALTERs)
 ALTER TABLE performance_goals
-    ADD COLUMN IF NOT EXISTS okr_objective BOOLEAN DEFAULT FALSE,
-    ADD COLUMN IF NOT EXISTS okr_key_results JSON NULL,
-    ADD COLUMN IF NOT EXISTS okr_owner INT NULL,
-    ADD COLUMN IF NOT EXISTS okr_progress DECIMAL(5,2) DEFAULT 0.00,
-    ADD COLUMN IF NOT EXISTS okr_confidence ENUM('low','medium','high') DEFAULT 'medium',
-    ADD COLUMN IF NOT EXISTS okr_cycle ENUM('monthly','quarterly','annual') DEFAULT 'quarterly';
+    ADD COLUMN okr_objective BOOLEAN DEFAULT FALSE,
+    ADD COLUMN okr_key_results JSON NULL,
+    ADD COLUMN okr_owner INT NULL,
+    ADD COLUMN okr_progress DECIMAL(5,2) DEFAULT 0.00,
+    ADD COLUMN okr_confidence ENUM('low','medium','high') DEFAULT 'medium',
+    ADD COLUMN okr_cycle ENUM('monthly','quarterly','annual') DEFAULT 'quarterly';
 
 -- Index to speed queries on OKR flags and progress
-CREATE INDEX IF NOT EXISTS idx_performance_goals_okr ON performance_goals (okr_objective, okr_progress);
+CREATE INDEX idx_performance_goals_okr ON performance_goals (okr_objective, okr_progress);
 
 -- OKR progress updates history
 CREATE TABLE IF NOT EXISTS okr_progress_updates (
@@ -344,9 +344,9 @@ CREATE TABLE IF NOT EXISTS okr_scores (
     INDEX idx_okr_score_final (final_score)
 );
 
----------------------------------------------------------------------
+-- ---------------------------------------------------------------------
 -- 5) Individual Development Plans (IDPs)
----------------------------------------------------------------------
+-- ---------------------------------------------------------------------
 
 -- Main IDP records
 CREATE TABLE IF NOT EXISTS individual_development_plans (
@@ -461,9 +461,9 @@ CREATE TABLE IF NOT EXISTS development_roi_tracking (
     INDEX idx_roi_measurement_date (measurement_date)
 );
 
----------------------------------------------------------------------
+-- ---------------------------------------------------------------------
 -- Sample data: categories, templates, defaults
----------------------------------------------------------------------
+-- ---------------------------------------------------------------------
 
 -- KUDOS default categories
 INSERT INTO kudos_categories (name, description, created_by) VALUES

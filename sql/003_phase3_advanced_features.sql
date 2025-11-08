@@ -218,18 +218,18 @@ INSERT INTO evidence_tags (tag_name, tag_color, description, created_by) VALUES
 
 -- Add columns to growth_evidence_entries for enhanced features
 ALTER TABLE growth_evidence_entries 
-ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT FALSE,
-ADD COLUMN IF NOT EXISTS archived_at TIMESTAMP NULL,
-ADD COLUMN IF NOT EXISTS approval_status ENUM('none', 'pending', 'approved', 'rejected') DEFAULT 'none',
-ADD COLUMN IF NOT EXISTS visibility ENUM('public', 'manager_only', 'private') DEFAULT 'public',
-ADD COLUMN IF NOT EXISTS evidence_source ENUM('manager_feedback', 'self_assessment', 'peer_feedback', 'customer_feedback') DEFAULT 'manager_feedback';
+ADD COLUMN is_archived BOOLEAN DEFAULT FALSE,
+ADD COLUMN archived_at TIMESTAMP NULL,
+ADD COLUMN approval_status ENUM('none', 'pending', 'approved', 'rejected') DEFAULT 'none',
+ADD COLUMN visibility ENUM('public', 'manager_only', 'private') DEFAULT 'public',
+ADD COLUMN evidence_source ENUM('manager_feedback', 'self_assessment', 'peer_feedback', 'customer_feedback') DEFAULT 'manager_feedback';
 
 -- Add indexes for new columns
 ALTER TABLE growth_evidence_entries 
-ADD INDEX IF NOT EXISTS idx_archived (is_archived),
-ADD INDEX IF NOT EXISTS idx_approval_status (approval_status),
-ADD INDEX IF NOT EXISTS idx_visibility (visibility),
-ADD INDEX IF NOT EXISTS idx_evidence_source (evidence_source);
+ADD INDEX idx_archived (is_archived),
+ADD INDEX idx_approval_status (approval_status),
+ADD INDEX idx_visibility (visibility),
+ADD INDEX idx_evidence_source (evidence_source);
 
 -- Create view for active evidence (non-archived)
 CREATE OR REPLACE VIEW active_evidence_entries AS

@@ -1,0 +1,78 @@
+.skills-loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+}
+
+.skills-category + .skills-category {
+    border-top: 1px solid #e9ecef;
+    padding-top: 1.25rem;
+}
+
+.skills-category-header h6 {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.technical-symbol-display,
+.soft-symbol-display {
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+    white-space: nowrap;
+}
+
+.skills-category table tbody tr:hover {
+    background-color: rgba(13, 110, 253, 0.04);
+}
+
+.skills-category .btn-group .btn {
+    min-width: 36px;
+}
+
+#alerts-container,
+.alerts-container {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 1055;
+    width: min(320px, 90vw);
+}
+
+.alert.shadow-sm {
+    box-shadow: 0 0.5rem 1rem rgba(33, 37, 41, 0.1) !important;
+}
+
+.soft-behavior-list,
+.technical-preview .soft-summary-behaviors,
+.soft-summary-behaviors {
+    padding-left: 1.25rem;
+}
+
+.soft-behavior-list li,
+.soft-summary-behaviors li {
+    font-size: 0.85rem;
+    margin-bottom: 0.35rem;
+}
+
+.soft-behavior-list li:last-child,
+.soft-summary-behaviors li:last-child {
+    margin-bottom: 0;
+}
+
+.skills-category-header .badge {
+    background-color: rgba(108, 117, 125, 0.15);
+    color: #495057;
+}
+
+.skills-category .table th {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom-width: 2px;
+}
+
+.skills-category .table td {
+    vertical-align: middle;
+}

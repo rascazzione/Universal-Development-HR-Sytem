@@ -20,6 +20,11 @@ $bodyClass = $bodyClass ?? '';
     
     <!-- Custom CSS -->
     <link href="/assets/css/style.css" rel="stylesheet">
+    <?php if (!empty($pageStylesheets) && is_array($pageStylesheets)): ?>
+        <?php foreach ($pageStylesheets as $stylesheet): ?>
+            <link href="<?php echo htmlspecialchars($stylesheet); ?>" rel="stylesheet">
+        <?php endforeach; ?>
+    <?php endif; ?>
     
     <!-- Chart.js for analytics -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
