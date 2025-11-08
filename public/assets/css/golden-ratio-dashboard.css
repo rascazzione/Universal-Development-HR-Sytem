@@ -1,0 +1,536 @@
+/* Golden Ratio Dashboard Framework */
+/* Based on φ (phi) = 1.618:1 for optimal visual harmony */
+
+:root {
+    /* Golden Ratio Constants */
+    --golden-ratio: 1.618;
+    --golden-inverse: 0.618;
+    
+    /* Golden Ratio Spacing System */
+    --golden-space-xs: 8px;    /* φ⁰ */
+    --golden-space-sm: 13px;   /* φ¹ */
+    --golden-space-md: 21px;   /* φ² */
+    --golden-space-lg: 34px;   /* φ³ */
+    --golden-space-xl: 55px;   /* φ⁴ */
+    --golden-space-2xl: 89px;  /* φ⁵ */
+    
+    /* Golden Ratio Typography Scale */
+    --golden-text-xs: 0.618rem;   /* 9.9px */
+    --golden-text-sm: 0.75rem;    /* 12px */
+    --golden-text-base: 1rem;     /* 16px */
+    --golden-text-lg: 1.25rem;    /* 20px */
+    --golden-text-xl: 1.618rem;   /* 25.9px */
+    --golden-text-2xl: 2.618rem;  /* 41.9px */
+    --golden-text-3xl: 4.236rem;  /* 67.8px */
+    
+    /* Golden Ratio Color System */
+    --golden-primary: #0d6efd;
+    --golden-secondary: #6c757d;
+    --golden-success: #198754;
+    --golden-info: #0dcaf0;
+    --golden-warning: #ffc107;
+    --golden-danger: #dc3545;
+    
+    /* Golden Ratio Layout */
+    --golden-container-max: 1200px;
+    --golden-main-width: 61.8%;
+    --golden-sidebar-width: 38.2%;
+    
+    /* Card Aspect Ratios */
+    --golden-card-ratio: 1.618 / 1;
+    --golden-square-ratio: 1 / 1;
+    --golden-portrait-ratio: 1 / 1.618;
+}
+
+/* Golden Ratio Container */
+.golden-container {
+    max-width: var(--golden-container-max);
+    margin: 0 auto;
+    padding: 0 var(--golden-space-md);
+}
+
+/* Golden Ratio Grid System */
+.golden-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--golden-space-md);
+    margin: 0 -var(--golden-space-sm);
+}
+
+.golden-grid > * {
+    padding: 0 var(--golden-space-sm);
+}
+
+/* Golden Ratio Main/Sidebar Layout */
+.golden-layout {
+    display: flex;
+    gap: var(--golden-space-lg);
+    align-items: flex-start;
+}
+
+.golden-main {
+    flex: 0 0 var(--golden-main-width);
+    max-width: var(--golden-main-width);
+}
+
+.golden-sidebar {
+    flex: 0 0 var(--golden-sidebar-width);
+    max-width: var(--golden-sidebar-width);
+}
+
+/* Golden Ratio Card System */
+.golden-card {
+    background: white;
+    border-radius: var(--golden-space-sm);
+    box-shadow: 0 2px var(--golden-space-sm) rgba(0, 0, 0, 0.1);
+    transition: all var(--golden-space-sm) ease;
+    overflow: hidden;
+    height: 100%;
+}
+
+.golden-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px var(--golden-space-md) rgba(0, 0, 0, 0.15);
+}
+
+.golden-card-large {
+    flex: 0 0 100%;
+    aspect-ratio: var(--golden-card-ratio);
+}
+
+.golden-card-medium {
+    flex: 0 0 calc(61.8% - var(--golden-space-md));
+    aspect-ratio: var(--golden-square-ratio);
+}
+
+.golden-card-small {
+    flex: 0 0 calc(38.2% - var(--golden-space-md));
+    aspect-ratio: var(--golden-square-ratio);
+}
+
+/* Golden Ratio Card Content */
+.golden-card-header {
+    padding: var(--golden-space-md) var(--golden-space-lg);
+    border-bottom: 1px solid #e9ecef;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+}
+
+.golden-card-body {
+    padding: var(--golden-space-lg);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.golden-card-footer {
+    padding: var(--golden-space-md) var(--golden-space-lg);
+    border-top: 1px solid #e9ecef;
+    background: #f8f9fa;
+}
+
+/* Golden Ratio Typography */
+.golden-heading-xl {
+    font-size: var(--golden-text-2xl);
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: var(--golden-space-sm);
+}
+
+.golden-heading-lg {
+    font-size: var(--golden-text-xl);
+    font-weight: 600;
+    line-height: 1.3;
+    margin-bottom: var(--golden-space-sm);
+}
+
+.golden-heading-md {
+    font-size: var(--golden-text-lg);
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: var(--golden-space-xs);
+}
+
+.golden-text-base {
+    font-size: var(--golden-text-base);
+    line-height: 1.6;
+    margin-bottom: var(--golden-space-xs);
+}
+
+.golden-text-sm {
+    font-size: var(--golden-text-sm);
+    line-height: 1.5;
+    color: var(--golden-secondary);
+}
+
+.golden-text-xs {
+    font-size: var(--golden-text-xs);
+    line-height: 1.4;
+    color: var(--golden-secondary);
+}
+
+/* Golden Ratio Status Indicators */
+.golden-status {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--golden-space-xs);
+    padding: var(--golden-space-xs) var(--golden-space-sm);
+    border-radius: var(--golden-space-xs);
+    font-size: var(--golden-text-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.golden-status-primary {
+    background: rgba(13, 110, 253, 0.1);
+    color: var(--golden-primary);
+}
+
+.golden-status-success {
+    background: rgba(25, 135, 84, 0.1);
+    color: var(--golden-success);
+}
+
+.golden-status-warning {
+    background: rgba(255, 193, 7, 0.1);
+    color: #a07900;
+}
+
+.golden-status-info {
+    background: rgba(13, 202, 240, 0.1);
+    color: #0aa2c0;
+}
+
+/* Golden Ratio Icons */
+.golden-icon {
+    width: var(--golden-space-xl);
+    height: var(--golden-space-xl);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--golden-text-lg);
+    color: white;
+    margin-bottom: var(--golden-space-sm);
+}
+
+.golden-icon-primary {
+    background: linear-gradient(135deg, var(--golden-primary), #0056b3);
+}
+
+.golden-icon-success {
+    background: linear-gradient(135deg, var(--golden-success), #146c43);
+}
+
+.golden-icon-info {
+    background: linear-gradient(135deg, var(--golden-info), #0aa2c0);
+}
+
+.golden-icon-warning {
+    background: linear-gradient(135deg, var(--golden-warning), #d39e00);
+}
+
+.golden-icon-danger {
+    background: linear-gradient(135deg, var(--golden-danger), #b02a37);
+}
+
+/* Golden Ratio Metrics */
+.golden-metric {
+    text-align: center;
+    padding: var(--golden-space-md);
+}
+
+.golden-metric-value {
+    font-size: var(--golden-text-2xl);
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: var(--golden-space-xs);
+}
+
+.golden-metric-label {
+    font-size: var(--golden-text-sm);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--golden-secondary);
+}
+
+.golden-metric-sublabel {
+    font-size: var(--golden-text-xs);
+    color: var(--golden-secondary);
+    margin-top: var(--golden-space-xs);
+}
+
+/* Golden Ratio Progress Bars */
+.golden-progress {
+    width: 100%;
+    height: var(--golden-space-xs);
+    background: #e9ecef;
+    border-radius: var(--golden-space-xs);
+    overflow: hidden;
+    margin: var(--golden-space-sm) 0;
+}
+
+.golden-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--golden-primary), var(--golden-info));
+    border-radius: var(--golden-space-xs);
+    transition: width 0.6s ease;
+}
+
+/* Golden Ratio Buttons */
+.golden-btn {
+    padding: var(--golden-space-sm) var(--golden-space-md);
+    border: none;
+    border-radius: var(--golden-space-xs);
+    font-size: var(--golden-text-sm);
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--golden-space-xs);
+    transition: all var(--golden-space-sm) ease;
+    cursor: pointer;
+}
+
+.golden-btn-primary {
+    background: var(--golden-primary);
+    color: white;
+}
+
+.golden-btn-primary:hover {
+    background: #0056b3;
+    transform: translateY(-1px);
+}
+
+.golden-btn-outline {
+    background: transparent;
+    border: 2px solid var(--golden-primary);
+    color: var(--golden-primary);
+}
+
+.golden-btn-outline:hover {
+    background: var(--golden-primary);
+    color: white;
+}
+
+/* Golden Ratio Dashboard Specific Styles */
+
+/* Welcome Header */
+.golden-welcome {
+    background: linear-gradient(135deg, var(--golden-primary), #0056b3);
+    color: white;
+    padding: var(--golden-space-xl) var(--golden-space-lg);
+    border-radius: var(--golden-space-md);
+    margin-bottom: var(--golden-space-lg);
+}
+
+.golden-welcome-title {
+    font-size: var(--golden-text-2xl);
+    font-weight: 700;
+    margin-bottom: var(--golden-space-sm);
+}
+
+.golden-welcome-subtitle {
+    font-size: var(--golden-text-lg);
+    opacity: 0.9;
+}
+
+/* Job Template Hero */
+.golden-hero {
+    background: linear-gradient(180deg, #fff, #f7f9ff);
+    border: 1px solid #e3e8ff;
+    border-radius: var(--golden-space-md);
+    padding: var(--golden-space-xl);
+    margin-bottom: var(--golden-space-lg);
+    box-shadow: 0 0 var(--golden-space-lg) rgba(15, 23, 42, 0.06);
+}
+
+.golden-hero-title {
+    font-size: var(--golden-text-2xl);
+    font-weight: 700;
+    margin-bottom: var(--golden-space-sm);
+    color: #1f2937;
+}
+
+.golden-hero-subtitle {
+    font-size: var(--golden-text-lg);
+    color: #6b7280;
+    margin-bottom: var(--golden-space-md);
+}
+
+/* Golden Ratio Stats Grid */
+.golden-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--golden-space-md);
+    margin: var(--golden-space-lg) 0;
+}
+
+.golden-stat-card {
+    background: white;
+    border-radius: var(--golden-space-sm);
+    padding: var(--golden-space-lg);
+    text-align: center;
+    box-shadow: 0 2px var(--golden-space-sm) rgba(0, 0, 0, 0.1);
+    transition: all var(--golden-space-sm) ease;
+}
+
+.golden-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px var(--golden-space-md) rgba(0, 0, 0, 0.15);
+}
+
+/* Golden Ratio Item Lists */
+.golden-item-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.golden-item {
+    padding: var(--golden-space-sm) 0;
+    border-bottom: 1px solid #f1f3f4;
+    position: relative;
+    padding-left: var(--golden-space-lg);
+}
+
+.golden-item:last-child {
+    border-bottom: none;
+}
+
+.golden-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: var(--golden-space-xs);
+    height: var(--golden-space-xs);
+    background: var(--golden-primary);
+    border-radius: 50%;
+}
+
+.golden-item-title {
+    font-weight: 600;
+    margin-bottom: var(--golden-space-xs);
+    color: #1f2937;
+}
+
+.golden-item-description {
+    font-size: var(--golden-text-sm);
+    color: #6b7280;
+    margin-bottom: var(--golden-space-xs);
+}
+
+.golden-item-meta {
+    font-size: var(--golden-text-xs);
+    color: #9ca3af;
+}
+
+/* Golden Ratio Responsive Design */
+@media (max-width: 1024px) {
+    .golden-layout {
+        flex-direction: column;
+    }
+    
+    .golden-main,
+    .golden-sidebar {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+    
+    .golden-card-large,
+    .golden-card-medium,
+    .golden-card-small {
+        flex: 0 0 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .golden-container {
+        padding: 0 var(--golden-space-sm);
+    }
+    
+    .golden-grid {
+        gap: var(--golden-space-sm);
+    }
+    
+    .golden-card-body {
+        padding: var(--golden-space-md);
+    }
+    
+    .golden-welcome {
+        padding: var(--golden-space-lg);
+    }
+    
+    .golden-hero {
+        padding: var(--golden-space-lg);
+    }
+    
+    .golden-stats-grid {
+        grid-template-columns: 1fr;
+        gap: var(--golden-space-sm);
+    }
+}
+
+@media (max-width: 480px) {
+    :root {
+        --golden-space-xs: 6px;
+        --golden-space-sm: 10px;
+        --golden-space-md: 16px;
+        --golden-space-lg: 26px;
+        --golden-space-xl: 42px;
+    }
+    
+    .golden-heading-xl {
+        font-size: var(--golden-text-xl);
+    }
+    
+    .golden-heading-lg {
+        font-size: var(--golden-text-lg);
+    }
+    
+    .golden-card-body {
+        padding: var(--golden-space-sm);
+    }
+}
+
+/* Golden Ratio Animation */
+@keyframes goldenFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(var(--golden-space-sm));
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.golden-fade-in {
+    animation: goldenFadeIn 0.6s ease-out;
+}
+
+/* Golden Ratio Accessibility */
+@media (prefers-reduced-motion: reduce) {
+    .golden-card,
+    .golden-btn,
+    .golden-progress-bar {
+        transition: none;
+    }
+    
+    .golden-fade-in {
+        animation: none;
+    }
+}
+
+@media (prefers-contrast: high) {
+    .golden-card {
+        border: 2px solid #000;
+    }
+    
+    .golden-status {
+        border: 1px solid currentColor;
+    }
+}
