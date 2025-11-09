@@ -12,6 +12,13 @@ require_once __DIR__ . '/../../classes/MediaManager.php';
 // Require authentication
 requireAuth();
 
+// Get employee ID from URL
+$employeeId = $_GET['employee_id'] ?? null;
+if (!$employeeId) {
+    setFlashMessage('Employee ID is required.', 'error');
+    redirect('/employees/list.php');
+}
+
 // Detect if this is self-feedback
 $currentUserEmployeeId = $_SESSION['employee_id'] ?? null;
 $isSelfFeedback = ($employeeId == $currentUserEmployeeId);
@@ -30,13 +37,6 @@ $pageDescription = 'Provide feedback to your team members through the Growth Evi
 $employeeClass = new Employee();
 $journalClass = new GrowthEvidenceJournal();
 $mediaManager = new MediaManager();
-
-// Get employee ID from URL
-$employeeId = $_GET['employee_id'] ?? null;
-if (!$employeeId) {
-    setFlashMessage('Employee ID is required.', 'error');
-    redirect('/employees/list.php');
-}
 
 // Get employee details
 $employee = $employeeClass->getEmployeeById($employeeId);
@@ -130,12 +130,12 @@ include __DIR__ . '/../../templates/header.php';
                 <i class="fas fa-user-circle fa-3x me-3"></i>
                 <div>
                     <h5 class="alert-heading mb-1">
-                        ⭐ AUTOFEEDBACK - Reflexión Personal
+                        ⭐ AUTOFEEDBACK - Personal Reflection
                     </h5>
                     <p class="mb-0">
-                        Estás documentando feedback sobre tu propio desempeño.
-                        Esta es una oportunidad para reflexionar sobre tus logros,
-                        aprendizajes y áreas de mejora.
+                        You are documenting feedback about your own performance.
+                        This is an opportunity to reflect on your achievements,
+                        learning and areas for improvement.
                     </p>
                 </div>
             </div>
@@ -146,7 +146,7 @@ include __DIR__ . '/../../templates/header.php';
             <div class="card-header">
                 <h5 class="card-title mb-0">
                     <?php if ($isSelfFeedback): ?>
-                        ⭐ Autofeedback - Reflexión Personal
+                        ⭐ Autofeedback - Personal Reflection
                     <?php else: ?>
                         Give Feedback to <?php echo htmlspecialchars($employee['first_name'] . ' ' . $employee['last_name']); ?>
                     <?php endif; ?>

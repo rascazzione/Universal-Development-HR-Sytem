@@ -20,6 +20,105 @@ function renderDashboardJobTemplate($jobTemplateData, $employeeId, $isExpanded =
     $template = $jobTemplateData['template'];
     $counts = $jobTemplateData['counts'];
     $details = $jobTemplateData['details'];
+
+    // Normalize data from JobTemplate to keep the renderer backwards-compatible
+    $formatKpi = static function(array $kpi): array {
+        $title = $kpi['title']
+            ?? $kpi['kpi_name']
+            ?? $kpi['name']
+            ?? '';
+
+        $description = $kpi['description']
+            ?? $kpi['kpi_description']
+            ?? $kpi['details']
+            ?? '';
+
+        $targetValue = $kpi['target']
+            ?? $kpi['target_value']
+            ?? $kpi['expected_result']
+            ?? '';
+
+        $targetUnit = $kpi['measurement_unit']
+            ?? $kpi['unit']
+            ?? '';
+
+        $target = trim(trim((string) $targetValue) . ' ' . trim((string) $targetUnit));
+        if ($target === '' && isset($kpi['weight_percentage'])) {
+            $target = rtrim(rtrim((string) $kpi['weight_percentage'], '0'), '.');
+            $target = ($target === '' ? (string) $kpi['weight_percentage'] : $target) . '%';
+        }
+
+        return [
+            'title' => $title,
+            'description' => $description,
+            'target' => $target
+        ];
+    };
+
+    $formatResponsibility = static function(array $responsibility): array {
+        $title = $responsibility['title'] ?? '';
+        $description = $responsibility['description'] ?? '';
+        $text = $responsibility['responsibility_text'] ?? ($responsibility['text'] ?? '');
+
+        if ($title === '' && $text !== '') {
+            $title = $text;
+        } elseif ($description === '' && $text !== '' && $text !== $title) {
+            $description = $text;
+        }
+
+        return [
+            'title' => $title,
+            'description' => $description
+        ];
+    };
+
+    $formatSkill = static function(array $skill): array {
+        $name = $skill['skill_name']
+            ?? $skill['competency_name']
+            ?? $skill['name']
+            ?? '';
+
+        $levelCandidates = [
+            $skill['level'] ?? null,
+            $skill['required_level'] ?? null,
+            $skill['technical_level_name'] ?? null,
+            isset($skill['technical_display_level']) ? 'Nivel ' . $skill['technical_display_level'] : null,
+            $skill['soft_skill_level_title'] ?? null,
+            isset($skill['soft_skill_level']) ? 'Nivel ' . $skill['soft_skill_level'] : null
+        ];
+
+        $level = null;
+        foreach ($levelCandidates as $candidate) {
+            if (!empty($candidate)) {
+                $level = $candidate;
+                break;
+            }
+        }
+
+        $description = $skill['description']
+            ?? $skill['competency_description']
+            ?? $skill['technical_level_description']
+            ?? $skill['soft_skill_description']
+            ?? $skill['soft_skill_definition']
+            ?? $skill['soft_skill_meaning']
+            ?? null;
+
+        if (!$description && !empty($skill['soft_skill_behaviors']) && is_array($skill['soft_skill_behaviors'])) {
+            $description = implode(', ', $skill['soft_skill_behaviors']);
+        }
+
+        return [
+            'name' => $name,
+            'level' => $level,
+            'description' => $description
+        ];
+    };
+
+    $kpiItems = array_map($formatKpi, $details['kpis'] ?? []);
+    $responsibilityItems = array_map($formatResponsibility, $details['responsibilities'] ?? []);
+    $technicalSkillItems = array_map($formatSkill, $details['technical_skills'] ?? []);
+    $softSkillItems = array_map($formatSkill, $details['soft_skills'] ?? []);
+    $valueItems = $details['values'] ?? [];
     
     // Calculate total sections
     $totalSections = 0;
@@ -41,13 +140,13 @@ function renderDashboardJobTemplate($jobTemplateData, $employeeId, $isExpanded =
                             aria-expanded="<?php echo $isExpanded ? 'true' : 'false'; ?>"
                             aria-controls="jobTemplateCollapse">
                         <i class="fas fa-briefcase me-2"></i>
-                        📋 Mi Ficha de Puesto - <?php echo htmlspecialchars($template['position_title']); ?>
+                        📋 My Job Profile - <?php echo htmlspecialchars($template['position_title']); ?>
                     </button>
                 </h5>
                 <div class="d-flex align-items-center gap-2">
-                    <span class="badge bg-light text-dark"><?php echo $totalSections; ?> Secciones</span>
+                    <span class="badge bg-light text-dark"><?php echo $totalSections; ?> Sections</span>
                     <button class="btn btn-sm btn-success btn-self-feedback" onclick="goToSelfFeedback()">
-                        <i class="fas fa-star me-1"></i> Dar Autofeedback
+                        <i class="fas fa-star me-1"></i> Give Self-Feedback
                     </button>
                 </div>
             </div>
@@ -58,7 +157,7 @@ function renderDashboardJobTemplate($jobTemplateData, $employeeId, $isExpanded =
             <div class="card-body">
                 <?php if (!empty($template['description'])): ?>
                 <div class="alert alert-info mb-4">
-                    <small class="d-block mb-1"><strong>Descripción del puesto:</strong></small>
+                    <small class="d-block mb-1"><strong>Job Description:</strong></small>
                     <?php echo htmlspecialchars($template['description']); ?>
                 </div>
                 <?php endif; ?>
@@ -72,8 +171,8 @@ function renderDashboardJobTemplate($jobTemplateData, $employeeId, $isExpanded =
                 </div>
                 <?php endif; ?>
                 
-                <!-- Sección 1: KPIs -->
-                <?php if (!empty($details['kpis']) && count($details['kpis']) > 0): ?>
+                <!-- Section 1: KPIs -->
+                <?php if (!empty($kpiItems)): ?>
                 <div class="template-section">
                     <h6><i class="fas fa-chart-line me-2"></i>📊 Desired Results (KPIs)</h6>
                     <div class="table-responsive">
@@ -81,12 +180,12 @@ function renderDashboardJobTemplate($jobTemplateData, $employeeId, $isExpanded =
                             <thead>
                                 <tr>
                                     <th>KPI</th>
-                                    <th>Descripción</th>
+                                    <th>Description</th>
                                     <th>Target</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php foreach ($details['kpis'] as $kpi): ?>
+                                <?php foreach ($kpiItems as $kpi): ?>
                                 <tr>
                                     <td><?php echo htmlspecialchars($kpi['title'] ?? ''); ?></td>
                                     <td><?php echo htmlspecialchars($kpi['description'] ?? ''); ?></td>
@@ -99,12 +198,12 @@ function renderDashboardJobTemplate($jobTemplateData, $employeeId, $isExpanded =
                 </div>
                 <?php endif; ?>
                 
-                <!-- Sección 2: Responsabilidades -->
-                <?php if (!empty($details['responsibilities']) && count($details['responsibilities']) > 0): ?>
+                <!-- Section 2: Responsibilities -->
+                <?php if (!empty($responsibilityItems)): ?>
                 <div class="template-section">
                     <h6><i class="fas fa-tasks me-2"></i>📝 Key Responsibilities</h6>
                     <ul class="list-group list-group-flush">
-                        <?php foreach ($details['responsibilities'] as $responsibility): ?>
+                        <?php foreach ($responsibilityItems as $responsibility): ?>
                         <li class="list-group-item d-flex align-items-start">
                             <i class="fas fa-check-circle text-success me-3 mt-1"></i>
                             <div>
@@ -119,44 +218,43 @@ function renderDashboardJobTemplate($jobTemplateData, $employeeId, $isExpanded =
                 </div>
                 <?php endif; ?>
                 
-                <!-- Sección 3: Skills (Technical + Soft) -->
-                <?php if ((!empty($details['technical_skills']) && count($details['technical_skills']) > 0) || 
-                         (!empty($details['soft_skills']) && count($details['soft_skills']) > 0)): ?>
+                <!-- Section 3: Skills (Technical + Soft) -->
+                <?php if (!empty($technicalSkillItems) || !empty($softSkillItems)): ?>
                 <div class="template-section">
                     <h6><i class="fas fa-puzzle-piece me-2"></i>🧩 Skills & Competencies</h6>
                     
                     <!-- Tabs for Technical/Soft Skills -->
                     <ul class="nav nav-tabs mb-3" id="skillsTabs" role="tablist">
-                        <?php if (!empty($details['technical_skills']) && count($details['technical_skills']) > 0): ?>
+                        <?php if (!empty($technicalSkillItems)): ?>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link active" id="technical-tab" data-bs-toggle="tab" 
                                     data-bs-target="#technical-skills" type="button" role="tab">
                                 <i class="fas fa-code me-1"></i>Technical Skills
-                                <span class="badge bg-secondary ms-1"><?php echo count($details['technical_skills']); ?></span>
+                                <span class="badge bg-secondary ms-1"><?php echo count($technicalSkillItems); ?></span>
                             </button>
                         </li>
                         <?php endif; ?>
                         
-                        <?php if (!empty($details['soft_skills']) && count($details['soft_skills']) > 0): ?>
+                        <?php if (!empty($softSkillItems)): ?>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link <?php echo empty($details['technical_skills']) ? 'active' : ''; ?>" 
+                            <button class="nav-link <?php echo empty($technicalSkillItems) ? 'active' : ''; ?>" 
                                     id="soft-tab" data-bs-toggle="tab" 
                                     data-bs-target="#soft-skills" type="button" role="tab">
                                 <i class="fas fa-users me-1"></i>Soft Skills
-                                <span class="badge bg-secondary ms-1"><?php echo count($details['soft_skills']); ?></span>
+                                <span class="badge bg-secondary ms-1"><?php echo count($softSkillItems); ?></span>
                             </button>
                         </li>
                         <?php endif; ?>
                     </ul>
                     
                     <div class="tab-content" id="skillsTabsContent">
-                        <?php if (!empty($details['technical_skills']) && count($details['technical_skills']) > 0): ?>
+                        <?php if (!empty($technicalSkillItems)): ?>
                         <div class="tab-pane fade show active" id="technical-skills" role="tabpanel">
                             <div class="skills-grid">
-                                <?php foreach ($details['technical_skills'] as $skill): ?>
+                                <?php foreach ($technicalSkillItems as $skill): ?>
                                 <div class="skill-card">
                                     <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <h6 class="mb-0"><?php echo htmlspecialchars($skill['skill_name'] ?? ''); ?></h6>
+                                        <h6 class="mb-0"><?php echo htmlspecialchars($skill['name'] ?? ''); ?></h6>
                                         <?php if (!empty($skill['level'])): ?>
                                         <span class="badge bg-primary"><?php echo htmlspecialchars($skill['level']); ?></span>
                                         <?php endif; ?>
@@ -170,14 +268,14 @@ function renderDashboardJobTemplate($jobTemplateData, $employeeId, $isExpanded =
                         </div>
                         <?php endif; ?>
                         
-                        <?php if (!empty($details['soft_skills']) && count($details['soft_skills']) > 0): ?>
-                        <div class="tab-pane fade <?php echo empty($details['technical_skills']) ? 'show active' : ''; ?>" 
+                        <?php if (!empty($softSkillItems)): ?>
+                        <div class="tab-pane fade <?php echo empty($technicalSkillItems) ? 'show active' : ''; ?>" 
                              id="soft-skills" role="tabpanel">
                             <div class="skills-grid">
-                                <?php foreach ($details['soft_skills'] as $skill): ?>
+                                <?php foreach ($softSkillItems as $skill): ?>
                                 <div class="skill-card">
                                     <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <h6 class="mb-0"><?php echo htmlspecialchars($skill['skill_name'] ?? ''); ?></h6>
+                                        <h6 class="mb-0"><?php echo htmlspecialchars($skill['name'] ?? ''); ?></h6>
                                         <?php if (!empty($skill['level'])): ?>
                                         <span class="badge bg-info"><?php echo htmlspecialchars($skill['level']); ?></span>
                                         <?php endif; ?>
@@ -194,12 +292,12 @@ function renderDashboardJobTemplate($jobTemplateData, $employeeId, $isExpanded =
                 </div>
                 <?php endif; ?>
                 
-                <!-- Sección 4: Company Values -->
-                <?php if (!empty($details['values']) && count($details['values']) > 0): ?>
+                <!-- Section 4: Company Values -->
+                <?php if (!empty($valueItems)): ?>
                 <div class="template-section">
                     <h6><i class="fas fa-gem me-2"></i>💎 Company Values</h6>
                     <div class="row">
-                        <?php foreach ($details['values'] as $value): ?>
+                        <?php foreach ($valueItems as $value): ?>
                         <div class="col-md-6 col-lg-4 mb-3">
                             <div class="card h-100 border-light">
                                 <div class="card-body text-center">
@@ -249,14 +347,14 @@ function renderNoTemplateMessage() {
     <div class="card no-template-card">
         <div class="card-body text-center py-5">
             <i class="fas fa-briefcase fa-4x text-muted mb-4"></i>
-            <h5 class="text-muted mb-3">Sin Ficha de Puesto Asignada</h5>
+            <h5 class="text-muted mb-3">No Job Profile Assigned</h5>
             <p class="text-muted mb-4">
-                Tu ficha de puesto aún no ha sido configurada. Contacta con el departamento de RRHH 
-                para que te asignen tu job template y puedas ver tus KPIs, responsabilidades, skills y valores.
+                Your job profile has not been configured yet. Contact the HR department
+                to assign your job template so you can see your KPIs, responsibilities, skills, and values.
             </p>
             <div class="alert alert-info d-inline-block">
                 <i class="fas fa-info-circle me-2"></i>
-                Una vez asignada tu ficha de puesto, podrás dar autofeedback sobre tu desempeño.
+                Once your job profile is assigned, you will be able to give self-feedback on your performance.
             </div>
         </div>
     </div>
