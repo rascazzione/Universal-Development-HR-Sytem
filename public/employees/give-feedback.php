@@ -12,9 +12,13 @@ require_once __DIR__ . '/../../classes/MediaManager.php';
 // Require authentication
 requireAuth();
 
-// Only managers and HR admins can give feedback
-if (!in_array($_SESSION['user_role'], ['manager', 'hr_admin'])) {
-    setFlashMessage('You do not have permission to give feedback.', 'error');
+// Detect if this is self-feedback
+$currentUserEmployeeId = $_SESSION['employee_id'] ?? null;
+$isSelfFeedback = ($employeeId == $currentUserEmployeeId);
+
+// If it's NOT self-feedback, only allow managers and HR admins
+if (!$isSelfFeedback && !in_array($_SESSION['user_role'], ['manager', 'hr_admin'])) {
+    setFlashMessage('Solo puedes dar feedback a ti mismo o, si eres manager, a tu equipo.', 'error');
     redirect('/dashboard.php');
 }
 
@@ -42,10 +46,12 @@ if (!$employee) {
 }
 
 // Check if current user can give feedback to this employee
-$currentUserEmployeeId = $_SESSION['employee_id'] ?? null;
-if ($_SESSION['user_role'] === 'manager' && $employee['manager_id'] != $currentUserEmployeeId) {
-    setFlashMessage('You can only give feedback to your direct reports.', 'error');
-    redirect('/employees/list.php');
+if (!$isSelfFeedback) {
+    // If NOT self-feedback, validate that it's a manager of the employee
+    if ($_SESSION['user_role'] === 'manager' && $employee['manager_id'] != $currentUserEmployeeId) {
+        setFlashMessage('Solo puedes dar feedback a tus subordinados directos.', 'error');
+        redirect('/employees/list.php');
+    }
 }
 
 // Handle form submission
@@ -60,9 +66,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // Prepare entry data
+        // For autofeedback, manager_id should equal employee_id
+        $managerId = $isSelfFeedback ? $employeeId : $currentUserEmployeeId;
+        
         $entryData = [
             'employee_id' => $employeeId,
-            'manager_id' => $currentUserEmployeeId,
+            'manager_id' => $managerId,
             'content' => $_POST['content'],
             'star_rating' => (int)$_POST['star_rating'],
             'dimension' => $_POST['dimension'],
@@ -104,14 +113,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+// Add custom CSS for autofeedback banner
+$pageStylesheets = [
+    '/assets/css/dashboard-job-template.css'
+];
+
 include __DIR__ . '/../../templates/header.php';
 ?>
 
 <div class="row">
     <div class="col-12">
+        <?php if ($isSelfFeedback): ?>
+        <!-- AUTOFEEDBACK Banner -->
+        <div class="alert alert-info alert-self-feedback mb-4">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-user-circle fa-3x me-3"></i>
+                <div>
+                    <h5 class="alert-heading mb-1">
+                        ⭐ AUTOFEEDBACK - Reflexión Personal
+                    </h5>
+                    <p class="mb-0">
+                        Estás documentando feedback sobre tu propio desempeño.
+                        Esta es una oportunidad para reflexionar sobre tus logros,
+                        aprendizajes y áreas de mejora.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+        
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title mb-0">Give Feedback to <?php echo htmlspecialchars($employee['first_name'] . ' ' . $employee['last_name']); ?></h5>
+                <h5 class="card-title mb-0">
+                    <?php if ($isSelfFeedback): ?>
+                        ⭐ Autofeedback - Reflexión Personal
+                    <?php else: ?>
+                        Give Feedback to <?php echo htmlspecialchars($employee['first_name'] . ' ' . $employee['last_name']); ?>
+                    <?php endif; ?>
+                </h5>
                 <small class="text-muted"><?php echo htmlspecialchars($employee['position'] ?? ''); ?> <?php echo htmlspecialchars($employee['department'] ? '· ' . $employee['department'] : ''); ?></small>
             </div>
             <div class="card-body">

@@ -11,6 +11,7 @@ require_once __DIR__ . '/../classes/EvaluationPeriod.php';
 require_once __DIR__ . '/../classes/JobTemplate.php';
 require_once __DIR__ . '/../includes/components/dashboard-widgets.php';
 require_once __DIR__ . '/../includes/components/quick-actions.php';
+require_once __DIR__ . '/../includes/components/dashboard-job-template.php';
 
 // Require authentication
 requireAuth();
@@ -155,6 +156,15 @@ if ($userRole === 'hr_admin') {
     ];
 }
 
+// Add custom CSS and JS for job template component
+$pageStylesheets = [
+    '/assets/css/dashboard-job-template.css'
+];
+
+$pageScripts = [
+    '/assets/js/dashboard-job-template.js'
+];
+
 include __DIR__ . '/../templates/header.php';
 ?>
 
@@ -173,143 +183,14 @@ include __DIR__ . '/../templates/header.php';
         </div>
     </div>
 
-    <!-- Job Template Hero - Bootstrap Design -->
+    <!-- Job Template Accordion Section -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <?php if ($jobTemplateAssignment['has_template']): ?>
-                        <div class="row align-items-center mb-4">
-                            <div class="col-md-8">
-                                <h2 class="h4 mb-2">
-                                    <?php echo htmlspecialchars($jobTemplateAssignment['template']['position_title']); ?>
-                                </h2>
-                                <?php if (!empty($jobTemplateAssignment['template']['department'])): ?>
-                                <p class="text-muted mb-3">
-                                    <?php echo htmlspecialchars($jobTemplateAssignment['template']['department']); ?>
-                                </p>
-                                <?php endif; ?>
-                                
-                                <?php if (!empty($jobTemplateAssignment['template']['description'])): ?>
-                                    <?php
-                                    $jobTemplateDescription = $jobTemplateAssignment['template']['description'];
-                                    if (strlen($jobTemplateDescription) > 300) {
-                                        $jobTemplateDescription = substr($jobTemplateDescription, 0, 297) . '...';
-                                    }
-                                    ?>
-                                    <p class="mb-3"><?php echo htmlspecialchars($jobTemplateDescription); ?></p>
-                                <?php else: ?>
-                                    <p class="mb-3">
-                                        These are the KPIs, responsibilities, skills, and values you are expected to live every day.
-                                    </p>
-                                <?php endif; ?>
-                            </div>
-                            <div class="col-md-4">
-                                <!-- Stats Cards -->
-                                <div class="row g-2">
-                                    <div class="col-6">
-                                        <div class="card bg-primary text-white">
-                                            <div class="card-body text-center py-2">
-                                                <div class="h5 mb-0"><?php echo number_format($jobTemplateAssignment['counts']['kpis']); ?></div>
-                                                <small>KPIs</small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="card bg-success text-white">
-                                            <div class="card-body text-center py-2">
-                                                <div class="h5 mb-0"><?php echo number_format($jobTemplateAssignment['counts']['responsibilities']); ?></div>
-                                                <small>Responsibilities</small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="card bg-info text-white">
-                                            <div class="card-body text-center py-2">
-                                                <div class="h5 mb-0"><?php echo number_format($jobTemplateAssignment['counts']['skills']); ?></div>
-                                                <small>Skills</small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="card bg-danger text-white">
-                                            <div class="card-body text-center py-2">
-                                                <div class="h5 mb-0"><?php echo number_format($jobTemplateAssignment['counts']['values']); ?></div>
-                                                <small>Values</small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Action Buttons -->
-                        <div class="d-flex flex-wrap gap-2">
-                            <?php if (!empty($jobTemplateAssignment['employee']['employee_id'])): ?>
-                            <a href="/employees/view.php?id=<?php echo $jobTemplateAssignment['employee']['employee_id']; ?>#job-template"
-                               class="btn btn-primary">
-                                <i class="fas fa-eye me-2"></i>View Full Template
-                            </a>
-                            <a href="/employees/view-feedback.php?employee_id=<?php echo $jobTemplateAssignment['employee']['employee_id']; ?>"
-                               class="btn btn-outline-secondary">
-                                <i class="fas fa-comments me-2"></i>Feedback Hub
-                            </a>
-                            <a href="/self-assessment/dashboard.php" class="btn btn-outline-secondary">
-                                <i class="fas fa-pen me-2"></i>Self-Reflection
-                            </a>
-                            <a href="/achievements/journal.php" class="btn btn-outline-secondary">
-                                <i class="fas fa-lightbulb me-2"></i>Achievement Journal
-                            </a>
-                            <a href="/idp/dashboard.php" class="btn btn-outline-secondary">
-                                <i class="fas fa-road me-2"></i>Development Plan
-                            </a>
-                            <?php endif; ?>
-                            <?php if (isHRAdmin() && !empty($jobTemplateAssignment['template']['id'])): ?>
-                            <a href="/admin/job_templates.php?edit=<?php echo $jobTemplateAssignment['template']['id']; ?>"
-                               class="btn btn-outline-secondary">
-                                <i class="fas fa-sliders-h me-2"></i>Manage Template
-                            </a>
-                            <?php endif; ?>
-                        </div>
-                    <?php else: ?>
-                        <div class="text-center py-4">
-                            <h4 class="h5 mb-3">Job template not available</h4>
-                            <p class="text-muted mb-4">
-                                We weren't able to find a job template linked to your profile yet. Once assigned, your KPIs,
-                                responsibilities, skills, and values will appear here.
-                            </p>
-                            <div class="alert alert-warning d-inline-block">
-                                <?php if ($jobTemplateAssignment['status'] === 'missing_profile'): ?>
-                                    <strong>Profile required:</strong> Link this user to an employee profile to unlock job template access.
-                                <?php elseif ($jobTemplateAssignment['status'] === 'no_template'): ?>
-                                    <strong>No job template assigned.</strong> Contact HR to assign a template that matches your role.
-                                <?php elseif ($jobTemplateAssignment['status'] === 'template_not_found'): ?>
-                                    <strong>Template not available.</strong> The assigned template could not be found or is inactive.
-                                <?php elseif ($jobTemplateAssignment['status'] === 'error'): ?>
-                                    <strong>Unable to load template.</strong> Please refresh the page or try again later.
-                                <?php else: ?>
-                                    <strong>Profile not found.</strong> We could not load your employee record.
-                                <?php endif; ?>
-                            </div>
-                            
-                            <?php if (isHRAdmin()): ?>
-                                <div class="mt-3">
-                                    <?php if ($jobTemplateAssignment['employee']): ?>
-                                    <a href="/employees/edit.php?id=<?php echo $jobTemplateAssignment['employee']['employee_id']; ?>"
-                                       class="btn btn-primary">
-                                        <i class="fas fa-link me-2"></i>Assign Template
-                                    </a>
-                                    <?php else: ?>
-                                    <a href="/employees/create.php" class="btn btn-primary">
-                                        <i class="fas fa-user-plus me-2"></i>Create Employee Profile
-                                    </a>
-                                    <?php endif; ?>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                    <?php endif; ?>
-                </div>
-            </div>
+            <?php echo renderDashboardJobTemplate(
+                $jobTemplateAssignment,
+                $jobTemplateAssignment['employee']['employee_id'] ?? null,
+                false // collapsed by default
+            ); ?>
         </div>
     </div>
 </div>

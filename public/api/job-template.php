@@ -16,15 +16,19 @@ try {
     // Require authentication
     requireAuth();
 
-    // Only managers and HR admins can access this
-    if (!in_array($_SESSION['user_role'], ['manager', 'hr_admin'])) {
+    // Detect if this is self-feedback (autofeedback)
+    $currentUserEmployeeId = $_SESSION['employee_id'] ?? null;
+    $employeeId = isset($_GET['employee_id']) ? (int)$_GET['employee_id'] : 0;
+    $isSelfFeedback = ($employeeId == $currentUserEmployeeId);
+
+    // Allow if it's autofeedback or if user is manager/hr_admin
+    if (!$isSelfFeedback && !in_array($_SESSION['user_role'], ['manager', 'hr_admin'])) {
         http_response_code(403);
-        echo json_encode(['success' => false, 'message' => 'Forbidden']);
+        echo json_encode(['success' => false, 'message' => 'No autorizado']);
         exit;
     }
 
-    // Validate and get employee ID
-    $employeeId = isset($_GET['employee_id']) ? (int)$_GET['employee_id'] : 0;
+    // Validate employee ID (already defined above)
     if ($employeeId <= 0) {
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'Missing or invalid employee_id']);
@@ -51,11 +55,13 @@ try {
     }
 
     // Check if current user can give feedback to this employee
-    $currentUserEmployeeId = $_SESSION['employee_id'] ?? null;
-    if ($_SESSION['user_role'] === 'manager' && $employee['manager_id'] != $currentUserEmployeeId) {
-        http_response_code(403);
-        echo json_encode(['success' => false, 'message' => 'You can only give feedback to your direct reports']);
-        exit;
+    if (!$isSelfFeedback) {
+        // If NOT self-feedback, validate that it's a manager of the employee
+        if ($_SESSION['user_role'] === 'manager' && $employee['manager_id'] != $currentUserEmployeeId) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Solo puedes ver templates de tus subordinados']);
+            exit;
+        }
     }
 
     // Get job template data
