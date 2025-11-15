@@ -1,0 +1,43 @@
+{
+    "name": " Does",
+    "definition": " Does the person set a firm standard of performance and require others to follow it as well? ",
+    "description": "People management entails making other people act in accordance with our objectives, appropriately and correctly using personal power or the authority we have been granted. It includes \"telling others what they should do\". < br/> The style varies according to require it circumstances or people, from steady and manager until demanding or even threatening. Trying to reason, persuade or convince another to do something is Impact and Influence, not People Management. ",
+    "levels": {
+        "1": {
+            "title": "Gives orders and instructions",
+            "behaviors": [
+                "Gives people appropriate instructions, making sure the needs and demands are reasonably clear.",
+                "Explicitly delegates routine tasks so they can dedicate time to more significant matters.",
+                "Assigns tasks and responsibilities to their team.",
+                "Organises the work and plans the team's tasks."
+            ]
+        },
+        "2": {
+            "title": "",
+            "behaviors": [
+                "Gives people appropriate instructions, making sure the needs and demands are reasonably clear.",
+                "Explicitly delegates routine tasks so they can dedicate time to more significant matters.",
+                "Assigns tasks and responsibilities to their team.",
+                "Organises the work and plans the team's tasks."
+            ]
+        },
+        "3": {
+            "title": "",
+            "behaviors": [
+                "",
+                "",
+                "",
+                ""
+            ]
+        },
+        "4": {
+            "title": "",
+            "behaviors": [
+                "",
+                "",
+                "",
+                ""
+            ]
+        }
+    }
+}

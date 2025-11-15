@@ -7,6 +7,12 @@
 class CompanyKPI {
     
     /**
+     * Allowed target types recognized by the evaluation engine.
+     * @var array
+     */
+    private static $allowedTargetTypes = ['higher_better', 'lower_better', 'target_range'];
+    
+    /**
      * Get all company KPIs
      * @param string $category
      * @return array
@@ -220,37 +226,90 @@ class CompanyKPI {
      * @return array
      */
     public function importKPIsFromCSV($csvFile, $createdBy) {
-        $results = ['success' => 0, 'errors' => []];
+        $results = [
+            'imported' => 0,
+            'updated' => 0,
+            'skipped' => 0,
+            'errors' => []
+        ];
         
-        if (($handle = fopen($csvFile, "r")) !== FALSE) {
-            $header = fgetcsv($handle); // Skip header row
-            
-            while (($data = fgetcsv($handle)) !== FALSE) {
-                try {
-                    $kpiData = [
-                        'kpi_name' => $data[0] ?? '',
-                        'kpi_description' => $data[1] ?? '',
-                        'measurement_unit' => $data[2] ?? '',
-                        'category' => $data[3] ?? '',
-                        'target_type' => $data[4] ?? 'higher_better',
-                        'created_by' => $createdBy
-                    ];
-                    
-                    if (empty($kpiData['kpi_name'])) {
-                        $results['errors'][] = "Empty KPI name in row";
-                        continue;
-                    }
-                    
-                    $this->createKPI($kpiData);
-                    $results['success']++;
-                    
-                } catch (Exception $e) {
-                    $results['errors'][] = "Error importing KPI: " . $e->getMessage();
-                }
-            }
-            fclose($handle);
+        if (!is_readable($csvFile)) {
+            $results['errors'][] = 'CSV file could not be read.';
+            return $results;
         }
         
+        if (($handle = fopen($csvFile, "r")) === false) {
+            $results['errors'][] = 'Unable to open CSV file.';
+            return $results;
+        }
+        
+        $headerRow = fgetcsv($handle);
+        if ($headerRow === false) {
+            fclose($handle);
+            $results['errors'][] = 'CSV file does not contain a header row.';
+            return $results;
+        }
+        
+        $headerMap = $this->buildHeaderMap($headerRow);
+        $columnIndexes = $this->mapImportColumns($headerMap);
+        
+        $missingColumns = [];
+        foreach (['kpi_name' => 'KPI Name', 'category' => 'Category'] as $field => $label) {
+            if (!isset($columnIndexes[$field])) {
+                $missingColumns[] = $label;
+            }
+        }
+        
+        if (!empty($missingColumns)) {
+            fclose($handle);
+            $results['errors'][] = 'Missing required columns: ' . implode(', ', $missingColumns);
+            return $results;
+        }
+        
+        $rowNumber = 1; // Header already read
+        while (($row = fgetcsv($handle)) !== false) {
+            $rowNumber++;
+            
+            if ($this->isRowEmpty($row)) {
+                $results['skipped']++;
+                continue;
+            }
+            
+            try {
+                $kpiName = $this->extractColumnValue($row, $columnIndexes, 'kpi_name');
+                $category = $this->extractColumnValue($row, $columnIndexes, 'category');
+                
+                if ($kpiName === '' || $category === '') {
+                    $results['errors'][] = "Row {$rowNumber}: KPI Name and Category are required.";
+                    $results['skipped']++;
+                    continue;
+                }
+                
+                $kpiData = [
+                    'kpi_name' => $kpiName,
+                    'kpi_description' => $this->extractColumnValue($row, $columnIndexes, 'kpi_description'),
+                    'measurement_unit' => $this->extractColumnValue($row, $columnIndexes, 'measurement_unit') ?: 'count',
+                    'category' => $category,
+                    'target_type' => $this->normalizeTargetType($this->extractColumnValue($row, $columnIndexes, 'target_type')),
+                    'created_by' => $createdBy
+                ];
+                
+                $existingId = $this->findKPIIdByNameAndCategory($kpiData['kpi_name'], $kpiData['category']);
+                
+                if ($existingId) {
+                    $this->updateKPI($existingId, $kpiData);
+                    $results['updated']++;
+                } else {
+                    $this->createKPI($kpiData);
+                    $results['imported']++;
+                }
+            } catch (Exception $e) {
+                $results['errors'][] = "Row {$rowNumber}: " . $e->getMessage();
+                $results['skipped']++;
+            }
+        }
+        
+        fclose($handle);
         return $results;
     }
     
@@ -277,6 +336,161 @@ class CompanyKPI {
         }
         
         return $csv;
+    }
+    
+    /**
+     * Return curated starter KPIs defined in the catalog config.
+     * @param string|null $category
+     * @return array
+     */
+    public function getStarterKPICatalog($category = null) {
+        static $catalog = null;
+        
+        if ($catalog === null) {
+            $catalogFile = __DIR__ . '/../config/kpi_catalog.php';
+            if (file_exists($catalogFile)) {
+                $data = include $catalogFile;
+                $catalog = is_array($data) ? $data : [];
+            } else {
+                $catalog = [];
+            }
+        }
+        
+        if ($category) {
+            return array_values(array_filter($catalog, function ($item) use ($category) {
+                return isset($item['category']) && strcasecmp($item['category'], $category) === 0;
+            }));
+        }
+        
+        return $catalog;
+    }
+    
+    /**
+     * Build a normalized map of header labels to their column indexes.
+     * @param array $headerRow
+     * @return array
+     */
+    private function buildHeaderMap($headerRow) {
+        $map = [];
+        foreach ($headerRow as $index => $label) {
+            $normalized = strtolower(trim((string)$label));
+            if ($normalized === '') {
+                continue;
+            }
+            if (!array_key_exists($normalized, $map)) {
+                $map[$normalized] = $index;
+            }
+        }
+        return $map;
+    }
+    
+    /**
+     * Map CSV columns to internal fields using supported aliases.
+     * @param array $headerMap
+     * @return array
+     */
+    private function mapImportColumns(array $headerMap) {
+        $aliases = [
+            'kpi_name' => ['kpi name', 'kpi_name', 'name', 'kpi'],
+            'kpi_description' => ['description', 'kpi description', 'kpi_description', 'details'],
+            'measurement_unit' => ['measurement unit', 'measurement_unit', 'unit', 'uom'],
+            'category' => ['category', 'kpi category', 'kpi_category'],
+            'target_type' => ['target type', 'target_type', 'target', 'direction']
+        ];
+        
+        $columns = [];
+        foreach ($aliases as $field => $fieldAliases) {
+            foreach ($fieldAliases as $alias) {
+                if (array_key_exists($alias, $headerMap)) {
+                    $columns[$field] = $headerMap[$alias];
+                    break;
+                }
+            }
+        }
+        
+        return $columns;
+    }
+    
+    /**
+     * Extract and trim a value from the CSV row for a given field.
+     * @param array $row
+     * @param array $columnIndexes
+     * @param string $field
+     * @return string
+     */
+    private function extractColumnValue(array $row, array $columnIndexes, $field) {
+        if (!isset($columnIndexes[$field])) {
+            return '';
+        }
+        
+        $index = $columnIndexes[$field];
+        return isset($row[$index]) ? trim((string)$row[$index]) : '';
+    }
+    
+    /**
+     * Determine if an entire CSV row is empty/blank.
+     * @param array $row
+     * @return bool
+     */
+    private function isRowEmpty(array $row) {
+        foreach ($row as $cell) {
+            if (trim((string)$cell) !== '') {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    /**
+     * Normalize target type aliases into supported values.
+     * @param string $targetType
+     * @return string
+     */
+    private function normalizeTargetType($targetType) {
+        $value = strtolower(trim((string)$targetType));
+        
+        if ($value === '') {
+            return 'higher_better';
+        }
+        
+        $aliasMap = [
+            'higher' => 'higher_better',
+            'increase' => 'higher_better',
+            'growth' => 'higher_better',
+            'lower' => 'lower_better',
+            'decrease' => 'lower_better',
+            'reduction' => 'lower_better',
+            'range' => 'target_range',
+            'balanced' => 'target_range'
+        ];
+        
+        if (isset($aliasMap[$value])) {
+            $value = $aliasMap[$value];
+        }
+        
+        if (in_array($value, self::$allowedTargetTypes, true)) {
+            return $value;
+        }
+        
+        return 'higher_better';
+    }
+    
+    /**
+     * Locate an existing KPI by name and category to avoid duplicates.
+     * @param string $kpiName
+     * @param string $category
+     * @return int|null
+     */
+    private function findKPIIdByNameAndCategory($kpiName, $category) {
+        $sql = "SELECT id 
+                FROM company_kpis 
+                WHERE LOWER(kpi_name) = LOWER(?) 
+                  AND LOWER(COALESCE(category, '')) = LOWER(?) 
+                  AND is_active = 1
+                LIMIT 1";
+        
+        $existing = fetchOne($sql, [$kpiName, $category ?? '']);
+        return $existing['id'] ?? null;
     }
 }
 ?>

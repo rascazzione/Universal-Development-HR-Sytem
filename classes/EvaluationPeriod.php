@@ -628,5 +628,16 @@ class EvaluationPeriod {
             throw $e;
         }
     }
+
+    /**
+     * Get active period for employee
+     * @param int $employeeId
+     * @return array|false
+     */
+    public function getActivePeriodForEmployee($employeeId) {
+        // For now, return the current active period (same for all employees)
+        // In the future, this could be enhanced to check employee-specific periods
+        return $this->getCurrentPeriod();
+    }
 }
 ?>

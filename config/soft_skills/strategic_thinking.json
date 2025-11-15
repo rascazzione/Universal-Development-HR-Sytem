@@ -1,0 +1,43 @@
+{
+    "name": "SasA",
+    "definition": "SasA",
+    "description": "asAS",
+    "levels": {
+        "1": {
+            "title": " F",
+            "behaviors": [
+                "A",
+                "",
+                "",
+                ""
+            ]
+        },
+        "2": {
+            "title": "UF",
+            "behaviors": [
+                "J",
+                "",
+                "",
+                ""
+            ]
+        },
+        "3": {
+            "title": "YYY",
+            "behaviors": [
+                "Y",
+                "",
+                "",
+                ""
+            ]
+        },
+        "4": {
+            "title": " YFYF",
+            "behaviors": [
+                "Y",
+                "",
+                "",
+                ""
+            ]
+        }
+    }
+}

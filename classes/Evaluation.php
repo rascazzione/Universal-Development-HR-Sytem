@@ -32,12 +32,10 @@ class Evaluation {
                 }
             }
             
-            // Check if evaluation already exists for this employee and period
-            if ($this->evaluationExists($evaluationData['employee_id'], $evaluationData['period_id'])) {
-                throw new Exception("Evaluation already exists for this employee and period");
-            }
+            // Set default evaluation type if not provided
+            $evaluationType = $evaluationData['evaluation_type'] ?? 'manager';
             
-            // Get employee's manager
+            // Get employee's manager for relationship tracking
             $employeeClass = new Employee();
             $employee = $employeeClass->getEmployeeById($evaluationData['employee_id']);
             
@@ -51,15 +49,33 @@ class Evaluation {
                 error_log("WARNING: Employee {$evaluationData['employee_id']} has no manager assigned");
             }
             
-            // Insert evaluation with manager_id for direct relationship
-            $sql = "INSERT INTO evaluations (employee_id, evaluator_id, manager_id, period_id, status)
-                    VALUES (?, ?, ?, ?, 'draft')";
-            $evaluationId = insertRecord($sql, [
+            // Check if evaluation already exists for this employee, period, and type
+            if ($this->evaluationExists($evaluationData['employee_id'], $evaluationData['period_id'], $evaluationType)) {
+                throw new Exception("Evaluation already exists for this employee, period, and type");
+            }
+            
+            // Insert evaluation with workflow support
+            $sql = "INSERT INTO evaluations (employee_id, evaluator_id, manager_id, period_id, evaluation_type, workflow_state, status";
+
+            // Add self_evaluation_id if provided
+            $values = [
                 $evaluationData['employee_id'],
                 $evaluationData['evaluator_id'],
                 $managerId,
-                $evaluationData['period_id']
-            ]);
+                $evaluationData['period_id'],
+                $evaluationType,
+                $evaluationData['workflow_state'] ?? 'pending_self',
+                'draft'
+            ];
+
+            if (isset($evaluationData['self_evaluation_id'])) {
+                $sql .= ", self_evaluation_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                $values[] = $evaluationData['self_evaluation_id'];
+            } else {
+                $sql .= ") VALUES (?, ?, ?, ?, ?, ?, ?)";
+            }
+            
+            $evaluationId = insertRecord($sql, $values);
             
             // Get evaluation period for evidence aggregation
             $periodClass = new EvaluationPeriod();
@@ -1817,6 +1833,32 @@ class Evaluation {
             ];
         }
         return $normalized;
+    }
+    /**
+     * Get self-evaluation for employee and period
+     * @param int $employeeId
+     * @param int $periodId
+     * @return array|false
+     */
+    public function getSelfEvaluationForPeriod($employeeId, $periodId) {
+        $sql = "SELECT e.*, p.period_name, p.start_date, p.end_date
+                FROM evaluations e
+                JOIN evaluation_periods p ON e.period_id = p.period_id
+                WHERE e.employee_id = ? AND e.period_id = ? AND e.evaluation_type = 'self'";
+        return fetchOne($sql, [$employeeId, $periodId]);
+    }
+    
+    /**
+     * Get manager evaluation for self-evaluation
+     * @param int $selfEvaluationId
+     * @return array|false
+     */
+    public function getManagerEvaluationForSelfEvaluation($selfEvaluationId) {
+        $sql = "SELECT e.*, emp.first_name as employee_first_name, emp.last_name as employee_last_name
+                FROM evaluations e
+                JOIN employees emp ON e.employee_id = emp.employee_id
+                WHERE e.self_evaluation_id = ? AND e.evaluation_type = 'manager'";
+        return fetchOne($sql, [$selfEvaluationId]);
     }
 }
 ?>

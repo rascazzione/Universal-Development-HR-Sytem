@@ -364,6 +364,81 @@ function isEmployee() {
 }
 
 /**
+ * Check if current user can access evaluation with workflow permissions
+ * @param array $evaluation
+ * @return bool
+ */
+function canAccessEvaluationWorkflow($evaluation) {
+    if (!isAuthenticated()) {
+        return false;
+    }
+
+    $userRole = $_SESSION['user_role'];
+    $userId = $_SESSION['user_id'];
+    $employeeId = $_SESSION['employee_id'] ?? null;
+    $evaluationType = $evaluation['evaluation_type'] ?? 'manager';
+    $workflowState = $evaluation['workflow_state'] ?? 'pending_self';
+
+    // HR Admin can access all evaluations
+    if ($userRole === 'hr_admin') {
+        return true;
+    }
+
+    // Self-evaluations: only the employee can access their own
+    if ($evaluationType === 'self') {
+        return $evaluation['employee_id'] == $employeeId;
+    }
+
+    // Manager evaluations: manager can access evaluations for their direct reports
+    if ($evaluationType === 'manager') {
+        return $userRole === 'manager' && $evaluation['manager_id'] == $employeeId;
+    }
+
+    // Final evaluations: employee, their manager, and HR can access
+    if ($evaluationType === 'final') {
+        return $evaluation['employee_id'] == $employeeId ||
+               ($userRole === 'manager' && $evaluation['manager_id'] == $employeeId) ||
+               $userRole === 'hr_admin';
+    }
+
+    return false;
+}
+
+/**
+ * Check if current user can edit evaluation with workflow state management
+ * @param array $evaluation
+ * @return bool
+ */
+function canEditEvaluationWorkflow($evaluation) {
+    if (!isAuthenticated()) {
+        return false;
+    }
+
+    $userRole = $_SESSION['user_role'];
+    $userId = $_SESSION['user_id'];
+    $employeeId = $_SESSION['employee_id'] ?? null;
+    $evaluationType = $evaluation['evaluation_type'] ?? 'manager';
+    $workflowState = $evaluation['workflow_state'] ?? 'pending_self';
+
+    // HR Admin can edit any evaluation
+    if ($userRole === 'hr_admin') {
+        return true;
+    }
+
+    // Self-evaluations: only the employee can edit their own pending self-evaluations
+    if ($evaluationType === 'self' && $evaluation['employee_id'] == $employeeId) {
+        return $workflowState === 'pending_self';
+    }
+
+    // Manager evaluations: manager can edit evaluations for their direct reports when in pending_manager state
+    if ($evaluationType === 'manager' && $userRole === 'manager' && $evaluation['manager_id'] == $employeeId) {
+        return $workflowState === 'pending_manager';
+    }
+
+    return false;
+}
+
+/**
  * Get navigation menu items based on user role
  * @return array
  */

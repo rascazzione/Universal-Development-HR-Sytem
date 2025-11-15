@@ -1,0 +1,43 @@
+{
+    "name": "Verbal Communication",
+    "definition": "The ability to convey information, ideas, and emotions clearly, accurately, and appropriately through spoken words, while also actively listening and responding to others.",
+    "description": "Effective verbal communication enables individuals to share knowledge, influence others, resolve conflicts, and build relationships. It involves clarity of speech, appropriate tone, active listening, audience awareness, and the capacity to adapt messaging to varied contexts and cultures.",
+    "levels": {
+        "1": {
+            "title": "Basic",
+            "behaviors": [
+                "Speaks clearly and audibly in familiar, low‑stakes situations.",
+                "Uses simple, concrete language to convey basic information.",
+                "Listens attentively and asks clarifying questions when needed.",
+                "Avoids jargon and technical terms unless they are defined."
+            ]
+        },
+        "2": {
+            "title": "Intermediate",
+            "behaviors": [
+                "Adapts language and tone to suit different audiences and contexts.",
+                "Communicates moderately complex ideas with logical sequencing.",
+                "Provides constructive verbal feedback that is specific and respectful.",
+                "Demonstrates active listening by paraphrasing and summarizing others’ points."
+            ]
+        },
+        "3": {
+            "title": "Advanced",
+            "behaviors": [
+                "Persuades and influences stakeholders through well‑structured arguments.",
+                "Tailors messages for diverse cultural and professional groups.",
+                "Facilitates group discussions, ensuring all voices are heard and ideas are synthesized.",
+                "Manages challenging conversations (e.g., conflict, negotiation) with confidence and empathy."
+            ]
+        },
+        "4": {
+            "title": "Expert",
+            "behaviors": [
+                "Leads high‑stakes verbal communications such as executive briefings, public presentations, and crisis briefings.",
+                "Mentors and coaches others to develop their verbal communication competencies.",
+                "Creates compelling narratives that align with strategic objectives and inspire action.",
+                "Excels in cross‑cultural verbal interactions, seamlessly navigating language nuances and cultural etiquette."
+            ]
+        }
+    }
+}

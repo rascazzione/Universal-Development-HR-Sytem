@@ -98,10 +98,32 @@ include __DIR__ . '/../../templates/header.php';
 
 <div class="row">
     <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
             <h4>Company KPIs Management</h4>
-            <div>
-                <button type="button" class="btn btn-outline-secondary me-2" data-bs-toggle="modal" data-bs-target="#importModal">
+            <div class="d-flex flex-wrap justify-content-end gap-2">
+                <div class="btn-group">
+                    <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-file-export me-2"></i>Download Catalog
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <a class="dropdown-item" href="/api/kpi_catalog.php?source=db&format=csv&download=1" target="_blank" rel="noopener">
+                                <i class="fas fa-database me-2 text-primary"></i>Current KPI Catalog (CSV)
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/api/kpi_catalog.php?source=starter&format=csv&download=1" target="_blank" rel="noopener">
+                                <i class="fas fa-seedling me-2 text-success"></i>Starter KPI Library (CSV)
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/api/kpi_catalog.php?source=starter&format=json" target="_blank" rel="noopener">
+                                <i class="fas fa-code me-2 text-muted"></i>Starter KPI Library (JSON)
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#importModal">
                     <i class="fas fa-upload me-2"></i>Import KPIs
                 </button>
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createKPIModal">
@@ -387,24 +409,46 @@ include __DIR__ . '/../../templates/header.php';
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p>Upload a CSV file with the following columns:</p>
-                <ul>
-                    <li>KPI Name</li>
-                    <li>Description</li>
-                    <li>Measurement Unit</li>
-                    <li>Category</li>
-                    <li>Target Type (higher_better, lower_better, target_range)</li>
+                <div class="alert alert-light border" role="alert">
+                    <div class="d-flex align-items-start">
+                        <i class="fas fa-lightbulb text-warning me-2 mt-1"></i>
+                        <div>
+                            <div class="fw-semibold">Need a starting point?</div>
+                            <div class="small text-muted">Download the curated KPI catalog or export the current company list to tweak it offline.</div>
+                            <div class="mt-2 small">
+                                <a href="/api/kpi_catalog.php?source=starter&format=csv&download=1" target="_blank" rel="noopener" class="me-2">
+                                    <i class="fas fa-file-csv me-1"></i>Starter catalog (CSV)
+                                </a>
+                                <a href="/api/kpi_catalog.php?source=starter&format=json" target="_blank" rel="noopener" class="me-2">
+                                    <i class="fas fa-code me-1"></i>Starter catalog (JSON)
+                                </a>
+                                <a href="/api/kpi_catalog.php?source=db&format=csv&download=1" target="_blank" rel="noopener">
+                                    <i class="fas fa-database me-1"></i>Current catalog (CSV)
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p class="mb-2">Upload a CSV file with the following headers (case-insensitive):</p>
+                <ul class="small mb-3">
+                    <li><strong>KPI Name</strong> (required)</li>
+                    <li><strong>Description</strong> (optional)</li>
+                    <li><strong>Measurement Unit</strong> (optional, defaults to <em>count</em>)</li>
+                    <li><strong>Category</strong> (required)</li>
+                    <li><strong>Target Type</strong> (higher_better, lower_better, target_range)</li>
                 </ul>
+                <p class="text-muted small mb-3">Duplicate KPI name + category pairs will be updated automatically. Extra columns are ignored.</p>
                 <form id="importForm" enctype="multipart/form-data">
                     <div class="mb-3">
                         <label for="csvFile" class="form-label">CSV File</label>
                         <input type="file" class="form-control" id="csvFile" accept=".csv" required>
                     </div>
                 </form>
+                <div id="importFeedback" class="alert alert-info d-none mt-3" role="alert"></div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="importKPIs()">Import</button>
+                <button type="button" class="btn btn-primary" id="importButton" onclick="importKPIs()">Import</button>
             </div>
         </div>
     </div>
@@ -525,12 +569,57 @@ function viewKPIUsage(kpiId) {
         });
 }
 
+function setImportFeedback(message, variant = 'info') {
+    const feedback = document.getElementById('importFeedback');
+    if (!feedback) return;
+    
+    feedback.classList.remove('d-none', 'alert-info', 'alert-success', 'alert-warning', 'alert-danger');
+    feedback.classList.add(`alert-${variant}`);
+    feedback.innerHTML = message;
+}
+
+function safeImportMetric(value) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function formatImportSummary(data) {
+    const summary = [
+        `<strong>Imported:</strong> ${safeImportMetric(data.imported)}`,
+        `<strong>Updated:</strong> ${safeImportMetric(data.updated)}`,
+        `<strong>Skipped:</strong> ${safeImportMetric(data.skipped)}`
+    ].join('<br>');
+    
+    if (Array.isArray(data.errors) && data.errors.length) {
+        const issues = data.errors.slice(0, 5).map(error => `<li>${error}</li>`).join('');
+        return `${summary}<hr class="my-2"><strong>Issues</strong><ul class="mb-0">${issues}</ul>`;
+    }
+    
+    return summary;
+}
+
 function importKPIs() {
     const fileInput = document.getElementById('csvFile');
-    if (!fileInput.files[0]) {
-        alert('Please select a CSV file');
+    if (!fileInput || !fileInput.files[0]) {
+        setImportFeedback('Please select a CSV file to import.', 'warning');
         return;
     }
+    
+    const importButton = document.getElementById('importButton');
+    const originalButtonLabel = importButton ? importButton.innerHTML : '';
+    const restoreButton = () => {
+        if (importButton) {
+            importButton.disabled = false;
+            importButton.innerHTML = originalButtonLabel || 'Import';
+        }
+    };
+    
+    if (importButton) {
+        importButton.disabled = true;
+        importButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Importing';
+    }
+    
+    setImportFeedback('Uploading and validating KPI catalog...', 'info');
     
     const formData = new FormData();
     formData.append('csvFile', fileInput.files[0]);
@@ -541,19 +630,23 @@ function importKPIs() {
         method: 'POST',
         body: formData
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert(`Successfully imported ${data.imported} KPIs`);
-            location.reload();
-        } else {
-            alert('Import failed: ' + data.message);
-        }
-    })
-    .catch(error => {
-        console.error('Error importing KPIs:', error);
-        alert('Error importing KPIs');
-    });
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const variant = Array.isArray(data.errors) && data.errors.length ? 'warning' : 'success';
+                setImportFeedback(formatImportSummary(data), variant);
+                setTimeout(() => location.reload(), 1200);
+            } else {
+                const message = data.message ? `Import failed: ${data.message}` : 'Import failed. Please review the CSV file.';
+                setImportFeedback(message, 'danger');
+            }
+            restoreButton();
+        })
+        .catch(error => {
+            console.error('Error importing KPIs:', error);
+            setImportFeedback('Unexpected error importing KPIs. Please try again.', 'danger');
+            restoreButton();
+        });
 }
 </script>
 

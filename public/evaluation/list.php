@@ -18,6 +18,7 @@ $pageDescription = 'View and manage performance evaluations';
 // Initialize classes
 $evaluationClass = new Evaluation();
 $employeeClass = new Employee();
+$periodClass = new EvaluationPeriod();
 
 // Get filter parameters
 $status = $_GET['status'] ?? '';
@@ -46,6 +47,19 @@ if ($userRole === 'employee') {
     // HR Admin can see all evaluations
     $evaluationsData = $evaluationClass->getEvaluations(1, 50, $filters);
     $evaluations = $evaluationsData['evaluations'];
+}
+
+// Get active evaluation periods for workflow actions
+$activePeriods = [];
+if ($userRole === 'employee') {
+    $activePeriod = $periodClass->getActivePeriodForEmployee($_SESSION['employee_id']);
+    if ($activePeriod) {
+        $activePeriods[] = $activePeriod;
+    }
+} elseif ($userRole === 'manager') {
+    $activePeriods = $periodClass->getActivePeriods();
+} else {
+    $activePeriods = $periodClass->getActivePeriods();
 }
 
 include __DIR__ . '/../../templates/header.php';
@@ -93,6 +107,62 @@ include __DIR__ . '/../../templates/header.php';
                 </div>
                 <?php endif; ?>
 
+                <!-- Workflow Status for Active Periods -->
+                <?php if (!empty($activePeriods)): ?>
+                <div class="row mb-4">
+                    <?php foreach ($activePeriods as $period): ?>
+                    <div class="col-md-6">
+                        <div class="card border-info">
+                            <div class="card-header bg-info text-white">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-calendar-alt me-2"></i><?php echo htmlspecialchars($period['period_name']); ?>
+                                </h6>
+                                <small><?php echo formatDate($period['start_date']); ?> - <?php echo formatDate($period['end_date']); ?></small>
+                            </div>
+                            <div class="card-body">
+                                <?php
+                                $workflowStatus = [];
+                                if ($userRole === 'employee') {
+                                    $workflowStatus = (new EvaluationWorkflow())->getWorkflowStatus($_SESSION['employee_id'], $period['period_id']);
+                                }
+                                ?>
+
+                                <?php if ($userRole === 'employee'): ?>
+                                    <?php if ($workflowStatus['has_self'] && $workflowStatus['self_state'] === 'pending_self'): ?>
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                            <strong>Action Required:</strong> Complete your self-evaluation
+                                            <a href="/evaluation/self-evaluation.php" class="btn btn-sm btn-warning ms-2">Complete Now</a>
+                                        </div>
+                                    <?php elseif ($workflowStatus['has_final'] && $workflowStatus['final_state'] === 'final_delivered'): ?>
+                                        <div class="alert alert-success">
+                                            <i class="fas fa-check-circle me-2"></i>
+                                            Your final evaluation is ready to view.
+                                        </div>
+                                    <?php else: ?>
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            Self-evaluation period is active.
+                                        </div>
+                                    <?php endif; ?>
+                                <?php elseif ($userRole === 'manager'): ?>
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-users me-2"></i>
+                                        Review team evaluations for this period.
+                                    </div>
+                                <?php else: ?>
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-cogs me-2"></i>
+                                        Manage evaluations for this period.
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
+
                 <?php if (empty($evaluations)): ?>
                 <div class="text-center py-4">
                     <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
@@ -123,7 +193,9 @@ include __DIR__ . '/../../templates/header.php';
                                 <th>Employee</th>
                                 <th>Period</th>
                                 <th>Evaluator</th>
+                                <th>Type</th>
                                 <th>Status</th>
+                                <th>Workflow State</th>
                                 <th>Overall Rating</th>
                                 <th>Created Date</th>
                                 <th>Actions</th>
@@ -151,6 +223,11 @@ include __DIR__ . '/../../templates/header.php';
                                 </td>
                                 <td><?php echo htmlspecialchars(($evaluation['evaluator_first_name'] ?? '') . ' ' . ($evaluation['evaluator_last_name'] ?? '') ?: 'N/A'); ?></td>
                                 <td>
+                                    <span class="badge bg-secondary">
+                                        <?php echo ucfirst($evaluation['evaluation_type'] ?? 'manager'); ?>
+                                    </span>
+                                </td>
+                                <td>
                                     <?php
                                     $statusClass = [
                                         'draft' => 'warning',
@@ -161,6 +238,20 @@ include __DIR__ . '/../../templates/header.php';
                                     ?>
                                     <span class="badge bg-<?php echo $statusClass; ?>">
                                         <?php echo ucfirst($evaluation['status']); ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <?php
+                                    $workflowClass = [
+                                        'pending_self' => 'warning',
+                                        'self_submitted' => 'info',
+                                        'pending_manager' => 'primary',
+                                        'manager_submitted' => 'success',
+                                        'final_delivered' => 'success'
+                                    ][$evaluation['workflow_state']] ?? 'secondary';
+                                    ?>
+                                    <span class="badge bg-<?php echo $workflowClass; ?>">
+                                        <?php echo ucfirst(str_replace('_', ' ', $evaluation['workflow_state'] ?? 'pending_self')); ?>
                                     </span>
                                 </td>
                                 <td>
@@ -187,6 +278,34 @@ include __DIR__ . '/../../templates/header.php';
                                         <a href="/evaluation/edit.php?id=<?php echo $evaluation['evaluation_id']; ?>" class="btn btn-outline-secondary" title="<?php echo ($evaluation['status'] === 'submitted' && $userRole === 'hr_admin') ? 'Review' : 'Edit'; ?>">
                                             <i class="fas fa-edit"></i>
                                         </a>
+                                        <?php endif; ?>
+
+                                        <?php
+                                        // Workflow-specific actions
+                                        $workflowState = $evaluation['workflow_state'] ?? 'pending_self';
+                                        $evaluationType = $evaluation['evaluation_type'] ?? 'manager';
+
+                                        // Employee: Show self-evaluation action for pending self-evaluations
+                                        if ($userRole === 'employee' && $evaluationType === 'self' && $workflowState === 'pending_self'): ?>
+                                            <a href="/evaluation/self-evaluation.php" class="btn btn-outline-success btn-sm" title="Complete Self-Evaluation">
+                                                <i class="fas fa-user-check"></i> Complete
+                                            </a>
+                                        <?php endif; ?>
+
+                                        <?php
+                                        // Manager: Show review action for submitted self-evaluations
+                                        if ($userRole === 'manager' && $evaluationType === 'self' && $workflowState === 'self_submitted'): ?>
+                                            <a href="/evaluation/manager-review.php?id=<?php echo $evaluation['evaluation_id']; ?>" class="btn btn-outline-warning btn-sm" title="Review Self-Evaluation">
+                                                <i class="fas fa-user-tie"></i> Review
+                                            </a>
+                                        <?php endif; ?>
+
+                                        <?php
+                                        // Manager: Show evaluation action for pending manager evaluations
+                                        if ($userRole === 'manager' && $evaluationType === 'manager' && $workflowState === 'pending_manager'): ?>
+                                            <a href="/evaluation/manager-review.php?id=<?php echo $evaluation['self_evaluation_id']; ?>" class="btn btn-outline-primary btn-sm" title="Complete Manager Evaluation">
+                                                <i class="fas fa-edit"></i> Evaluate
+                                            </a>
                                         <?php endif; ?>
                                     </div>
                                 </td>

@@ -8,6 +8,7 @@ require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../classes/Employee.php';
 require_once __DIR__ . '/../classes/Evaluation.php';
 require_once __DIR__ . '/../classes/EvaluationPeriod.php';
+require_once __DIR__ . '/../classes/EvaluationWorkflow.php';
 require_once __DIR__ . '/../classes/JobTemplate.php';
 require_once __DIR__ . '/../includes/components/dashboard-widgets.php';
 require_once __DIR__ . '/../includes/components/quick-actions.php';
@@ -28,6 +29,7 @@ $userRole = $_SESSION['user_role'];
 $employeeClass = new Employee();
 $evaluationClass = new Evaluation();
 $periodClass = new EvaluationPeriod();
+$workflowClass = new EvaluationWorkflow();
 $jobTemplateClass = new JobTemplate();
 
 // Get dashboard data based on user role
@@ -146,13 +148,22 @@ if ($userRole === 'hr_admin') {
 } else {
     // Employee Dashboard
     $employeeEvaluations = $evaluationClass->getEmployeeEvaluations($_SESSION['employee_id']);
-    
+
+    // Get workflow status for active periods
+    $workflowStatus = [];
+    $activePeriods = $periodClass->getActivePeriods();
+    foreach ($activePeriods as $period) {
+        $workflowStatus[$period['period_id']] = $workflowClass->getWorkflowStatus($_SESSION['employee_id'], $period['period_id']);
+    }
+
     $dashboardData = [
         'total_evaluations' => count($employeeEvaluations),
         'latest_evaluation' => $employeeEvaluations[0] ?? null,
         'evaluation_history' => array_slice($employeeEvaluations, 0, 5),
         'current_period' => $periodClass->getCurrentPeriod(),
-        'employee_info' => $employeeClass->getEmployeeById($_SESSION['employee_id'])
+        'employee_info' => $employeeClass->getEmployeeById($_SESSION['employee_id']),
+        'workflow_status' => $workflowStatus,
+        'active_periods' => $activePeriods
     ];
 }
 
@@ -308,6 +319,71 @@ include __DIR__ . '/../templates/header.php';
         </div>
     </div>
     
+    <!-- Workflow Status Section for Employees -->
+    <?php if ($userRole === 'employee' && !empty($dashboardData['active_periods'])): ?>
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tasks me-2"></i>Evaluation Workflow Status
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <?php foreach ($dashboardData['active_periods'] as $period): ?>
+                        <?php
+                        $workflow = $dashboardData['workflow_status'][$period['period_id']] ?? [];
+                        $hasSelf = $workflow['has_self'] ?? false;
+                        $selfState = $workflow['self_state'] ?? 'pending_self';
+                        $hasFinal = $workflow['has_final'] ?? false;
+                        $finalState = $workflow['final_state'] ?? 'pending_self';
+                        ?>
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <strong><?php echo htmlspecialchars($period['period_name']); ?></strong><br>
+                                <small class="text-muted">
+                                    <?php echo formatDate($period['start_date']); ?> - <?php echo formatDate($period['end_date']); ?>
+                                </small>
+                            </div>
+                            <div class="col-md-8">
+                                <?php if (!$hasSelf): ?>
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Self-evaluation period is active. Please complete your self-assessment.
+                                        <a href="/evaluation/self-evaluation.php" class="btn btn-sm btn-primary ms-2">Start Self-Evaluation</a>
+                                    </div>
+                                <?php elseif ($hasSelf && $selfState === 'pending_self'): ?>
+                                    <div class="alert alert-warning">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        <strong>Action Required:</strong> Complete your self-evaluation
+                                        <a href="/evaluation/self-evaluation.php" class="btn btn-sm btn-warning ms-2">Complete Now</a>
+                                    </div>
+                                <?php elseif ($hasSelf && $selfState === 'self_submitted'): ?>
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-clock me-2"></i>
+                                        Self-evaluation submitted. Waiting for manager review.
+                                    </div>
+                                <?php elseif ($hasFinal && $finalState === 'final_delivered'): ?>
+                                    <div class="alert alert-success">
+                                        <i class="fas fa-check-circle me-2"></i>
+                                        Your final evaluation is ready to view.
+                                        <a href="/evaluation/list.php" class="btn btn-sm btn-success ms-2">View Evaluation</a>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="alert alert-secondary">
+                                        <i class="fas fa-spinner me-2"></i>
+                                        Evaluation in progress...
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <!-- Quick Actions / Current Period - Using Reusable Component -->
     <?php echo renderQuickActions($userRole, $jobTemplateAssignment); ?>
 </div>

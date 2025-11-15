@@ -444,32 +444,228 @@ class NotificationManager {
         try {
             $whereClause = "WHERE 1=1";
             $params = [];
-            
+
             if (!empty($filters['start_date'])) {
                 $whereClause .= " AND created_at >= ?";
                 $params[] = $filters['start_date'];
             }
-            
+
             if (!empty($filters['end_date'])) {
                 $whereClause .= " AND created_at <= ?";
                 $params[] = $filters['end_date'];
             }
-            
-            $sql = "SELECT 
+
+            $sql = "SELECT
                         type,
                         COUNT(*) as total_sent,
                         SUM(CASE WHEN is_read = TRUE THEN 1 ELSE 0 END) as total_read,
                         AVG(CASE WHEN is_read = TRUE THEN TIMESTAMPDIFF(MINUTE, created_at, read_at) ELSE NULL END) as avg_read_time_minutes
-                    FROM notifications 
-                    $whereClause 
+                    FROM notifications
+                    $whereClause
                     GROUP BY type
                     ORDER BY total_sent DESC";
-            
+
             return fetchAll($sql, $params);
-            
+
         } catch (Exception $e) {
             error_log("Get notification statistics error: " . $e->getMessage());
             throw $e;
+        }
+    }
+
+    /**
+     * Notify evaluation period started
+     * @param int $userId
+     * @param int $periodId
+     * @param int $evaluationId
+     * @return bool
+     */
+    public function notifyEvaluationPeriodStarted($userId, $periodId, $evaluationId) {
+        try {
+            // Get period details
+            $period = fetchOne("SELECT period_name, start_date, end_date FROM evaluation_periods WHERE period_id = ?", [$periodId]);
+            if (!$period) return false;
+
+            $variables = [
+                'period_name' => $period['period_name'],
+                'start_date' => formatDate($period['start_date']),
+                'end_date' => formatDate($period['end_date'])
+            ];
+
+            return $this->createFromTemplate('evaluation_period_started', $userId, $variables);
+        } catch (Exception $e) {
+            error_log("Notify evaluation period started error: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Notify self-evaluation submitted
+     * @param int $employeeId
+     * @param int $evaluationId
+     * @return bool
+     */
+    public function notifySelfEvaluationSubmitted($employeeId, $evaluationId) {
+        try {
+            // Get employee details
+            $employee = fetchOne("SELECT first_name, last_name FROM employees WHERE employee_id = ?", [$employeeId]);
+            if (!$employee) return false;
+
+            $variables = [
+                'employee_name' => $employee['first_name'] . ' ' . $employee['last_name']
+            ];
+
+            // Notify manager
+            $manager = fetchOne("SELECT user_id FROM employees WHERE employee_id = (SELECT manager_id FROM employees WHERE employee_id = ?)", [$employeeId]);
+            if ($manager && $manager['user_id']) {
+                return $this->createFromTemplate('self_evaluation_submitted', $manager['user_id'], $variables);
+            }
+
+            return false;
+        } catch (Exception $e) {
+            error_log("Notify self-evaluation submitted error: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Notify manager of self-evaluation
+     * @param int $managerUserId
+     * @param int $evaluationId
+     * @return bool
+     */
+    public function notifyManagerOfSelfEvaluation($managerUserId, $evaluationId) {
+        try {
+            // Get evaluation details
+            $evaluation = fetchOne("
+                SELECT e.*, emp.first_name, emp.last_name, p.period_name
+                FROM evaluations e
+                JOIN employees emp ON e.employee_id = emp.employee_id
+                JOIN evaluation_periods p ON e.period_id = p.period_id
+                WHERE e.evaluation_id = ?
+            ", [$evaluationId]);
+
+            if (!$evaluation) return false;
+
+            $variables = [
+                'employee_name' => $evaluation['first_name'] . ' ' . $evaluation['last_name'],
+                'period_name' => $evaluation['period_name'],
+                'evaluation_id' => $evaluationId
+            ];
+
+            return $this->createFromTemplate('manager_self_evaluation_due', $managerUserId, $variables);
+        } catch (Exception $e) {
+            error_log("Notify manager of self-evaluation error: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Notify manager evaluation due
+     * @param int $managerUserId
+     * @param int $evaluationId
+     * @return bool
+     */
+    public function notifyManagerEvaluationDue($managerUserId, $evaluationId) {
+        try {
+            // Get evaluation details
+            $evaluation = fetchOne("
+                SELECT e.*, emp.first_name, emp.last_name, p.period_name
+                FROM evaluations e
+                JOIN employees emp ON e.employee_id = emp.employee_id
+                JOIN evaluation_periods p ON e.period_id = p.period_id
+                WHERE e.evaluation_id = ?
+            ", [$evaluationId]);
+
+            if (!$evaluation) return false;
+
+            $variables = [
+                'employee_name' => $evaluation['first_name'] . ' ' . $evaluation['last_name'],
+                'period_name' => $evaluation['period_name'],
+                'evaluation_id' => $evaluationId
+            ];
+
+            return $this->createFromTemplate('manager_evaluation_due', $managerUserId, $variables);
+        } catch (Exception $e) {
+            error_log("Notify manager evaluation due error: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Notify final evaluation delivered
+     * @param int $employeeId
+     * @param int $evaluationId
+     * @return bool
+     */
+    public function notifyFinalEvaluationDelivered($employeeId, $evaluationId) {
+        try {
+            // Get employee user ID
+            $employee = fetchOne("SELECT user_id FROM employees WHERE employee_id = ?", [$employeeId]);
+            if (!$employee || !$employee['user_id']) return false;
+
+            // Get evaluation details
+            $evaluation = fetchOne("
+                SELECT e.*, p.period_name
+                FROM evaluations e
+                JOIN evaluation_periods p ON e.period_id = p.period_id
+                WHERE e.evaluation_id = ?
+            ", [$evaluationId]);
+
+            if (!$evaluation) return false;
+
+            $variables = [
+                'period_name' => $evaluation['period_name'],
+                'evaluation_id' => $evaluationId
+            ];
+
+            return $this->createFromTemplate('final_evaluation_delivered', $employee['user_id'], $variables);
+        } catch (Exception $e) {
+            error_log("Notify final evaluation delivered error: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Notify HR of evaluation completion
+     * @param int $evaluationId
+     * @return bool
+     */
+    public function notifyHROfEvaluationCompletion($evaluationId) {
+        try {
+            // Get HR admin users
+            $hrUsers = fetchAll("SELECT user_id FROM users WHERE role = 'hr_admin'");
+
+            if (empty($hrUsers)) return false;
+
+            // Get evaluation details
+            $evaluation = fetchOne("
+                SELECT e.*, emp.first_name, emp.last_name, p.period_name
+                FROM evaluations e
+                JOIN employees emp ON e.employee_id = emp.employee_id
+                JOIN evaluation_periods p ON e.period_id = p.period_id
+                WHERE e.evaluation_id = ?
+            ", [$evaluationId]);
+
+            if (!$evaluation) return false;
+
+            $variables = [
+                'employee_name' => $evaluation['first_name'] . ' ' . $evaluation['last_name'],
+                'period_name' => $evaluation['period_name'],
+                'evaluation_id' => $evaluationId
+            ];
+
+            $successCount = 0;
+            foreach ($hrUsers as $hrUser) {
+                if ($this->createFromTemplate('hr_evaluation_completed', $hrUser['user_id'], $variables)) {
+                    $successCount++;
+                }
+            }
+
+            return $successCount > 0;
+        } catch (Exception $e) {
+            error_log("Notify HR of evaluation completion error: " . $e->getMessage());
+            return false;
         }
     }
 }

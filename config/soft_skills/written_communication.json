@@ -1,0 +1,43 @@
+{
+    "name": "a",
+    "definition": "a",
+    "description": "a",
+    "levels": {
+        "1": {
+            "title": "",
+            "behaviors": [
+                "a",
+                "",
+                "",
+                ""
+            ]
+        },
+        "2": {
+            "title": "",
+            "behaviors": [
+                "a",
+                "",
+                "",
+                ""
+            ]
+        },
+        "3": {
+            "title": "",
+            "behaviors": [
+                "e",
+                "",
+                "",
+                ""
+            ]
+        },
+        "4": {
+            "title": "",
+            "behaviors": [
+                "e",
+                "",
+                "",
+                ""
+            ]
+        }
+    }
+}
