@@ -153,7 +153,7 @@ performance_evaluation_system/
 1. Create new classes in the `classes/` directory
 2. Add new pages in the appropriate `public/` subdirectory
 3. Update navigation in `includes/auth.php`
-4. Add database migrations to `sql/` directory
+4. Add database schema files to `sql/` directory
 
 ### Customization
 - **Evaluation Template** - Modify `classes/Evaluation.php` to change evaluation criteria

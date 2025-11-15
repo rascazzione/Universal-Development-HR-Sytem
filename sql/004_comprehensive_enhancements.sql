@@ -4,7 +4,7 @@
 
 USE performance_evaluation;
 
--- NOTE: Some MySQL installations may enforce strict FK checks during DDL; disable temporarily for safe migrations
+-- NOTE: Some MySQL installations may enforce strict FK checks during DDL; disable temporarily for safe schema changes
 SET @@foreign_key_checks=0;
 
 -- ---------------------------------------------------------------------

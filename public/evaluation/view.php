@@ -245,7 +245,7 @@ include __DIR__ . '/../../templates/header.php';
                     <h6 class="alert-heading">
                         <i class="fas fa-exclamation-triangle me-2"></i>Legacy Evaluation Format
                     </h6>
-                    <p class="mb-0">This evaluation was created using the legacy format and does not contain job template dimensions. Please contact HR to migrate this evaluation to the new job template-based system.</p>
+                    <p class="mb-0">This evaluation was created using the legacy format and does not contain job template dimensions. Please contact HR to update this evaluation to the new job template-based system.</p>
                 </div>
                 <?php endif; ?>
                 

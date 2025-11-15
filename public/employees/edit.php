@@ -319,7 +319,6 @@ include __DIR__ . '/../../templates/header.php';
                                 </select>
                                 <div class="form-text">
                                     Assign a job template to define evaluation criteria for this employee.
-                                    <br><small class="text-warning">Note: Job template assignment requires database migration. See sql/add_job_template_id_to_employees.sql</small>
                                 </div>
                             </div>
                         </div>
