@@ -13,6 +13,7 @@ mysql_data/
 *.swp
 *.swo
 *~
+AGENTS.md
 
 # OS generated files
 .DS_Store
