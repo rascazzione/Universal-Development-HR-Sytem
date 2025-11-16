@@ -1,6 +1,6 @@
 # Universal Development HR System
 
-A comprehensive web-based Human Resources management system built with PHP and MySQL, designed to streamline employee evaluation, performance management, talent development, and organizational analytics. This system digitizes traditional HR processes with modern web technology, providing role-based access control and automated reporting capabilities.
+A comprehensive web-based Human Resources management system built with PHP and MySQL, designed to streamline employee evaluation, performance management, talent development, and organizational analytics. This system digitizes traditional HR processes with modern web technology, providing role-based access control and automated reporting capabilities..
 
 ## 🚀 Quick Start
 
