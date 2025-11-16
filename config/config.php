@@ -1,7 +1,7 @@
 <?php
 /**
  * Application Configuration
- * Performance Evaluation System
+ * Universal-Development-HR-System
  */
 
 // Start session if not already started
@@ -10,9 +10,9 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // Application settings
-define('APP_NAME', 'Performance Evaluation System');
+define('APP_NAME', 'Universal-Development-HR-System');
 define('APP_VERSION', '1.0.0');
-define('APP_URL', 'http://localhost/performance_evaluation_system');
+define('APP_URL', 'http://localhost/universal_development_hr_system');
 
 // Security settings
 define('SESSION_TIMEOUT', 3600); // 1 hour in seconds
@@ -33,7 +33,7 @@ define('SMTP_PORT', 587);
 define('SMTP_USERNAME', '');
 define('SMTP_PASSWORD', '');
 define('FROM_EMAIL', 'noreply@company.com');
-define('FROM_NAME', 'Performance Evaluation System');
+define('FROM_NAME', 'Universal-Development-HR-System');
 
 // Timezone
 date_default_timezone_set('Europe/Madrid');

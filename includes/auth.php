@@ -450,13 +450,6 @@ function getNavigationMenu() {
     $menu = [];
     $userRole = $_SESSION['user_role'];
     
-    // Dashboard - available to all authenticated users
-    $menu[] = [
-        'title' => 'Dashboard',
-        'url' => '/dashboard.php',
-        'icon' => 'fas fa-tachometer-alt'
-    ];
-    
     // System Configuration - HR Admin only
     if ($userRole === 'hr_admin') {
         $menu[] = [
@@ -476,7 +469,7 @@ function getNavigationMenu() {
     
     // Evaluations menu
     if ($userRole === 'hr_admin' || $userRole === 'manager') {
-        $menu[] = [
+        $evaluationSubmenu = [
             'title' => 'Evaluations',
             'url' => '/evaluation/',
             'icon' => 'fas fa-clipboard-list',
@@ -486,6 +479,12 @@ function getNavigationMenu() {
                 ['title' => 'My Evaluations', 'url' => '/evaluation/my-evaluations.php']
             ]
         ];
+        
+        if ($userRole === 'hr_admin') {
+            $evaluationSubmenu['submenu'][] = ['title' => 'Evaluation Periods', 'url' => '/admin/periods.php'];
+        }
+        
+        $menu[] = $evaluationSubmenu;
     } elseif ($userRole === 'employee') {
         $menu[] = [
             'title' => 'My Evaluations',
@@ -510,22 +509,10 @@ function getNavigationMenu() {
         ];
     }
     
-    // Administration menu (HR Admin only)
-    if ($userRole === 'hr_admin') {
-        $menu[] = [
-            'title' => 'Administration',
-            'url' => '/admin/',
-            'icon' => 'fas fa-cog',
-            'submenu' => [
-                ['title' => 'Evaluation Periods', 'url' => '/admin/periods.php']
-            ]
-        ];
-    }
-    
     // Reports menu
     if ($userRole === 'hr_admin' || $userRole === 'manager') {
         $menu[] = [
-            'title' => 'Reports (Coming Soon)',
+            'title' => 'Reports',
             'url' => '/pending.php?feature=Reports',
             'icon' => 'fas fa-chart-bar'
         ];

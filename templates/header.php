@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../includes/auth.php';
 
 // Get page title from variable or use default
-$pageTitle = $pageTitle ?? 'Performance Evaluation System';
+$pageTitle = $pageTitle ?? 'Universal-Development-HR-System';
 $bodyClass = $bodyClass ?? '';
 $csrfToken = generateCSRFToken();
 ?>

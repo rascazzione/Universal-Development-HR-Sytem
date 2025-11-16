@@ -1,7 +1,7 @@
 <?php
 /**
  * Dashboard Page - Refactored with Legacy Bootstrap Design
- * Performance Evaluation System
+ * Universal-Development-HR-System
  */
 
 require_once __DIR__ . '/../includes/auth.php';
