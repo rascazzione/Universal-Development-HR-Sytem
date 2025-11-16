@@ -308,6 +308,21 @@ function showValidationResults(results) {
             Errors: ${results.error_count}
         </div>
     `;
+
+    if (results.warnings && results.warnings.length > 0) {
+        html += '<div class="alert alert-warning"><strong>Warnings:</strong><ul class="mb-0">';
+        results.warnings.forEach(warning => {
+            html += `<li>${warning}</li>`;
+        });
+        html += '</ul></div>';
+    }
+
+    if (results.departments_to_create && results.departments_to_create.length > 0) {
+        html += `<div class="alert alert-info">
+            <strong>New departments detected:</strong> ${results.departments_to_create.join(', ')}<br>
+            <small>They will be created automatically during the import.</small>
+        </div>`;
+    }
     
     if (results.errors.length > 0) {
         html += '<div class="alert alert-warning"><strong>Errors found:</strong></div>';
@@ -396,6 +411,12 @@ function showImportResults(results) {
             </ul>
         </div>
     `;
+
+    if (results.auto_created_departments && results.auto_created_departments.length > 0) {
+        html += `<div class="alert alert-info">
+            <strong>Departments added:</strong> ${results.auto_created_departments.join(', ')}
+        </div>`;
+    }
     
     if (results.errors.length > 0) {
         html += '<div class="alert alert-warning"><strong>Some errors occurred:</strong></div>';

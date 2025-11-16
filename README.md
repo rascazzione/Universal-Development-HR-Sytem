@@ -1,144 +1,276 @@
-# PHP Performance Evaluation System
+# Universal Development HR System
 
-A comprehensive web-based employee performance evaluation system built with PHP and MySQL. This system digitizes the traditional paper-based evaluation process with user authentication, role-based access control, and automated reporting.
+A comprehensive web-based Human Resources management system built with PHP and MySQL, designed to streamline employee evaluation, performance management, talent development, and organizational analytics. This system digitizes traditional HR processes with modern web technology, providing role-based access control and automated reporting capabilities.
 
-## Features
+## 🚀 Quick Start
 
-### Core Functionality
-- **User Authentication & Authorization** - Secure login with role-based access (HR Admin, Manager, Employee)
-- **Employee Management** - Complete employee database with organizational hierarchy
-- **Performance Evaluations** - Digital evaluation forms matching traditional templates
-- **Flexible Evaluation Periods** - Support for monthly, quarterly, annual, and custom evaluation cycles
-- **Automated Reporting** - PDF generation and performance analytics
-- **Dashboard Analytics** - Role-specific dashboards with key metrics
+Get the system running in under 5 minutes:
 
-### Evaluation Template
-Based on the provided performance evaluation templates, the system includes:
-- **Expected Results** (40% weight) - Achievement of objectives, quality, productivity, initiative
-- **Skills, Knowledge & Competencies** (25% weight) - Technical skills, communication, problem-solving, teamwork
-- **Key Responsibilities** (25% weight) - Job knowledge, reliability, adaptability
-- **Living Our Values** (10% weight) - Integrity, respect, excellence, innovation
-- **Overall Rating** - 1-5 scale with weighted calculation
-
-### User Roles & Permissions
-- **HR Administrator** - Full system access, user management, evaluation oversight
-- **Manager** - Create/edit evaluations for direct reports, view team performance
-- **Employee** - View own evaluations and performance history
-
-## System Requirements
-
-- **PHP** 7.4 or higher
-- **MySQL** 8.0 or higher
-- **Web Server** (Apache/Nginx)
-- **Extensions**: PDO, JSON, OpenSSL
-
-## Installation
-
-### 1. Clone/Download the Project
 ```bash
-git clone <repository-url>
-cd performance_evaluation_system
+# 1. Initial setup (first time only)
+make install
+
+# 2. Start the environment
+make up
+
+# 3. Access the application
+open http://localhost:8080
 ```
 
-### 2. Database Setup
-1. Create a MySQL database named `performance_evaluation`
-2. Import the database schema:
+**Default Login Credentials:**
+- Username: `admin`
+- Password: `admin123`
+
+⚠️ **Important**: Change the default password immediately after first login!
+
+## 📋 Table of Contents
+
+1. [Features](#features)
+2. [System Requirements](#system-requirements)
+3. [Installation](#installation)
+4. [User Roles & Permissions](#user-roles--permissions)
+5. [Core Modules](#core-modules)
+6. [Development](#development)
+7. [Troubleshooting](#troubleshooting)
+8. [Security Features](#security-features)
+9. [Support](#support)
+
+## ✨ Features
+
+### 🎯 Performance Management
+- **360-Degree Evaluations** - Comprehensive feedback from multiple sources
+- **Self-Assessments** - Employee-driven performance reviews
+- **Manager Evaluations** - Structured performance assessments
+- **Evidence-Based Reviews** - Documented performance evidence and achievements
+- **Flexible Evaluation Periods** - Monthly, quarterly, annual, and custom cycles
+- **Weighted Scoring System** - Configurable evaluation criteria with weights
+
+### 👥 Employee Management
+- **Complete Employee Database** - Comprehensive employee profiles and records
+- **Organizational Hierarchy** - Manager-subordinate relationships
+- **Department Management** - Organizational structure administration
+- **Employee Import/Export** - Bulk data management with CSV support
+- **Job Templates** - Standardized role definitions and requirements
+
+### 📊 Analytics & Reporting
+- **Role-Specific Dashboards** - HR Admin, Manager, and Employee views
+- **Performance Analytics** - Trends, insights, and comparative analysis
+- **Automated Reporting** - PDF generation and performance summaries
+- **KPI Tracking** - Key Performance Indicators monitoring
+- **Evidence-Based Insights** - Data-driven decision support
+
+### 🎓 Talent Development
+- **Individual Development Plans (IDPs)** - Personalized growth strategies
+- **Goal Setting & OKRs** - Objectives and Key Results management
+- **Skills Assessment** - Technical and soft skills evaluation
+- **Competency Management** - Skill gap analysis and development tracking
+- **Achievement Journals** - Documented accomplishments and milestones
+
+### 🏆 Recognition & Engagement
+- **Kudos System** - Peer recognition and appreciation platform
+- **Achievement Tracking** - Milestone and accomplishment recording
+- **Feedback Mechanisms** - Continuous feedback collection and management
+- **Upward Feedback** - Anonymous feedback for management improvement
+
+### 🔧 System Administration
+- **User Authentication & Authorization** - Secure login with role-based access
+- **Audit Logging** - Comprehensive activity tracking and compliance
+- **System Settings** - Configurable application parameters
+- **Data Import/Export** - Flexible data management capabilities
+- **Health Monitoring** - System performance and status tracking
+
+## 🖥️ System Requirements
+
+### Required Software
+- **Docker** 20.10+ ([Install Docker](https://docs.docker.com/get-docker/))
+- **Docker Compose** 2.0+ ([Install Docker Compose](https://docs.docker.com/compose/install/))
+- **Make** (usually pre-installed on Linux/macOS)
+
+### System Requirements
+- **CPU**: 2+ cores
+- **Memory**: 2GB+ available RAM
+- **Disk**: 5GB+ available space
+- **OS**: Linux, macOS, or Windows with WSL2
+
+### Verify Installation
 ```bash
-mysql -u root -p performance_evaluation < sql/database_setup.sql
+docker --version          # Should show 20.10+
+docker-compose --version  # Should show 2.0+
+make --version            # Should show GNU Make
 ```
 
-### 3. Configuration
-1. Update database credentials in `config/database.php`:
-```php
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'performance_evaluation');
-define('DB_USER', 'your_username');
-define('DB_PASS', 'your_password');
-```
+## 🛠️ Installation
 
-2. Configure application settings in `config/config.php` as needed.
-
-### 4. Web Server Setup
-Configure your web server to serve files from the `public/` directory.
-
-#### Apache (.htaccess)
-```apache
-RewriteEngine On
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ index.php [QSA,L]
-```
-
-#### Nginx
-```nginx
-location / {
-    try_files $uri $uri/ /index.php?$query_string;
-}
-```
-
-### 5. File Permissions
-Ensure proper permissions for file uploads and logs:
+### 1. Clone and Setup
 ```bash
-chmod 755 public/
-chmod 644 public/*.php
+# Navigate to project directory
+cd /path/to/your/project
+
+# Initial setup
+make install
 ```
 
-## Default Login Credentials
+This will:
+- Copy `.env.example` to `.env`
+- Create necessary log directories
+- Set up the development environment
 
-After installation, you can log in with the default administrator account:
-- **Username**: admin
-- **Password**: admin123
+### 2. Configure Environment (Optional)
+Edit `.env` file to customize settings:
+```bash
+# Database settings
+DB_NAME=performance_evaluation
+DB_USER=app_user
+DB_PASSWORD=your_secure_password
 
-**⚠️ Important**: Change the default password immediately after first login!
-
-## Usage
-
-### For HR Administrators
-1. **User Management** - Create user accounts for managers and employees
-2. **Employee Management** - Add employee records and set up organizational hierarchy
-3. **Evaluation Periods** - Create and manage evaluation cycles
-4. **System Oversight** - Monitor all evaluations and generate reports
-
-### For Managers
-1. **Team Management** - View and manage direct reports
-2. **Create Evaluations** - Conduct performance evaluations for team members
-3. **Track Progress** - Monitor evaluation completion and team performance
-
-### For Employees
-1. **View Evaluations** - Access personal evaluation history
-2. **Performance Tracking** - Monitor ratings and feedback over time
-3. **Profile Management** - Update personal information
-
-## File Structure
-
-```
-performance_evaluation_system/
-├── config/                 # Configuration files
-│   ├── database.php       # Database configuration
-│   └── config.php         # Application settings
-├── classes/               # PHP classes
-│   ├── User.php          # User management
-│   ├── Employee.php      # Employee management
-│   ├── Evaluation.php    # Evaluation handling
-│   └── EvaluationPeriod.php # Period management
-├── includes/              # Include files
-│   └── auth.php          # Authentication functions
-├── templates/             # HTML templates
-│   ├── header.php        # Common header
-│   └── footer.php        # Common footer
-├── public/               # Public web files
-│   ├── index.php         # Main entry point
-│   ├── login.php         # Login page
-│   ├── dashboard.php     # Dashboard
-│   └── evaluation/       # Evaluation pages
-├── assets/               # Static assets
-│   ├── css/             # Stylesheets
-│   └── js/              # JavaScript files
-└── sql/                 # Database files
-    └── database_setup.sql # Database schema
+# Port settings (if 8080 is in use)
+WEB_PORT=8081
+DB_PORT=3307
 ```
 
-## Security Features
+### 3. Start the Environment
+```bash
+make up
+```
+
+Wait for the startup process to complete. You'll see:
+```
+✅ Database is ready
+✅ Web server is ready
+🌐 Application URL: http://localhost:8080
+```
+
+## 👤 User Roles & Permissions
+
+### HR Administrator
+- **Full System Access** - Complete administrative control
+- **User Management** - Create and manage user accounts
+- **Employee Management** - Add/edit employee records and hierarchy
+- **Evaluation Oversight** - Monitor all evaluations and generate reports
+- **System Configuration** - Manage system settings and parameters
+- **Department Management** - Organizational structure administration
+
+### Manager
+- **Team Management** - View and manage direct reports
+- **Create Evaluations** - Conduct performance evaluations for team members
+- **Performance Tracking** - Monitor team performance and progress
+- **Feedback Management** - Provide and manage employee feedback
+- **Goal Setting** - Set and track team objectives and OKRs
+- **Development Planning** - Create and manage IDPs for team members
+
+### Employee
+- **Self-Assessment** - Complete self-evaluations and assessments
+- **View Evaluations** - Access personal evaluation history and feedback
+- **Performance Tracking** - Monitor ratings and progress over time
+- **Goal Management** - Set and track personal development goals
+- **Achievement Recording** - Document accomplishments and evidence
+- **Feedback Participation** - Provide feedback to peers and managers
+
+## 📁 Core Modules
+
+### 📈 Performance Evaluation Module
+- **Evaluation Workflow** - Structured evaluation process with states
+- **Evidence Aggregation** - Automated evidence collection and analysis
+- **Multi-Source Feedback** - 360-degree evaluation capabilities
+- **Scoring Engine** - Weighted calculation and rating system
+- **Evaluation Templates** - Standardized evaluation forms and criteria
+
+### 📊 Analytics Dashboard
+- **HR Analytics** - Organization-wide insights and metrics
+- **Manager Dashboard** - Team performance and management tools
+- **Employee Dashboard** - Personal performance and development view
+- **Real-time Metrics** - Live data updates and notifications
+- **Custom Reports** - Flexible reporting and data export
+
+### 🎓 Development & Learning
+- **IDP Management** - Individual Development Plan creation and tracking
+- **Skills Assessment** - Technical and soft skills evaluation
+- **Competency Framework** - Comprehensive skill management system
+- **Learning Resources** - Development recommendations and resources
+- **Progress Tracking** - Development goal monitoring and analytics
+
+### 🏆 Recognition & Engagement
+- **Kudos Platform** - Peer recognition and appreciation system
+- **Achievement Tracking** - Milestone and accomplishment recording
+- **Feedback Systems** - Continuous feedback collection
+- **Engagement Metrics** - Employee engagement tracking and analysis
+
+### 📋 Data Management
+- **Import/Export** - CSV-based bulk data operations
+- **Employee Records** - Comprehensive employee information management
+- **Document Management** - File uploads and attachment handling
+- **Audit Trail** - Complete activity logging and compliance
+
+## 🔧 Development
+
+### Available Commands
+
+#### Core Commands
+| Command | Description |
+|---------|-------------|
+| `make up` | Start the development environment |
+| `make down` | Stop the development environment |
+| `make restart` | Restart all services |
+| `make status` | Show container status and resource usage |
+
+#### Development Commands
+| Command | Description |
+|---------|-------------|
+| `make logs` | View application logs (all services) |
+| `make logs-web` | View web server logs only |
+| `make logs-db` | View database logs only |
+| `make shell` | Access web container shell |
+| `make mysql` | Access MySQL command line |
+
+#### Maintenance Commands
+| Command | Description |
+|---------|-------------|
+| `make reset` | Reset environment (clear data, keep images) |
+| `make destroy` | Completely destroy the environment |
+| `make clean` | Clean up unused Docker resources |
+| `make health` | Run comprehensive health checks |
+
+#### Advanced Commands
+| Command | Description |
+|---------|-------------|
+| `make backup` | Create database backup |
+| `make restore BACKUP=file` | Restore database from backup |
+| `make rebuild` | Rebuild and restart containers |
+| `make update` | Update container images |
+
+### Development Workflow
+
+#### 🔄 Hot Reload
+Code changes are immediately reflected:
+1. Edit any PHP file
+2. Refresh browser
+3. Changes are live instantly
+
+#### 💾 Data Persistence
+- Database data survives container restarts
+- Only removed with `make reset` or `make destroy`
+
+#### 🔧 Configuration Changes
+1. Edit `.env` file
+2. Run `make restart`
+3. Changes take effect
+
+#### 🗄️ Database Access
+```bash
+# MySQL command line
+make mysql
+
+# Database shell
+make shell-db
+
+# Backup database
+make backup
+
+# Restore from backup
+make restore BACKUP=backup_20231201_120000.sql
+```
+
+## 🔒 Security Features
 
 - **Password Hashing** - Secure password storage using PHP's password_hash()
 - **CSRF Protection** - Cross-site request forgery prevention
@@ -146,89 +278,202 @@ performance_evaluation_system/
 - **XSS Protection** - Input sanitization and output encoding
 - **Session Security** - Secure session handling with timeout
 - **Role-based Access Control** - Granular permissions system
+- **Audit Logging** - Comprehensive activity tracking
+- **Input Validation** - Data validation and sanitization
+- **File Upload Security** - Secure file handling and validation
 
-## Development
+## 🔧 Configuration
 
-### Adding New Features
-1. Create new classes in the `classes/` directory
-2. Add new pages in the appropriate `public/` subdirectory
-3. Update navigation in `includes/auth.php`
-4. Add database schema files to `sql/` directory
+### Environment Variables (.env)
+```bash
+# Application
+APP_ENV=development
+APP_DEBUG=true
+APP_URL=http://localhost:8080
 
-### Customization
-- **Evaluation Template** - Modify `classes/Evaluation.php` to change evaluation criteria
-- **Styling** - Update `assets/css/style.css` for visual customization
-- **Permissions** - Adjust role permissions in `config/config.php`
+# Database
+DB_HOST=mysql
+DB_NAME=performance_evaluation
+DB_USER=app_user
+DB_PASSWORD=secure_dev_password
+DB_ROOT_PASSWORD=root_dev_password
 
-## Troubleshooting
+# Ports
+WEB_PORT=8080
+DB_PORT=3306
+
+# PHP Settings
+PHP_MEMORY_LIMIT=256M
+PHP_MAX_EXECUTION_TIME=300
+```
+
+### Volume Mounts
+- **Application Code**: `./:/var/www/html` (hot reload)
+- **Database Data**: `mysql_data:/var/lib/mysql` (persistence)
+- **Logs**: `./docker/logs:/var/log` (debugging)
+
+### Network Configuration
+- **Web Application**: http://localhost:8080
+- **Database**: localhost:3306
+- **Health Check**: http://localhost:8080/health-check.php
+
+## 🐛 Troubleshooting
 
 ### Common Issues
 
-1. **Database Connection Error**
-   - Check database credentials in `config/database.php`
-   - Ensure MySQL service is running
-   - Verify database exists and user has proper permissions
-
-2. **Permission Denied Errors**
-   - Check file permissions on web server
-   - Ensure web server user can read PHP files
-
-3. **Session Issues**
-   - Verify session directory is writable
-   - Check PHP session configuration
-
-4. **Login Problems**
-   - Verify default admin user exists in database
-   - Check password hashing compatibility
-
-### Debug Mode
-Enable debug mode in `config/config.php`:
-```php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+#### 🔴 Port Already in Use
+```bash
+# Error: Port 8080 is already in use
+# Solution: Change port in .env
+WEB_PORT=8081
+make restart
 ```
 
-## Support
+#### 🔴 Container Won't Start
+```bash
+# Check logs
+make logs
 
-For technical support or feature requests:
-1. Check the troubleshooting section above
-2. Review the system logs for error messages
-3. Consult the PHP and MySQL documentation
+# Rebuild containers
+make rebuild
 
-## License
+# Check Docker daemon
+docker info
+```
 
-This project is developed for internal use. Please ensure compliance with your organization's software policies.
+#### 🔴 Database Connection Failed
+```bash
+# Check database health
+make health
 
-## Changelog
+# Reset database
+make reset
 
-### Version 1.0.0
-- Initial release
-- Complete evaluation system implementation
-- User authentication and role management
-- Dashboard and reporting features
-- Mobile-responsive design
+# Access database directly
+make mysql
+```
+
+#### 🔴 Permission Issues
+```bash
+# Fix file permissions
+make shell
+chown -R www-data:www-data /var/www/html
+```
+
+#### 🔴 Out of Disk Space
+```bash
+# Clean up Docker resources
+make clean
+
+# Check disk usage
+df -h
+```
+
+### Health Monitoring
+```bash
+# Quick health check
+make health
+
+# Continuous monitoring
+./docker/scripts/health-check.sh --watch
+
+# Detailed container stats
+make status
+```
+
+### Log Analysis
+```bash
+# All logs
+make logs
+
+# Web server errors
+make logs-web | grep ERROR
+
+# Database slow queries
+make logs-db | grep "Query_time"
+
+# PHP errors
+tail -f docker/logs/php/error.log
+```
+
+## 📚 File Structure
+
+```
+universal_development_hr_system/
+├── docker-compose.yml              # Main orchestration
+├── docker-compose.override.yml     # Development overrides
+├── .env.example                    # Environment template
+├── .env                           # Environment variables (created)
+├── Makefile                       # Quick commands
+├── config/                        # Configuration files
+│   ├── database.php               # Database configuration
+│   └── config.php                 # Application settings
+├── classes/                       # PHP classes
+│   ├── User.php                   # User management
+│   ├── Employee.php               # Employee management
+│   ├── Evaluation.php             # Evaluation handling
+│   └── [20+ other classes]        # Core business logic
+├── public/                        # Public web files
+│   ├── index.php                  # Main entry point
+│   ├── login.php                  # Login page
+│   ├── dashboard.php               # Dashboard
+│   ├── admin/                     # Admin interfaces
+│   ├── api/                       # API endpoints
+│   ├── employees/                 # Employee management
+│   ├── evaluation/                # Evaluation interfaces
+│   └── [other modules]            # Feature modules
+├── sql/                           # Database files
+│   ├── 001_database_setup.sql     # Main schema
+│   └── [migration files]         # Database migrations
+├── docker/                        # Docker configuration
+│   ├── web/
+│   │   ├── Dockerfile             # Web container definition
+│   │   ├── apache.conf            # Apache configuration
+│   │   └── php.ini               # PHP settings
+│   ├── scripts/                   # Management scripts
+│   └── logs/                      # Centralized logging
+└── docs/                          # Documentation
+```
+
+## 🤝 Support
+
+### Getting Help
+1. Check this README
+2. Run `make health` for diagnostics
+3. Check logs with `make logs`
+4. Review Docker documentation
+
+### Useful Resources
+- [Docker Documentation](https://docs.docker.com/)
+- [Docker Compose Reference](https://docs.docker.com/compose/)
+- [PHP Documentation](https://www.php.net/docs.php)
+- [MySQL Documentation](https://dev.mysql.com/doc/)
+
+### Contributing
+1. Test changes locally with `make up`
+2. Run health checks with `make health`
+3. Document any new features
+4. Update this README if needed
 
 ---
 
-**Note**: This system is designed to replace paper-based evaluation processes while maintaining the same evaluation criteria and workflow. All evaluation data is stored securely and can be exported for compliance purposes.
+## 📄 License
 
-## 🚀 Developer Resources
+This project is developed for internal use. Please ensure compliance with your organization's software policies.
 
-- **[Developer Guide](README_DEV.md)** - Complete development environment management
-- **[Quick Reference](QUICK_REFERENCE.md)** - Essential commands cheat sheet
-- **[Database Migrations](docs/DATABASE_MIGRATION_IMPLEMENTATION.md)** - Migration system documentation
-- **[Architecture Design](docs/ARCHITECTURE_DESIGN.md)** - System architecture overview
-- **[Docker Setup](DOCKER_SETUP_COMPLETE.md)** - Docker environment details
+## 📈 Version History
 
-### Quick Start for Developers
-```bash
-# Start development environment
-make up
+### Version 1.0.0
+- Initial release
+- Complete HR management system
+- Performance evaluation framework
+- User authentication and role management
+- Dashboard and analytics features
+- Mobile-responsive design
+- Docker-based deployment
 
-# Access application
-open http://localhost:8080
+---
 
-# Default login: admin / admin123
-```
+**🎉 Thank you for choosing Universal Development HR System!**
 
-For detailed development instructions, see **[README_DEV.md](README_DEV.md)**.
+Your comprehensive HR management platform is ready for deployment. This system provides a modern, scalable solution for employee evaluation, performance management, and organizational development.

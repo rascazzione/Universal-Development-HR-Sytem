@@ -1,0 +1,24 @@
+"KPI Name",Description,"Measurement Unit",Category,"Target Type"
+"Revenue Growth Rate","Percentage increase in total revenue compared to the prior comparable period.",%,"Sales Performance",higher_better
+"Average Deal Size","Average revenue per closed won deal for the selected period.",USD,"Sales Performance",higher_better
+"Sales Win Rate","Ratio of closed won deals to total qualified opportunities.",%,"Sales Performance",higher_better
+"Lead to Opportunity Conversion","Percent of marketing qualified leads that become sales accepted opportunities.",%,"Sales Funnel Efficiency",higher_better
+"Customer Retention Rate","Percentage of existing customers that remain active over the measurement window.",%,"Customer Success",higher_better
+"Net Promoter Score","Customer loyalty index derived from promoter and detractor responses.",score,"Customer Success",higher_better
+"First Response Time","Average minutes it takes support agents to respond to new tickets.",minutes,"Customer Support",lower_better
+"Resolution SLA Achievement","Percent of support tickets solved within the committed SLA window.",%,"Customer Support",higher_better
+"On-Time Delivery Rate","Share of deliveries completed on or before the promised date.",%,Operations,higher_better
+"Production Defect Rate","Number of defective units per million produced.",ppm,"Operations Quality",lower_better
+"Inventory Turnover","Times inventory is sold or used in a period.",turns,Operations,higher_better
+"Gross Margin","Percentage of revenue remaining after cost of goods sold.",%,"Financial Health",higher_better
+"Operating Expense Ratio","Operating expenses as a share of total revenue.",%,"Financial Health",lower_better
+"Cash Conversion Cycle","Days required to convert investments in inventory into cash flow.",days,"Financial Health",lower_better
+"Employee Engagement Score","Average favorability score from the latest engagement survey.",score,"People Experience",higher_better
+"Training Completion Rate","Percent of required training modules completed on time.",%,"People Development",higher_better
+"Time to Fill","Average number of days to fill an approved role from requisition to acceptance.",days,"Talent Acquisition",lower_better
+"Project On-Time Completion","Percent of projects delivered on or before the agreed timeline.",%,"Delivery Excellence",higher_better
+"Website Conversion Rate","Visitors that complete the primary digital conversion goal.",%,"Digital Marketing",higher_better
+"Marketing Qualified Leads","Count of leads that meet the agreed qualification criteria.",count,"Digital Marketing",higher_better
+"Customer Churn Rate","Percent of customers that cancel or do not renew within the period.",%,"Customer Success",lower_better
+"Carbon Emissions per Unit","Kilograms of CO2e emitted per unit produced or shipped.","kg CO2e",Sustainability,lower_better
+"Innovation Pipeline Health","Weighted score of ideas progressing through the innovation lifecycle.",index,"Strategic Initiatives",higher_better
