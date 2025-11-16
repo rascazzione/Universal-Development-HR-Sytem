@@ -457,24 +457,19 @@ function getNavigationMenu() {
         'icon' => 'fas fa-tachometer-alt'
     ];
     
-    // 360-Degree Feedback Features Menu - available to all authenticated users
-    $menu[] = [
-        'title' => '360° Features',
-        'url' => '/360-features/',
-        'icon' => 'fas fa-sync-alt',
-        'submenu' => [
-            ['title' => 'Self-Assessment', 'url' => '/self-assessment/dashboard.php'],
-            ['title' => 'Achievement Journal', 'url' => '/achievements/journal.php'],
-            ['title' => 'KUDOS Recognition', 'url' => '/kudos/feed.php'],
-            ['title' => 'OKR Management', 'url' => '/okr/dashboard.php'],
-            ['title' => 'Development Plans', 'url' => '/idp/dashboard.php']
-        ]
-    ];
-    
-    // Upward Feedback - only visible to managers
-    if ($userRole === 'hr_admin' || $userRole === 'manager') {
-        // Add Upward Feedback to the 360° submenu for managers
-        $menu[count($menu) - 1]['submenu'][] = ['title' => 'Upward Feedback', 'url' => '/upward-feedback/dashboard.php'];
+    // System Configuration - HR Admin only
+    if ($userRole === 'hr_admin') {
+        $menu[] = [
+            'title' => 'System Configuration',
+            'url' => '/360-features/',
+            'icon' => 'fas fa-tools',
+            'submenu' => [
+                ['title' => 'Job Templates', 'url' => '/admin/job_templates.php'],
+                ['title' => 'Company KPIs', 'url' => '/admin/kpis.php'],
+                ['title' => 'Competencies', 'url' => '/admin/competencies.php'],
+                ['title' => 'Company Values', 'url' => '/admin/values.php']
+            ]
+        ];
     }
     
     // Evaluations menu
@@ -494,6 +489,15 @@ function getNavigationMenu() {
             'title' => 'My Evaluations',
             'url' => '/evaluation/my-evaluations.php',
             'icon' => 'fas fa-clipboard-list'
+        ];
+    }
+    
+    // Upward Feedback (Managers & HR Admin)
+    if ($userRole === 'hr_admin' || $userRole === 'manager') {
+        $menu[] = [
+            'title' => 'Upward Feedback',
+            'url' => '/upward-feedback/dashboard.php',
+            'icon' => 'fas fa-arrow-up'
         ];
     }
     

@@ -43,6 +43,9 @@ function renderQuickActions($userRole, $jobTemplateAssignment = null) {
                         <a href="/admin/periods.php" class="btn btn-outline-warning btn-sm mb-1">
                             <i class="fas fa-calendar-plus me-2"></i>Evaluation Periods
                         </a>
+                        <a href="/upward-feedback/dashboard.php" class="btn btn-outline-danger btn-sm mb-1">
+                            <i class="fas fa-arrow-up me-2"></i>Upward Feedback
+                        </a>
                         <hr class="my-2">
                         <a href="/reports/performance.php" class="btn btn-outline-info">
                             <i class="fas fa-chart-bar me-2"></i>View Reports
@@ -58,6 +61,9 @@ function renderQuickActions($userRole, $jobTemplateAssignment = null) {
                         <a href="/evaluation/my-evaluations.php" class="btn btn-outline-secondary">
                             <i class="fas fa-clipboard-list me-2"></i>My Evaluations
                         </a>
+                        <a href="/upward-feedback/dashboard.php" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-up me-2"></i>Upward Feedback
+                        </a>
                         
                     <?php else: // employee ?>
                         <?php if ($jobTemplateAssignment && $jobTemplateAssignment['has_template'] && !empty($jobTemplateAssignment['employee']['employee_id'])): ?>
@@ -68,20 +74,11 @@ function renderQuickActions($userRole, $jobTemplateAssignment = null) {
                         <a href="/evaluation/my-evaluations.php" class="btn btn-primary">
                             <i class="fas fa-clipboard-list me-2"></i>My Evaluations
                         </a>
-                        <a href="/self-assessment/dashboard.php" class="btn btn-outline-secondary">
-                            <i class="fas fa-pen me-2"></i>Give Self-Feedback
-                        </a>
-                        <a href="/achievements/journal.php" class="btn btn-outline-secondary">
-                            <i class="fas fa-lightbulb me-2"></i>Log Achievement
-                        </a>
                         <?php if (!empty($_SESSION['employee_id'])): ?>
                         <a href="/employees/view-feedback.php?employee_id=<?php echo $_SESSION['employee_id']; ?>" class="btn btn-outline-secondary">
                             <i class="fas fa-comments me-2"></i>Feedback Hub
                         </a>
                         <?php endif; ?>
-                        <a href="/idp/dashboard.php" class="btn btn-outline-secondary">
-                            <i class="fas fa-road me-2"></i>Development Plan
-                        </a>
                         <?php if (!empty($_SESSION['employee_id'])): ?>
                         <a href="/employees/edit.php?id=<?php echo $_SESSION['employee_id']; ?>" class="btn btn-outline-primary">
                             <i class="fas fa-user-edit me-2"></i>Update Profile
