@@ -40,15 +40,21 @@ function renderQuickActions($userRole, $jobTemplateAssignment = null) {
                         <a href="/admin/values.php" class="btn btn-outline-danger btn-sm mb-1">
                             <i class="fas fa-heart me-2"></i>Company Values
                         </a>
+                        <a href="/admin/departments.php" class="btn btn-outline-dark btn-sm mb-1">
+                            <i class="fas fa-sitemap me-2"></i>Departments
+                        </a>
                         <a href="/admin/periods.php" class="btn btn-outline-warning btn-sm mb-1">
                             <i class="fas fa-calendar-plus me-2"></i>Evaluation Periods
+                        </a>
+                        <a href="/pending.php?feature=Audit+Log" class="btn btn-outline-secondary btn-sm mb-1">
+                            <i class="fas fa-clipboard-list me-2"></i>Audit Log (Pending)
                         </a>
                         <a href="/upward-feedback/dashboard.php" class="btn btn-outline-danger btn-sm mb-1">
                             <i class="fas fa-arrow-up me-2"></i>Upward Feedback
                         </a>
                         <hr class="my-2">
-                        <a href="/reports/performance.php" class="btn btn-outline-info">
-                            <i class="fas fa-chart-bar me-2"></i>View Reports
+                        <a href="/pending.php?feature=Reports" class="btn btn-outline-info">
+                            <i class="fas fa-chart-bar me-2"></i>Reports (Coming Soon)
                         </a>
                         
                     <?php elseif ($userRole === 'manager'): ?>

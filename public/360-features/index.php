@@ -96,6 +96,40 @@ include __DIR__ . '/../../templates/header.php';
                 </div>
             </div>
         </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="card h-100 shadow-sm border-0 config-card">
+                <div class="card-body text-center">
+                    <div class="config-icon bg-dark text-white mb-3">
+                        <i class="fas fa-sitemap"></i>
+                    </div>
+                    <h5>Departments</h5>
+                    <p class="text-muted small">
+                        Maintain your org structure so reporting lines and templates stay aligned.
+                    </p>
+                    <a href="/admin/departments.php" class="btn btn-dark btn-sm w-100">
+                        Manage Departments
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="card h-100 shadow-sm border-0 config-card">
+                <div class="card-body text-center">
+                    <div class="config-icon bg-secondary text-white mb-3">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <h5>Audit Log</h5>
+                    <p class="text-muted small">
+                        Track sensitive configuration changes. This area is still being built.
+                    </p>
+                    <a href="/pending.php?feature=Audit+Log" class="btn btn-secondary btn-sm w-100">
+                        Coming Soon
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="row mt-4">

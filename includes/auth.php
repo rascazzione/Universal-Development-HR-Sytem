@@ -467,7 +467,9 @@ function getNavigationMenu() {
                 ['title' => 'Job Templates', 'url' => '/admin/job_templates.php'],
                 ['title' => 'Company KPIs', 'url' => '/admin/kpis.php'],
                 ['title' => 'Competencies', 'url' => '/admin/competencies.php'],
-                ['title' => 'Company Values', 'url' => '/admin/values.php']
+                ['title' => 'Company Values', 'url' => '/admin/values.php'],
+                ['title' => 'Departments', 'url' => '/admin/departments.php'],
+                ['title' => 'Audit Log (Coming Soon)', 'url' => '/pending.php?feature=Audit%20Log']
             ]
         ];
     }
@@ -489,15 +491,6 @@ function getNavigationMenu() {
             'title' => 'My Evaluations',
             'url' => '/evaluation/my-evaluations.php',
             'icon' => 'fas fa-clipboard-list'
-        ];
-    }
-    
-    // Upward Feedback (Managers & HR Admin)
-    if ($userRole === 'hr_admin' || $userRole === 'manager') {
-        $menu[] = [
-            'title' => 'Upward Feedback',
-            'url' => '/upward-feedback/dashboard.php',
-            'icon' => 'fas fa-arrow-up'
         ];
     }
     
@@ -524,14 +517,7 @@ function getNavigationMenu() {
             'url' => '/admin/',
             'icon' => 'fas fa-cog',
             'submenu' => [
-                ['title' => 'Users', 'url' => '/admin/users.php'],
-                ['title' => 'Departments', 'url' => '/admin/departments.php'],
-                ['title' => 'Evaluation Periods', 'url' => '/admin/periods.php'],
-                ['title' => 'System Settings', 'url' => '/admin/settings.php'],
-                ['title' => 'Audit Log', 'url' => '/admin/audit.php'],
-                ['title' => 'KUDOS Categories', 'url' => '/admin/kudos-categories.php'],
-                ['title' => 'Upward Feedback', 'url' => '/admin/upward-feedback.php'],
-                ['title' => '360° Analytics', 'url' => '/admin/360-analytics.php']
+                ['title' => 'Evaluation Periods', 'url' => '/admin/periods.php']
             ]
         ];
     }
@@ -539,14 +525,9 @@ function getNavigationMenu() {
     // Reports menu
     if ($userRole === 'hr_admin' || $userRole === 'manager') {
         $menu[] = [
-            'title' => 'Reports',
-            'url' => '/reports/',
-            'icon' => 'fas fa-chart-bar',
-            'submenu' => [
-                ['title' => 'Performance Reports', 'url' => '/reports/performance.php'],
-                ['title' => 'Department Reports', 'url' => '/reports/department.php'],
-                ['title' => 'Period Reports', 'url' => '/reports/period.php']
-            ]
+            'title' => 'Reports (Coming Soon)',
+            'url' => '/pending.php?feature=Reports',
+            'icon' => 'fas fa-chart-bar'
         ];
     }
     

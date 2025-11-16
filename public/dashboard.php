@@ -214,6 +214,28 @@ include __DIR__ . '/../templates/header.php';
 </div>
 <?php endif; ?>
 
+<?php if ($userRole === 'hr_admin' || $userRole === 'manager'): ?>
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body d-flex flex-column flex-md-row align-items-md-center justify-content-between">
+                    <div class="mb-3 mb-md-0">
+                        <h5 class="mb-1"><i class="fas fa-arrow-up text-danger me-2"></i>Upward Feedback Hub</h5>
+                        <p class="text-muted mb-0">
+                            Launch a dedicated view to monitor submissions, invite team responses, and review insights from your reports.
+                        </p>
+                    </div>
+                    <a href="/upward-feedback/dashboard.php" class="btn btn-danger">
+                        <i class="fas fa-external-link-alt me-2"></i>Open Upward Feedback
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
 <!-- Dashboard Widgets - Using Reusable Components -->
 <div class="container-fluid">
     <?php echo renderDashboardWidgets($userRole, $dashboardData); ?>
