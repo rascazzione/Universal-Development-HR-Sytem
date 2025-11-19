@@ -236,6 +236,10 @@ DB_PORT=3306
 # PHP Settings
 PHP_MEMORY_LIMIT=256M
 PHP_MAX_EXECUTION_TIME=300
+
+# Container User Mapping
+WWWUSER=1000
+WWWGROUP=1000
 ```
 
 ### Volume Mounts
@@ -287,10 +291,13 @@ make mysql
 ```
 
 #### 🔴 Permission Issues
+Bind mounts keep the host file ownership. If your application writes to `config/soft_skills`
+or other shared directories but the changes show up under `/tmp`, rebuild the container with
+`WWWUSER`/`WWWGROUP` values that match your host user so the PHP process retains write access.
 ```bash
-# Fix file permissions
-make shell
-chown -R www-data:www-data /var/www/html
+# Ensure the container user matches your host user (prevents /tmp fallbacks)
+WWWUSER=$(id -u) WWWGROUP=$(id -g) docker compose build web
+docker compose up -d --force-recreate web
 ```
 
 #### 🔴 Out of Disk Space

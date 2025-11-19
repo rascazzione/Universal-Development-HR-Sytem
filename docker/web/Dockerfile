@@ -1,5 +1,12 @@
 FROM php:8.1-apache
 
+# Allow mapping the Apache/PHP user and group to the host IDs so bind-mounted
+# files (like config/soft_skills) remain writable from inside the container.
+ARG WWWGROUP=33
+ARG WWWUSER=33
+RUN groupmod -o -g ${WWWGROUP} www-data \
+    && usermod -o -u ${WWWUSER} www-data
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
