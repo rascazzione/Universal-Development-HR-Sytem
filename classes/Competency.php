@@ -981,6 +981,148 @@ class Competency {
             ];
         }
     }
+
+    /**
+     * Import soft skill competencies from JSON files stored on disk.
+     *
+     * @param int $categoryId  The soft skill category that will own the imported competencies
+     * @param array $options   Supported keys:
+     *                         - keys (array): optional list of competency keys to limit the import to.
+     * @return array           Summary of the import work (imported, skipped, errors, created)
+     * @throws Exception
+     */
+    public function importSoftSkillsFromJson(int $categoryId, array $options = []): array {
+        $category = $this->getCategoryById($categoryId);
+        if (!$category) {
+            throw new Exception('Selected category not found');
+        }
+
+        $categoryType = $category['category_type'] ?? '';
+        $moduleType = $category['module_type'] ?? '';
+        $isSoftSkillCategory = $this->normalizeCategoryType($categoryType) === 'soft_skill'
+            || $this->normalizeModuleType($moduleType) === 'soft_skill';
+
+        if (!$isSoftSkillCategory) {
+            throw new Exception('Selected category is not configured for soft skills');
+        }
+
+        if (!is_dir($this->softSkillLevelsDir)) {
+            throw new Exception('Soft skill JSON directory not found');
+        }
+
+        $files = glob($this->softSkillLevelsDir . '/*.json');
+        if (empty($files)) {
+            return [
+                'imported' => 0,
+                'skipped' => 0,
+                'errors' => ['No soft skill JSON files were found in the catalog directory.'],
+                'created' => []
+            ];
+        }
+
+        $limitKeys = array_key_exists('keys', $options) && is_array($options['keys'])
+            ? array_map(function ($key) {
+                return $this->normalizeCompetencyKey((string)$key);
+            }, $options['keys'])
+            : null;
+
+        // Build a lookup of currently active soft skill competency keys
+        $existingKeys = [];
+        $existingRecords = fetchAll(
+            "SELECT c.competency_key
+             FROM competencies c
+             JOIN competency_categories cc ON c.category_id = cc.id
+             WHERE c.is_active = 1
+               AND c.competency_key IS NOT NULL
+               AND c.competency_key != ''
+               AND (cc.category_type = 'soft_skill' OR cc.module_type = 'soft_skill' OR c.level_type = 'soft_skill_scale')"
+        );
+        foreach ($existingRecords as $record) {
+            $normalized = $this->normalizeCompetencyKey($record['competency_key']);
+            if ($normalized !== '') {
+                $existingKeys[$normalized] = true;
+            }
+        }
+
+        $summary = [
+            'imported' => 0,
+            'skipped' => 0,
+            'errors' => [],
+            'created' => []
+        ];
+
+        foreach ($files as $file) {
+            $key = basename($file, '.json');
+            $normalizedKey = $this->normalizeCompetencyKey($key);
+            if ($normalizedKey === '') {
+                $summary['errors'][] = "Skipping file {$file}: cannot determine competency key.";
+                $summary['skipped']++;
+                continue;
+            }
+
+            if ($limitKeys !== null && !in_array($normalizedKey, $limitKeys, true)) {
+                continue;
+            }
+
+            if (isset($existingKeys[$normalizedKey])) {
+                $summary['skipped']++;
+                continue;
+            }
+
+            $json = file_get_contents($file);
+            $data = json_decode($this->sanitizeJsonPayload($json), true);
+            if (!is_array($data)) {
+                $summary['errors'][] = "Invalid JSON structure in {$file}.";
+                $summary['skipped']++;
+                continue;
+            }
+
+            $name = trim((string)($data['name'] ?? ''));
+            if ($name === '') {
+                $name = ucwords(str_replace('_', ' ', $normalizedKey));
+            }
+
+            $description = trim((string)($data['definition'] ?? ''));
+            if ($description === '') {
+                $description = trim((string)($data['description'] ?? ''));
+            }
+            if ($description === '') {
+                $description = 'Imported from soft skill JSON catalog.';
+            }
+
+            try {
+                $newId = $this->createCompetency([
+                    'competency_name' => $name,
+                    'description' => $description,
+                    'category_id' => $categoryId,
+                    'module_type' => 'soft_skill',
+                    'competency_key' => $normalizedKey,
+                    'symbol' => '🧠',
+                    'max_level' => 4,
+                    'level_type' => 'soft_skill_scale'
+                ]);
+
+                $summary['imported']++;
+                $summary['created'][] = [
+                    'id' => (int)$newId,
+                    'competency_key' => $normalizedKey,
+                    'name' => $name
+                ];
+                $existingKeys[$normalizedKey] = true;
+            } catch (Exception $e) {
+                $summary['errors'][] = "Failed to import {$normalizedKey}: " . $e->getMessage();
+                $summary['skipped']++;
+            }
+        }
+
+        if ($summary['imported'] > 0) {
+            // Refresh caches and ensure relational soft skill tables are synchronized
+            $this->softSkillCatalogCache = null;
+            $this->getSoftSkillCatalog();
+        }
+
+        return $summary;
+    }
     
     /**
      * Convert competency name to key for JSON storage

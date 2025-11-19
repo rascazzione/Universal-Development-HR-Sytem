@@ -1,0 +1,43 @@
+{
+    "name": "Leadership",
+    "definition": "The ability to inspire, guide, and empower individuals and teams toward achieving shared goals while fostering a positive, inclusive, and accountable environment.",
+    "description": "Effective leadership extends beyond formal authority; it involves establishing a clear vision, making strategic decisions, and motivating others to excel. It requires the capacity to build trust, develop talent, navigate uncertainty, and align individual efforts with organizational success.",
+    "levels": {
+        "1": {
+            "title": "Emerging",
+            "behaviors": [
+                "Leads by example through reliability, integrity, and a positive attitude.",
+                "Takes initiative to solve problems within their own scope without waiting for direction.",
+                "Supports new team members by sharing knowledge and offering assistance.",
+                "Accepts responsibility for own actions and learns from mistakes."
+            ]
+        },
+        "2": {
+            "title": "Competent",
+            "behaviors": [
+                "Delegates tasks effectively, matching assignments to team members’ strengths.",
+                "Provides timely, actionable feedback to help others improve performance.",
+                "Translates team goals into clear, actionable steps and timelines.",
+                "Facilitates collaboration and resolves minor conflicts within the team."
+            ]
+        },
+        "3": {
+            "title": "Proficient",
+            "behaviors": [
+                "Translates high-level organizational strategy into operational plans for the department.",
+                "Champions diversity and inclusion, ensuring varied perspectives are valued.",
+                "Navigates change management effectively, keeping the team focused during transitions.",
+                "Builds strong cross-functional partnerships to remove roadblocks for the team."
+            ]
+        },
+        "4": {
+            "title": "Visionary",
+            "behaviors": [
+                "Sets the innovative long-term vision and culture for the organization.",
+                "Develops a pipeline of future leaders by mentoring senior managers and directors.",
+                "Makes high-stakes, complex decisions with incomplete information and manages the associated risks.",
+                "Inspires enterprise-wide commitment and resilience during times of crisis or major transformation."
+            ]
+        }
+    }
+}

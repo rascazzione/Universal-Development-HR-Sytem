@@ -206,6 +206,11 @@ function handlePostRequest() {
     global $competencyClass;
     
     try {
+        if (($_POST['operation'] ?? '') === 'import_catalog') {
+            handleSoftSkillCatalogImport();
+            return;
+        }
+
         // Log incoming request for debugging
         error_log("[DEBUG] soft_skill_levels POST - competency_key: " . ($_POST['competency_key'] ?? 'null'));
         error_log("[DEBUG] soft_skill_levels POST - raw_json length: " . strlen($_POST['raw_json'] ?? ''));
@@ -294,6 +299,42 @@ function handlePostRequest() {
     } catch (Exception $e) {
         error_log("[ERROR] soft_skill_levels POST - Final exception: " . $e->getMessage());
         error_log("[ERROR] soft_skill_levels POST - Stack trace: " . $e->getTraceAsString());
+        http_response_code(400);
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => false,
+            'error' => $e->getMessage()
+        ]);
+    }
+}
+
+/**
+ * Handle catalog import requests - create competencies from JSON files.
+ */
+function handleSoftSkillCatalogImport(): void {
+    global $competencyClass;
+
+    try {
+        if (!verifyCSRFToken($_POST['csrf_token'] ?? '')) {
+            throw new Exception('Invalid security token');
+        }
+
+        $categoryId = (int)($_POST['category_id'] ?? 0);
+        if ($categoryId <= 0) {
+            throw new Exception('Please select a soft skill category for the imported competencies.');
+        }
+
+        $competencyKey = trim((string)($_POST['competency_key'] ?? ''));
+        $options = [];
+        if ($competencyKey !== '') {
+            $options['keys'] = [$competencyKey];
+        }
+
+        $result = $competencyClass->importSoftSkillsFromJson($categoryId, $options);
+
+        header('Content-Type: application/json');
+        echo json_encode(array_merge(['success' => true], $result));
+    } catch (Exception $e) {
         http_response_code(400);
         header('Content-Type: application/json');
         echo json_encode([

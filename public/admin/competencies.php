@@ -214,6 +214,12 @@ foreach ($softSkillStatus['missing_definitions'] as $missing) {
         $softSkillMissingLookup[$normalizedKey] = true;
     }
 }
+$softSkillCategories = array_values(array_filter($categories, function ($category) {
+    $categoryType = $category['category_type'] ?? '';
+    $moduleType = $category['module_type'] ?? '';
+    return $categoryType === 'soft_skill' || $moduleType === 'soft_skill';
+}));
+$canImportSoftSkills = !empty($softSkillCategories);
 
 $pageTitle = 'Competencies Management';
 $pageHeader = true;
@@ -522,6 +528,61 @@ include __DIR__ . '/../../templates/header.php';
                     <div id="softSkillInconsistencies" class="d-none"></div>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Import Soft Skill JSON Modal -->
+<div class="modal fade" id="importSoftSkillJsonModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Import Soft Skills from JSON Catalog</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="importSoftSkillJsonForm">
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                    <input type="hidden" name="operation" value="import_catalog">
+                    <input type="hidden" name="competency_key" id="importSoftSkillJsonKey">
+                    <div class="alert alert-light border small mb-3">
+                        <div class="fw-semibold mb-1">Use your versioned JSON files as the source of truth.</div>
+                        <div>The action below will import the selected orphaned JSON file into the chosen category.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Selected JSON File</label>
+                        <div id="softSkillImportSelection" class="alert alert-warning small mb-0">
+                            Select an orphaned JSON entry from the catalog list to import it.
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="importSoftSkillCategory" class="form-label">Target Soft Skill Category</label>
+                        <select class="form-select" id="importSoftSkillCategory" name="category_id" <?php echo $canImportSoftSkills ? '' : 'disabled'; ?> required>
+                            <?php if ($canImportSoftSkills): ?>
+                                <?php foreach ($softSkillCategories as $category): ?>
+                                <option value="<?php echo $category['id']; ?>">
+                                    <?php echo htmlspecialchars($category['category_name']); ?>
+                                </option>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <option value="">No soft skill categories available</option>
+                            <?php endif; ?>
+                        </select>
+                        <?php if ($canImportSoftSkills): ?>
+                        <div class="form-text">Imported competencies can be edited or re-assigned later.</div>
+                        <?php else: ?>
+                        <div class="form-text text-danger">Create at least one category with type "Soft Skills" and reload this page to enable imports.</div>
+                        <?php endif; ?>
+                    </div>
+                    <div id="softSkillImportFeedback" class="alert d-none mb-0 small" role="alert"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary" <?php echo $canImportSoftSkills ? '' : 'disabled'; ?>>
+                        <i class="fas fa-database me-1"></i>Import Soft Skills
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -845,6 +906,8 @@ include __DIR__ . '/../../templates/header.php';
 </div>
 
 <script>
+const softSkillImportEnabled = <?php echo $canImportSoftSkills ? 'true' : 'false'; ?>;
+
 // Form submission protection function
 function handleFormSubmit(form, loadingText = 'Processing...') {
     console.log('[DEBUG] handleFormSubmit called for form:', form, 'Timestamp:', new Date().toISOString());
@@ -931,6 +994,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    const softSkillImportForm = document.getElementById('importSoftSkillJsonForm');
+    if (softSkillImportForm) {
+        softSkillImportForm.addEventListener('submit', handleSoftSkillJsonImport);
+        setSoftSkillImportSelection('');
+    }
+
     loadSoftSkillCatalogStatus();
 });
 
@@ -1353,13 +1422,21 @@ function renderSoftSkillFilesTable(files) {
             ? '<span class="badge bg-danger ms-1">Orphaned</span>'
             : '';
         const orphanedClass = file.orphaned ? 'table-danger' : '';
-        const editButton = file.orphaned
-            ? `<button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteOrphanedJsonFile('${escapedKey}')" title="Delete orphaned JSON file">
-                 <i class="fas fa-trash me-1"></i>Delete
-               </button>`
-            : `<button type="button" class="btn btn-sm btn-outline-primary" onclick="viewSoftSkillLevels(null, '${escapedKey}')">
-                 <i class="fas fa-pen me-1"></i>Edit JSON
-               </button>`;
+        const orphanButtons = [];
+        if (softSkillImportEnabled) {
+            orphanButtons.push(`<button type="button" class="btn btn-outline-success" onclick="openSoftSkillImportModal('${escapedKey}')" title="Import this JSON into competencies">
+                    <i class="fas fa-database"></i>
+                </button>`);
+        }
+        orphanButtons.push(`<button type="button" class="btn btn-outline-danger" onclick="deleteOrphanedJsonFile('${escapedKey}')" title="Delete orphaned JSON file">
+                    <i class="fas fa-trash"></i>
+                </button>`);
+        const orphanedActions = `<div class="btn-group btn-group-sm">${orphanButtons.join('')}</div>`;
+        const editButton = `
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="viewSoftSkillLevels(null, '${escapedKey}')">
+                <i class="fas fa-pen me-1"></i>Edit JSON
+            </button>`;
+        const actions = file.orphaned ? orphanedActions : editButton;
         
         return `
             <tr class="${orphanedClass}">
@@ -1369,7 +1446,7 @@ function renderSoftSkillFilesTable(files) {
                 <td>${filePath}<br>${statusBadge}</td>
                 <td>${escapeHtml(updated)}</td>
                 <td class="text-end">
-                    ${editButton}
+                    ${actions}
                 </td>
             </tr>
         `;
@@ -1507,6 +1584,123 @@ function importCompetencies() {
             console.error('Error importing competencies:', error);
             setCompetencyImportFeedback('Unexpected error importing competencies. Please try again.', 'danger');
             restoreButton();
+        });
+}
+
+function setSoftSkillImportFeedback(message, variant = 'info') {
+    const feedback = document.getElementById('softSkillImportFeedback');
+    if (!feedback) return;
+    
+    if (!message) {
+        feedback.classList.add('d-none');
+        feedback.innerHTML = '';
+        return;
+    }
+    
+    feedback.classList.remove('d-none', 'alert-info', 'alert-success', 'alert-warning', 'alert-danger');
+    feedback.classList.add(`alert-${variant}`);
+    feedback.innerHTML = message;
+}
+
+function setSoftSkillImportSelection(competencyKey = '') {
+    const selection = document.getElementById('softSkillImportSelection');
+    const keyInput = document.getElementById('importSoftSkillJsonKey');
+    if (keyInput && competencyKey !== undefined) {
+        keyInput.value = competencyKey || '';
+    }
+    if (!selection) return;
+    
+    if (!competencyKey) {
+        selection.className = 'alert alert-warning small mb-0';
+        selection.innerHTML = 'Select an orphaned JSON entry from the catalog list to import it.';
+        return;
+    }
+    
+    selection.className = 'alert alert-success small mb-0';
+    selection.innerHTML = `<strong>File selected:</strong> <code>${escapeHtml(competencyKey)}</code>`;
+}
+
+function openSoftSkillImportModal(competencyKey) {
+    if (!competencyKey) {
+        alert('Unable to determine which JSON file to import.');
+        return;
+    }
+    
+    setSoftSkillImportSelection(competencyKey);
+    setSoftSkillImportFeedback('');
+    
+    const modalEl = document.getElementById('importSoftSkillJsonModal');
+    if (!modalEl) {
+        alert('Import modal not available. Please reload the page.');
+        return;
+    }
+    
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
+}
+
+function handleSoftSkillJsonImport(event) {
+    event.preventDefault();
+    const form = event.target;
+    const submitButton = form.querySelector('button[type="submit"]');
+    if (!submitButton) {
+        return;
+    }
+    
+    if (submitButton.disabled) {
+        return;
+    }
+    
+    const originalLabel = submitButton.innerHTML;
+    submitButton.disabled = true;
+    submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Importing...';
+    
+    const keyInput = document.getElementById('importSoftSkillJsonKey');
+    const competencyKey = keyInput ? keyInput.value.trim() : '';
+    if (!competencyKey) {
+        setSoftSkillImportFeedback('Select an orphaned JSON file from the catalog list before importing.', 'warning');
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalLabel;
+        return;
+    }
+
+    setSoftSkillImportFeedback('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Importing soft skill...', 'info');
+    
+    const formData = new FormData(form);
+    
+    fetch('/api/soft_skill_levels.php', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                throw new Error(data.error || 'Unable to import soft skills from JSON catalog.');
+            }
+            
+            const summaryParts = [
+                `<strong>Created:</strong> ${safeCompetencyImportMetric(data.imported)}`,
+                `<strong>Skipped:</strong> ${safeCompetencyImportMetric(data.skipped)}`
+            ];
+            
+            let message = summaryParts.join('<br>');
+            const hasErrors = Array.isArray(data.errors) && data.errors.length;
+            if (hasErrors) {
+                const issues = data.errors.slice(0, 5).map(error => `<li>${escapeHtml(error)}</li>`).join('');
+                message += `<hr class="my-2"><strong>Notes</strong><ul class="mb-0">${issues}</ul>`;
+            }
+            
+            setSoftSkillImportFeedback(`<strong>Catalog import completed.</strong><br>${message}`, hasErrors ? 'warning' : 'success');
+            setTimeout(() => window.location.reload(), 1500);
+        })
+        .catch(error => {
+            console.error('Error importing soft skill catalog:', error);
+            setSoftSkillImportFeedback(escapeHtml(error.message || 'Error importing soft skill definitions.'), 'danger');
+        })
+        .finally(() => {
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalLabel;
         });
 }
 

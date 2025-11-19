@@ -1,0 +1,43 @@
+{
+    "name": "Goal Orientation",
+    "definition": "The ability to set clear objectives, prioritize resources, and maintain focus and motivation to achieve measurable results, even in the face of obstacles.",
+    "description": "Goal orientation goes beyond simple task completion; it is the proactive drive to align daily actions with broader objectives. It involves strategic planning, effective time management, resilience against setbacks, and a continuous focus on outcomes and ROI (Return on Investment).",
+    "levels": {
+        "1": {
+            "title": "Task-Focused",
+            "behaviors": [
+                "Completes assigned tasks within established deadlines and quality standards.",
+                "Maintains a personal to-do list to track immediate responsibilities.",
+                "Seeks clarification on expectations to ensure work aligns with requirements.",
+                "Demonstrates reliability in finishing work without constant supervision."
+            ]
+        },
+        "2": {
+            "title": "Self-Managed",
+            "behaviors": [
+                "Sets personal SMART (Specific, Measurable, Achievable, Relevant, Time-bound) goals.",
+                "Prioritizes workload based on urgency and impact, rather than just chronological order.",
+                "Identifies potential minor obstacles early and adjusts plans to stay on track.",
+                "Balances multiple ongoing projects effectively without dropping the ball."
+            ]
+        },
+        "3": {
+            "title": "Strategic Achiever",
+            "behaviors": [
+                "Aligns team or project goals directly with organizational strategy and OKRs.",
+                "Develops contingency plans to mitigate risks that threaten critical milestones.",
+                "Evaluates the efficiency of processes and implements changes to operationalize success.",
+                "Rallies others toward shared targets, maintaining morale during high-pressure sprints."
+            ]
+        },
+        "4": {
+            "title": "Results Champion",
+            "behaviors": [
+                "Defines ambitious, long-term strategic visions and 'stretch' goals for the organization.",
+                "Institutionalizes a culture of accountability and high performance across departments.",
+                "Makes tough resource allocation decisions to ensure critical organizational goals are met.",
+                "Persists through major market shifts or crises to deliver on long-term promises to stakeholders."
+            ]
+        }
+    }
+}
